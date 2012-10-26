@@ -1,0 +1,14 @@
+### upstream fixes
+deb_allow-tilde-destdir
+deb_astgenkey-security
+#deb_make-clean-fixes
+## proformatique patches
+xivo_queue_agent_talking
+#xivo_agent_callback_login
+xivo_cel_pgsql_fix_reload
+#xivo_manager_inherit.patch
+#xivo_meetme_moderation
+xivo_banner
+#xivo_sip_autocreate_options
+#xivo_sip_notify_provd
+#xivo_skill_queues

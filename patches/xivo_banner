@@ -1,0 +1,19 @@
+
+ -- Faidon Liambotis <paravoid@debian.org>
+ -- Nicolas HICHER <nhicher@proformatique.com>
+
+Index: asterisk-11.0.0/main/asterisk.c
+===================================================================
+--- asterisk-11.0.0.orig/main/asterisk.c
++++ asterisk-11.0.0/main/asterisk.c
+@@ -179,6 +179,10 @@ int daemon(int, int);  /* defined in lib
+                 "This is free software, with components licensed under the GNU General Public\n" \
+                 "License version 2 and other licenses; you are welcome to redistribute it under\n" \
+                 "certain conditions. Type 'core show license' for details.\n" \
++                "=========================================================================\n" \
++                "This package has been modified for the Debian GNU/Linux distribution\n" \
++                "This package has then been modified for XiVO, a product of Proformatique\n" \
++                "Please report all bugs to technique@proformatique.com\n" \
+                 "=========================================================================\n", ast_get_version()) \
+ 
+ /*! \defgroup main_options Main Configuration Options

@@ -1,0 +1,11 @@
+Patch naming convention:
+
+Each patch has a prefix followed by it's name:
+	<prefix>_<patch name>
+
+The prefix is one of:
+* pf  : a patch made by proformatique
+* deb : a patch made by debian maintainers
+* dig : a patch coming from Asterisk's bugtracker
+
+You are invited to stick to that :)

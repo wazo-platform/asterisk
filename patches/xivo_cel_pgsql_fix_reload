@@ -1,0 +1,13 @@
+Index: asterisk-11.0.0/cel/cel_pgsql.c
+===================================================================
+--- asterisk-11.0.0.orig/cel/cel_pgsql.c
++++ asterisk-11.0.0/cel/cel_pgsql.c
+@@ -579,7 +579,7 @@ static int load_module(void)
+ static int reload(void)
+ {
+ 	my_unload_module();
+-	return my_load_module(1);
++	return my_load_module(0);
+ }
+ 
+ AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_LOAD_ORDER, "PostgreSQL CEL Backend",

@@ -1,0 +1,2160 @@
+Index: asterisk-1.8.17.0/apps/app_queue.c
+===================================================================
+--- asterisk-1.8.17.0.orig/apps/app_queue.c
++++ asterisk-1.8.17.0/apps/app_queue.c
+@@ -855,6 +855,8 @@ enum queue_reload_mask {
+ 	QUEUE_RELOAD_MEMBER = (1 << 1),
+ 	QUEUE_RELOAD_RULES = (1 << 2),
+ 	QUEUE_RESET_STATS = (1 << 3),
++	QUEUE_RELOAD_SKILLS = (1 << 4),
++	QUEUE_RELOAD_SKILL_RULES = (1 << 5),
+ };
+ 
+ static const struct strategy {
+@@ -1000,9 +1002,14 @@ struct callattempt {
+ 	struct ast_aoc_decoded *aoc_s_rate_list;
+ };
+ 
++struct virtual_queue {
++	char id[80];                        /*!< Argument 'ruleset' to the Queue() app. */
++	int holdtime;                       /*!< Estimated Waiting Time for this virtual queue. */
++};
+ 
+ struct queue_ent {
+ 	struct call_queue *parent;             /*!< What queue is our parent */
++	struct virtual_queue *vqueue;       /*!< Virtual queue in case there is skills routing */
+ 	char moh[80];                          /*!< Name of musiconhold to be used */
+ 	char announce[PATH_MAX];               /*!< Announcement to play for member when call is answered */
+ 	char context[AST_MAX_CONTEXT];         /*!< Context when user exits queue */
+@@ -1022,8 +1029,11 @@ struct queue_ent {
+ 	int min_penalty;                       /*!< Limit the members that can take this call to this penalty or higher */
+ 	int linpos;                            /*!< If using linear strategy, what position are we at? */
+ 	int linwrapped;                        /*!< Is the linpos wrapped? */
++	char skill_ruleset[80];             /*!< Name of the skill ruleset */
++	time_t skills_next_check;              /*!< Next check of skills rules. */
+ 	time_t start;                          /*!< When we started holding */
+ 	time_t expire;                         /*!< When this entry should expire (time out of queue) */
++	struct ao2_container *mem_selection;/*!< Members who match skill rules. */
+ 	int cancel_answered_elsewhere;	       /*!< Whether we should force the CAE flag on this call (C) option*/
+ 	struct ast_channel *chan;              /*!< Our channel */
+ 	AST_LIST_HEAD_NOLOCK(,penalty_rule) qe_rules; /*!< Local copy of the queue's penalty rules */
+@@ -1031,18 +1041,102 @@ struct queue_ent {
+ 	struct queue_ent *next;                /*!< The next queue entry */
+ };
+ 
++enum skill_rule_operand_type {
++	SKILL_RULE_OPERAND_UNKNOWN,
++	SKILL_RULE_OPERAND_VARIABLE,
++	SKILL_RULE_OPERAND_VALUE,
++	SKILL_RULE_OPERAND_OPERATOR,
++};
++
++struct skill_rule_operand {
++	union {
++		char var[80];
++		int value;
++		struct skill_rule_operator* operator;
++	} u;
++	enum skill_rule_operand_type type;
++	AST_LIST_ENTRY(skill_rule_operand) entry;
++};
++
++enum skill_rule_operator_type {
++	SKILL_RULE_OPERATOR_UNKNOWN,
++	SKILL_RULE_OPERATOR_DIVISION,       /*!<  op1 / op2  */
++	SKILL_RULE_OPERATOR_MULTIPLICATION, /*!<  op1 * op2  */
++	SKILL_RULE_OPERATOR_SUBTRACTION,    /*!<  op1 - op2  */
++	SKILL_RULE_OPERATOR_ADDITION,       /*!<  op1 + op2  */
++	SKILL_RULE_OPERATOR_NOTEQUAL,       /*!<  op1 ! op2  */
++	SKILL_RULE_OPERATOR_EQUAL,          /*!<  op1 = op2  */
++	SKILL_RULE_OPERATOR_GREATER,        /*!<  op1 > op2  */
++	SKILL_RULE_OPERATOR_LESSER,         /*!<  op1 < op2  */
++	SKILL_RULE_OPERATOR_AND,            /*!<  op1 & op2  */
++	SKILL_RULE_OPERATOR_OR              /*!<  op1 | op2  */
++};
++
++#define SKILL_RULE_OPERATORS_CHARS "/*-+!=><&|"
++static enum skill_rule_operator_type skill_rule_operator_type_str[] = {
++	['/'] = SKILL_RULE_OPERATOR_DIVISION,
++	['*'] = SKILL_RULE_OPERATOR_MULTIPLICATION,
++	['-'] = SKILL_RULE_OPERATOR_SUBTRACTION,
++	['+'] = SKILL_RULE_OPERATOR_ADDITION,
++	['!'] = SKILL_RULE_OPERATOR_NOTEQUAL,
++	['='] = SKILL_RULE_OPERATOR_EQUAL,
++	['>'] = SKILL_RULE_OPERATOR_GREATER,
++	['<'] = SKILL_RULE_OPERATOR_LESSER,
++	['&'] = SKILL_RULE_OPERATOR_AND,
++	['|'] = SKILL_RULE_OPERATOR_OR,
++};
++
++struct skill_rule_operator {
++	struct skill_rule_operator *parent;
++	AST_LIST_HEAD_NOLOCK(,skill_rule_operand) operands;
++	enum skill_rule_operator_type type;
++};
++
++struct skill_rule {
++	struct skill_rule_operator *dcond;           /*!< Condition against dynamical variables */
++	struct skill_rule_operator *cond;            /*!< Condition against skills */
++};
++
++struct skill_ruleset {
++	char name[80];
++	struct ao2_container *rules;
++	AST_LIST_ENTRY(skill_ruleset) entry;
++};
++
++static AST_LIST_HEAD_STATIC(skill_rulesets, skill_ruleset);
++
++struct rule_var {
++	char name[80];
++	char value[80];
++};
++
++struct skill {
++	char name[80];                      /*!< Name of skill */
++	int weight;                         /*!< Weight */
++};
++
++struct skills_group {
++	char name[80];
++	struct ao2_container *skills;       /*!< Head of the list of skills */
++	AST_LIST_ENTRY(skills_group) entry;
++};
++
++static AST_LIST_HEAD_STATIC(skills_groups, skills_group);
++
+ struct member {
+ 	char interface[80];                  /*!< Technology/Location to dial to reach this member*/
+ 	char state_exten[AST_MAX_EXTENSION]; /*!< Extension to get state from (if using hint) */
+ 	char state_context[AST_MAX_CONTEXT]; /*!< Context to use when getting state (if using hint) */
+ 	char state_interface[80];            /*!< Technology/Location from which to read devicestate changes */
+ 	char membername[80];                 /*!< Member name to use in queue logs */
++	char skills[80];                    /*!< Member skills */
+ 	int penalty;                         /*!< Are we a last resort? */
+ 	int calls;                           /*!< Number of calls serviced by this member */
+ 	int dynamic;                         /*!< Are we dynamically added? */
+ 	int realtime;                        /*!< Is this member realtime? */
+ 	int status;                          /*!< Status of queue member */
+ 	int paused;                          /*!< Are we paused (not accepting calls)? */
++	int holdtime;                       /*!< Average holdtime. */
+ 	time_t lastcall;                     /*!< When last successful call was hungup */
+ 	struct call_queue *lastqueue;	     /*!< Last queue we received a call */
+ 	unsigned int dead:1;                 /*!< Used to detect members deleted in realtime */
+@@ -1172,6 +1266,7 @@ struct call_queue {
+ 	int memberdelay;                    /*!< Seconds to delay connecting member to caller */
+ 	int autofill;                       /*!< Ignore the head call status and ring an available agent */
+ 	
++	struct ao2_container *vqueues;      /*!< Virtual queues */
+ 	struct ao2_container *members;             /*!< Head of the list of members */
+ 	struct queue_ent *head;             /*!< Head of the list of callers */
+ 	AST_LIST_ENTRY(call_queue) list;    /*!< Next call queue */
+@@ -1192,6 +1287,9 @@ static void update_realtime_members(stru
+ static int set_member_paused(const char *queuename, const char *interface, const char *reason, int paused);
+ 
+ static void queue_transfer_fixup(void *data, struct ast_channel *old_chan, struct ast_channel *new_chan); 
++static int update_queue_ent_skills_next_check(struct call_queue *q);
++static int member_is_selected(struct queue_ent *qe, struct member *mem);
++
+ /*! \brief sets the QUEUESTATUS channel variable */
+ static void set_queue_result(struct ast_channel *chan, enum queue_result res)
+ {
+@@ -1343,7 +1441,7 @@ static inline void insert_entry(struct c
+  * is available, the function immediately returns 0. If no members are available,
+  * then -1 is returned.
+  */
+-static int get_member_status(struct call_queue *q, int max_penalty, int min_penalty, enum empty_conditions conditions)
++static int get_member_status(struct call_queue *q, int max_penalty, int min_penalty, enum empty_conditions conditions, struct queue_ent* qe)
+ {
+ 	struct member *member;
+ 	struct ao2_iterator mem_iter;
+@@ -1358,6 +1456,11 @@ static int get_member_status(struct call
+ 			}
+ 		}
+ 
++		if (qe && !member_is_selected(qe, member)) {
++			ast_debug(4, "%s is unavailable because it is not selected by rule '%s'\n", member->membername, qe->skill_ruleset);
++			continue;
++		}
++
+ 		switch (member->status) {
+ 		case AST_DEVICE_INVALID:
+ 			if (conditions & QUEUE_EMPTY_INVALID) {
+@@ -1431,6 +1534,7 @@ static int update_status(struct call_que
+ 	if (q->maskmemberstatus)
+ 		return 0;
+ 
++	update_queue_ent_skills_next_check(q);
+ 	manager_event(EVENT_FLAG_AGENT, "QueueMemberStatus",
+ 		"Queue: %s\r\n"
+ 		"Location: %s\r\n"
+@@ -1440,9 +1544,10 @@ static int update_status(struct call_que
+ 		"CallsTaken: %d\r\n"
+ 		"LastCall: %d\r\n"
+ 		"Status: %d\r\n"
+-		"Paused: %d\r\n",
++		"Paused: %d\r\n"
++		"Skills: %s\r\n",
+ 		q->name, m->interface, m->membername, m->dynamic ? "dynamic" : m->realtime ? "realtime" : "static",
+-		m->penalty, m->calls, (int)m->lastcall, m->status, m->paused
++		m->penalty, m->calls, (int)m->lastcall, m->status, m->paused, m->skills
+ 	);
+ 
+ 	return 0;
+@@ -1595,7 +1700,7 @@ static int get_queue_member_status(struc
+ }
+ 
+ /*! \brief allocate space for new queue member and set fields based on parameters passed */
+-static struct member *create_queue_member(const char *interface, const char *membername, int penalty, int paused, const char *state_interface)
++static struct member *create_queue_member(const char *interface, const char *membername, int penalty, int paused, const char *state_interface, const char *skills)
+ {
+ 	struct member *cur;
+ 	
+@@ -1621,6 +1726,10 @@ static struct member *create_queue_membe
+ 			ast_copy_string(cur->state_context, S_OR(context, "default"), sizeof(cur->state_context));
+ 		}
+ 		cur->status = get_queue_member_status(cur);
++		if (!ast_strlen_zero(skills))
++			ast_copy_string(cur->skills, skills, sizeof(cur->skills));
++		else
++			cur->skills[0] = '\0';
+ 	}
+ 
+ 	return cur;
+@@ -2086,7 +2195,7 @@ static void queue_set_param(struct call_
+  * Search for member in queue, if found update penalty/paused state,
+  * if no member exists create one flag it as a RT member and add to queue member list. 
+ */
+-static void rt_handle_member_record(struct call_queue *q, char *interface, const char *rt_uniqueid, const char *membername, const char *penalty_str, const char *paused_str, const char* state_interface)
++static void rt_handle_member_record(struct call_queue *q, char *interface, const char *rt_uniqueid, const char *membername, const char *penalty_str, const char *paused_str, const char* state_interface, const char *skills)
+ {
+ 	struct member *m;
+ 	struct ao2_iterator mem_iter;
+@@ -2123,8 +2232,13 @@ static void rt_handle_member_record(stru
+  				ast_copy_string(m->state_interface, state_interface, sizeof(m->state_interface));
+  			}	   
+  			m->penalty = penalty;
++ 			if (!ast_strlen_zero(skills))
++ 				ast_copy_string(m->skills, skills, sizeof(m->skills));
++ 			else
++ 				m->skills[0] = '\0';
+  			found = 1;
+  			ao2_ref(m, -1);
++ 			update_queue_ent_skills_next_check(q);
+  			break;
+  		}
+  		ao2_ref(m, -1);
+@@ -2133,9 +2247,10 @@ static void rt_handle_member_record(stru
+ 
+  	/* Create a new member */
+  	if (!found) {
+-		if ((m = create_queue_member(interface, membername, penalty, paused, state_interface))) {
++		if ((m = create_queue_member(interface, membername, penalty, paused, state_interface, skills))) {
+ 			m->dead = 0;
+ 			m->realtime = 1;
+++			update_queue_ent_skills_next_check(q);
+ 			ast_copy_string(m->rt_uniqueid, rt_uniqueid, sizeof(m->rt_uniqueid));
+ 			ast_queue_log(q->name, "REALTIME", m->interface, "ADDMEMBER", "%s", paused ? "PAUSED" : "");
+ 			ao2_link(q->members, m);
+@@ -2174,6 +2289,10 @@ static void destroy_queue(void *obj)
+ 			free(q->sound_periodicannounce[i]);
+ 	}
+ 	ao2_ref(q->members, -1);
++
++	if (q->vqueues) {
++		ao2_ref(q->vqueues, -1);
++	}
+ }
+ 
+ static struct call_queue *alloc_queue(const char *queuename)
+@@ -2311,7 +2430,8 @@ static struct call_queue *find_queue_by_
+ 			S_OR(ast_variable_retrieve(member_config, interface, "membername"),interface),
+ 			ast_variable_retrieve(member_config, interface, "penalty"),
+ 			ast_variable_retrieve(member_config, interface, "paused"),
+-			S_OR(ast_variable_retrieve(member_config, interface, "state_interface"),interface));
++			S_OR(ast_variable_retrieve(member_config, interface, "state_interface"),interface),
++			ast_variable_retrieve(member_config, interface, "skills"));
+ 	}
+ 
+ 	/* Delete all realtime members that have been deleted in DB. */
+@@ -2441,7 +2561,8 @@ static void update_realtime_members(stru
+ 			S_OR(ast_variable_retrieve(member_config, interface, "membername"), interface),
+ 			ast_variable_retrieve(member_config, interface, "penalty"),
+ 			ast_variable_retrieve(member_config, interface, "paused"),
+-			S_OR(ast_variable_retrieve(member_config, interface, "state_interface"), interface));
++			S_OR(ast_variable_retrieve(member_config, interface, "state_interface"), interface),
++			ast_variable_retrieve(member_config, interface, "skills"));
+ 	}
+ 
+ 	/* Delete all realtime members that have been deleted in DB. */
+@@ -2458,6 +2579,886 @@ static void update_realtime_members(stru
+ 	ast_config_destroy(member_config);
+ }
+ 
++static void destroy_skills_group(void *obj)
++{
++	struct skills_group *skgrp = obj;
++	struct skill *cur;
++	struct ao2_iterator sk_iter = ao2_iterator_init(skgrp->skills, 0);
++
++	while ((cur = ao2_iterator_next(&sk_iter))) {
++		ao2_unlink(skgrp->skills, cur);
++		ao2_ref(cur, -1);
++	}
++	ao2_iterator_destroy(&sk_iter);
++	ao2_ref(skgrp->skills, -1);
++}
++
++static void destroy_operator(struct skill_rule_operator *op)
++{
++	struct skill_rule_operand *operand;
++
++	if (!op)
++		return;
++
++	AST_LIST_TRAVERSE_SAFE_BEGIN(&op->operands, operand, entry) {
++		AST_LIST_REMOVE_CURRENT(entry);
++		if (operand->type == SKILL_RULE_OPERAND_OPERATOR)
++			destroy_operator(operand->u.operator);
++
++		ast_free(operand);
++	}
++	AST_LIST_TRAVERSE_SAFE_END;
++	ast_free(op);
++}
++
++static void destroy_skill_rule(void* obj)
++{
++	struct skill_rule* r = obj;
++	if (r->dcond)
++		destroy_operator(r->dcond);
++	if (r->cond)
++		destroy_operator(r->cond);
++}
++
++static void destroy_skill_ruleset(void *obj)
++{
++	struct skill_ruleset *ruleset = obj;
++	struct skill_rule *cur;
++	struct ao2_iterator rule_iter = ao2_iterator_init(ruleset->rules, 0);
++
++	while ((cur = ao2_iterator_next(&rule_iter))) {
++		ao2_unlink(ruleset->rules, cur);
++		ao2_ref(cur, -1);
++	}
++	ao2_iterator_destroy(&rule_iter);
++	ao2_ref(ruleset->rules, -1);
++}
++
++static struct skill_rule_operator *create_skill_rule_operator(enum skill_rule_operator_type t, struct skill_rule_operator *parent)
++{
++	struct skill_rule_operator *op;
++	op = ast_calloc(1, sizeof(*op));
++	if (!op)
++		return NULL;
++
++	op->type = t;
++	AST_LIST_HEAD_INIT_NOLOCK(&op->operands);
++	op->parent = parent;
++
++	return op;
++}
++
++static struct skill_rule_operand *create_skill_rule_operand(enum skill_rule_operand_type t)
++{
++	struct skill_rule_operand *operand;
++	operand = ast_calloc(1, sizeof(*operand));
++	if (!operand)
++		return NULL;
++
++	operand->type = t;
++	return operand;
++}
++
++static char* display_operator(struct skill_rule_operator *op)
++{
++	struct skill_rule_operand *operand;
++	size_t len = 512;
++	char *str = malloc(len);
++	char *s = str;
++
++	*str = '\0';
++	AST_LIST_TRAVERSE(&op->operands, operand, entry) {
++		char t;
++		switch(op->type) {
++		case SKILL_RULE_OPERATOR_NOTEQUAL: t = '!'; break;
++		case SKILL_RULE_OPERATOR_EQUAL:    t = '='; break;
++		case SKILL_RULE_OPERATOR_GREATER:  t = '>'; break;
++		case SKILL_RULE_OPERATOR_LESSER:   t = '<'; break;
++		case SKILL_RULE_OPERATOR_AND:      t = '&'; break;
++		case SKILL_RULE_OPERATOR_OR:       t = '|'; break;
++		default:                           t = '?'; break;
++		}
++
++		if (*str != '\0')
++			ast_build_string(&s, &len, "%c", t);
++
++		switch(operand->type) {
++		case SKILL_RULE_OPERAND_VARIABLE:
++			ast_build_string(&s, &len, "%s", operand->u.var);
++			break;
++		case SKILL_RULE_OPERAND_VALUE:
++			ast_build_string(&s, &len, "%d", operand->u.value);
++			break;
++		case SKILL_RULE_OPERAND_OPERATOR:
++		{
++			char *tmp = display_operator(operand->u.operator);
++			ast_build_string(&s, &len, "(%s)", tmp);
++			free(tmp);
++			break;
++		}
++		case SKILL_RULE_OPERAND_UNKNOWN:
++			ast_build_string(&s, &len, "<unknown>");
++		}
++	}
++	return str;
++}
++
++static struct skill_rule_operator* parse_expr(const char *expr)
++{
++	struct skill_rule_operator *op, *head;
++	struct skill_rule_operand *operand = NULL;
++	const char *ptr, *start = NULL;
++
++	op = create_skill_rule_operator(SKILL_RULE_OPERATOR_UNKNOWN, NULL);
++	if (!op)
++		return NULL;
++
++	head = op;
++	ptr = expr;
++	do {
++		if (start) {
++			/* currently parsing a variable name. */
++			if ((*ptr >= 'a' && *ptr <= 'z') ||
++			    (*ptr >= 'A' && *ptr <= 'Z') ||
++			    (*ptr >= '0' && *ptr <= '9') ||
++			    (*ptr != '\0' && strchr("$-_", *ptr))) {
++				++ptr;
++				continue;
++			}
++
++			if (operand) {
++				ast_log(LOG_ERROR, "Unable to parse rule: syntax error, missing operator.\n");
++				goto error;
++			}
++
++			operand = create_skill_rule_operand(SKILL_RULE_OPERAND_VARIABLE);
++			if (!operand) {
++				/* OOM */
++				ast_log(LOG_ERROR, "Unable to parse rule: out-of-memory.\n");
++				goto error;
++			}
++			ast_copy_string(operand->u.var, start, (ptr + 1 - start) > sizeof(operand->u.var)
++			                                                         ? sizeof(operand->u.var)
++			                                                         : (ptr + 1 - start));
++			start = NULL;
++		}
++		if ((*ptr >= 'a' && *ptr <= 'z') ||
++		    (*ptr >= 'A' && *ptr <= 'Z') ||
++		    *ptr == '$') {
++			/* starting to parse a variable name. */
++			start = ptr++;
++			continue;
++		}
++		if ((*ptr >= '0' && *ptr <= '9') || *ptr == '-') {
++			/* parsing an integer value. */
++			int value;
++			start = ptr;
++			errno = 0;
++			value = strtol(start, (char**)&ptr, 10);
++			if (start == ptr) {
++				/* no digits found */
++				ast_log(LOG_ERROR, "Unable to parse rule: syntax error, no-digits.\n");
++				goto error;
++			}
++			if ((errno == ERANGE && (value == LONG_MAX || value == LONG_MIN)) ||
++			    (errno != 0 && value == 0)) {
++				/* error */
++				ast_log(LOG_ERROR, "Unable to parse rule: strtol error: %s.\n", strerror(errno));
++				goto error;
++			}
++
++			if (operand) {
++				/* WTF syn error */
++				ast_log(LOG_ERROR, "Unable to parse rule: syntax error, missing operator.\n");
++				goto error;
++			}
++			operand = create_skill_rule_operand(SKILL_RULE_OPERAND_VALUE);
++			if (!operand) {
++				/* OOM */
++				ast_log(LOG_ERROR, "Unable to parse rule: out-of-memory.\n");
++				goto error;
++			}
++			operand->u.value = value;
++			start = NULL;
++			continue;
++		}
++		if (*ptr == '(') {
++			struct skill_rule_operator *newop;
++			const char *end;
++			char *tmp;
++			unsigned count = 0;
++
++			if (operand) {
++				ast_log(LOG_ERROR, "Unable to parse rule: missing operator before '('\n");
++				goto error;
++			}
++
++			start = ++ptr;
++			end = ptr + strlen(ptr);
++
++			/* Look for the closing bracket. */
++			while (ptr < end && (count > 0 || *ptr != ')'))
++				switch(*ptr++) {
++				case '(': count++; break;
++				case ')': count--; break;
++				}
++
++			if (ptr == start) {
++				ast_log(LOG_ERROR, "Unable to parse rule: empty expression between ()\n");
++				goto error;
++			}
++			if (ptr == end) {
++				ast_log(LOG_ERROR, "Unable to parse rule: missing ')'\n");
++				goto error;
++			}
++
++			tmp = ast_strndup(start, ptr-start);
++			newop = parse_expr(tmp);
++			ast_free(tmp);
++
++			if (!newop) {
++				/* Something failed while parsing subexpr. Do
++				 * not display any message as parse_expr()
++				 * probably dit it.
++				 */
++				goto error;
++			}
++
++			operand = create_skill_rule_operand(SKILL_RULE_OPERAND_OPERATOR);
++			if (!operand) {
++				ast_log(LOG_ERROR, "Unable to parse rule: out-of-memory\n");
++				ast_free(newop);
++				goto error;
++			}
++			operand->u.operator = newop;
++			start = NULL;
++			++ptr;
++		}
++		/* if *ptr == '\0', strchr("...", *ptr) != NULL */
++		if (strchr(SKILL_RULE_OPERATORS_CHARS, *ptr)) {
++			/* operator */
++			enum skill_rule_operator_type flag = SKILL_RULE_OPERATOR_UNKNOWN;
++
++			if (!operand) {
++				/* syntax error */
++				ast_log(LOG_ERROR, "Unable to parse rule: syntax error, no operand before '%c'.\n", *ptr ? *ptr : ';');
++				goto error;
++			}
++
++			if (*ptr != '\0')
++				flag = skill_rule_operator_type_str[(size_t)*ptr];
++			else
++				flag = op->type;
++
++			if (op->type == SKILL_RULE_OPERATOR_UNKNOWN) {
++				if (flag == SKILL_RULE_OPERATOR_UNKNOWN) {
++					/* syntax error */
++					ast_log(LOG_ERROR, "Unable to parse rule: syntax error, no operator.\n");
++					goto error;
++				}
++				op->type = flag;
++			}
++
++			if (op->type < flag) {
++				/* last operator has a greater priority than current operator. */
++				struct skill_rule_operator *parent;
++
++				/* Firstly, add the operand in the current operator. */
++				AST_LIST_INSERT_TAIL(&op->operands, operand, entry);
++				operand = NULL;
++
++				/* Then we try to jump to an upper operator, or to create one. */
++
++				/* look for a parent operator with a lower or equal priority. */
++				for(parent = op->parent; parent && parent->type < flag; parent = parent->parent)
++					op = parent;
++
++				if (!parent) {
++					/* There isn't any other operator with a lower or equal priority */
++					parent = create_skill_rule_operator(flag, NULL);
++					if (!parent) {
++						/* OOM */
++						ast_log(LOG_ERROR, "Unable to parse rule: out-of-memory.\n");
++						goto error;
++					}
++
++					operand = create_skill_rule_operand(SKILL_RULE_OPERAND_OPERATOR);
++					if (!operand) {
++						/* OOM */
++						ast_log(LOG_ERROR, "Unable to parse rule: out-of-memory.\n");
++						ast_free(parent);
++						goto error;
++					}
++					operand->u.operator = op;
++
++					op->parent = parent;
++					AST_LIST_INSERT_TAIL(&parent->operands, operand, entry);
++
++					head = parent;
++
++					operand = NULL;
++				} else if (parent->type > flag) {
++					/* There is an operator with a greater priority, so we insert this
++					 * operator between this one and his last child. */
++					struct skill_rule_operator *newop;
++					newop = create_skill_rule_operator(flag, parent);
++					if (!newop) {
++						/* OOM */
++						ast_log(LOG_ERROR, "Unable to parse rule: out-of-memory.\n");
++						goto error;
++					}
++
++					AST_LIST_TRAVERSE(&parent->operands, operand, entry) {
++						if (operand->type == SKILL_RULE_OPERAND_OPERATOR && operand->u.operator == op)
++							break;
++					}
++
++					if (!operand) {
++						/* WTF */
++						ast_free(newop);
++						ast_log(LOG_ERROR, "Unable to parse rule: internal error (unable to find operand).\n");
++						goto error;
++					}
++					op->parent = newop;
++
++					AST_LIST_REMOVE(&parent->operands, operand, entry);
++					AST_LIST_INSERT_TAIL(&newop->operands, operand, entry);
++					operand = NULL;
++
++					operand = create_skill_rule_operand(SKILL_RULE_OPERAND_OPERATOR);
++					if (!operand) {
++						/* OOM */
++						ast_free(newop);
++						ast_log(LOG_ERROR, "Unable to parse rule: out-of-memory.\n");
++						goto error;
++					}
++					operand->u.operator = newop;
++					AST_LIST_INSERT_TAIL(&parent->operands, operand, entry);
++
++					operand = NULL;
++
++					parent = newop;
++				}
++				op = parent;
++
++			} else if (op->type > flag) {
++				/* last operator has a lower priority than current operator. */
++				struct skill_rule_operator *newop;
++				newop = create_skill_rule_operator(flag, op);
++				if (!newop) {
++					/* OOM */
++					ast_log(LOG_ERROR, "Unable to parse rule: out-of-memory.\n");
++					goto error;
++				}
++
++				AST_LIST_INSERT_TAIL(&newop->operands, operand, entry);
++				operand = NULL;
++
++				operand = create_skill_rule_operand(SKILL_RULE_OPERAND_OPERATOR);
++				if (!operand) {
++					/* OOM */
++					ast_log(LOG_ERROR, "Unable to parse rule: out-of-memory.\n");
++					ast_free(newop);
++					goto error;
++				}
++				operand->u.operator = newop;
++				AST_LIST_INSERT_TAIL(&op->operands, operand, entry);
++				operand = NULL;
++
++				op = newop;
++			} else {
++				AST_LIST_INSERT_TAIL(&op->operands, operand, entry);
++				operand = NULL;
++			}
++		}
++
++		++ptr;
++	} while (*(ptr-1));
++
++	return head;
++
++error:
++	destroy_operator(head);
++	if(operand)
++		ast_free(operand);
++	return NULL;
++}
++
++static int parse_skill_rule(struct skill_rule *r, const char *line)
++{
++	char* dcond = ast_strdupa(line);
++	char* cond;
++
++	cond = strchr(dcond, ',');
++	if (cond) {
++		*cond++ = '\0';
++		r->dcond = parse_expr(dcond);
++	}
++	else
++		cond = dcond;
++
++	r->cond = parse_expr(cond);
++	return 0;
++}
++
++static int operator_eval(struct skill_rule_operator *op, struct ao2_container *variables, struct ast_channel* chan,
++                         int (*getvalue_fn) (const char* key, void* data), void* data,
++                         void (*operator_proceeded_cb) (const char* left_name, int left_value, enum skill_rule_operator_type operator, const char* right_name, int right_value, void* data))
++{
++	struct skill_rule_operand *opnd = NULL;
++	int ret = 0;
++	const char* last_name = NULL;
++	int first = 1;
++
++	if (!op) {
++		ast_log(LOG_WARNING, "Rule is empty\n");
++		return 0;
++	}
++
++	AST_LIST_TRAVERSE(&op->operands, opnd, entry) {
++		const char *name = NULL;
++		int value = 0;
++		switch(opnd->type) {
++			case SKILL_RULE_OPERAND_VARIABLE:
++			{
++				struct rule_var *var = NULL;
++				name = opnd->u.var;
++
++				if (*name == '$') {
++					++name;
++
++					/* This is a meta-variable, find the value in the variables list. */
++					if (variables != NULL) {
++						struct ao2_iterator variter = ao2_iterator_init(variables, 0);
++
++						while ((var = ao2_iterator_next(&variter)) && strcmp(name, var->name))
++							ao2_ref(var, -1);
++
++						if (var)
++							name = var->value;
++
++						ao2_iterator_destroy(&variter);
++					}
++
++					/* If doesn't found in variables list, try with env vars */
++					if (!var && chan != NULL)
++						name = pbx_builtin_getvar_helper(chan, name);
++				}
++
++				if (name) {
++					char *endptr = NULL;
++					int v = strtoul(name, &endptr, 10);
++
++					if (endptr == '\0') {
++						value = v; /* name is an integer, so that's the value. */
++					} else if (getvalue_fn) {
++						/* Use callback to get the value of this variable. */
++						value = getvalue_fn(name, data);
++					} else {
++						ast_log(LOG_ERROR, "There is no 'getvalue' callback defined");
++					}
++				}
++
++				if (var)
++					ao2_ref(var, -1);
++				break;
++			}
++			case SKILL_RULE_OPERAND_VALUE:
++				value = opnd->u.value;
++				break;
++			case SKILL_RULE_OPERAND_OPERATOR:
++				value = operator_eval(opnd->u.operator, variables, chan, getvalue_fn, data, operator_proceeded_cb);
++				break;
++			case SKILL_RULE_OPERAND_UNKNOWN:
++				/* WTF */
++				return 0;
++		}
++
++		if (first)
++			ret = value;
++		else {
++			if (operator_proceeded_cb)
++				operator_proceeded_cb(last_name, ret, op->type, name, value, data);
++
++			switch(op->type) {
++				case SKILL_RULE_OPERATOR_DIVISION:
++					if (value != 0)
++						ret /= value;
++					else {
++						ast_log(LOG_WARNING, "Rule error: division by zero.\n");
++						return 0;
++					}
++					break;
++				case SKILL_RULE_OPERATOR_MULTIPLICATION:
++					ret *= value;
++					break;
++				case SKILL_RULE_OPERATOR_SUBTRACTION:
++					ret -= value;
++					break;
++				case SKILL_RULE_OPERATOR_ADDITION:
++					ret += value;
++					break;
++				case SKILL_RULE_OPERATOR_NOTEQUAL:
++					ret = (ret != value);
++					break;
++				case SKILL_RULE_OPERATOR_EQUAL:
++					ret = (ret == value);
++					break;
++				case SKILL_RULE_OPERATOR_GREATER:
++					ret = (ret > value);
++					break;
++				case SKILL_RULE_OPERATOR_LESSER:
++					ret = (ret < value);
++					break;
++				case SKILL_RULE_OPERATOR_AND:
++					ret = (ret && value);
++					break;
++				case SKILL_RULE_OPERATOR_OR:
++					ret = (ret || value);
++					break;
++				case SKILL_RULE_OPERATOR_UNKNOWN:
++					/* WTF */
++					return 0;
++			}
++		}
++
++		first = 0;
++		last_name = name;
++	}
++
++	return ret;
++}
++
++static int operator_eval_skills_getvalue(const char *key, void* data)
++{
++	struct skills_group *skills = data;
++	int value = 0;
++	struct skill* skill;
++	struct ao2_iterator iter = ao2_iterator_init(skills->skills, 0);
++	while ((skill = ao2_iterator_next(&iter)) && strcasecmp(skill->name, key))
++		ao2_ref(skill, -1);
++
++	if (!skill)
++		value = 0;
++	else {
++		value = skill->weight;
++		ao2_ref(skill, -1);
++	}
++	ao2_iterator_destroy(&iter);
++	return value;
++}
++
++static int operator_eval_skills(struct skill_rule_operator *op, struct skills_group *skills, struct ao2_container *variables, struct queue_ent *qe)
++{
++	return operator_eval(op, variables, qe->chan, operator_eval_skills_getvalue, skills, NULL);
++}
++
++static int calculate_estimated_waiting_time(struct queue_ent *qe)
++{
++	struct ao2_iterator iter;
++	struct member *mem;
++	struct queue_ent *ch;
++	int sum = 0, count = 0;
++	float aht, ciqu = 0;
++	float ali;
++
++	if (!qe->mem_selection || ao2_container_count(qe->mem_selection) == 0)
++		return qe->vqueue->holdtime;
++
++	iter = ao2_iterator_init(qe->mem_selection, 0);
++	while ((mem = ao2_iterator_next(&iter))) {
++		sum += mem->holdtime;
++		count++;
++		ao2_ref(mem, -1);
++	}
++	ao2_iterator_destroy(&iter);
++
++	ali = count > 0 ? count : 0.0001;
++	aht = sum / ali;
++
++	for (ch = qe->parent->head; ch; ch = ch->next) {
++		if (!ch->pending && ch->vqueue == qe->vqueue)
++			ciqu++;
++	}
++
++	return (qe->vqueue->holdtime = aht * ciqu / ali);
++}
++
++static int get_estimated_waiting_time(struct queue_ent *qe)
++{
++	if (qe->vqueue)
++		return calculate_estimated_waiting_time(qe);
++	else
++		return qe->parent->holdtime;
++}
++
++static int get_waiting_time(struct queue_ent *qe)
++{
++	return time(NULL) - qe->start;
++}
++
++static int operator_eval_dynamics_getvalue(const char *key, void* data)
++{
++	static const struct {
++		const char *name;
++		int (*func) (struct queue_ent *qe);
++	} static_vars[] = {
++		{ "EWT", get_estimated_waiting_time },
++		{ "WT", get_waiting_time },
++	};
++	struct queue_ent* qe = data;
++	size_t i;
++	int value = 0;
++
++	for (i = 0; i < sizeof(static_vars) / sizeof(*static_vars) && strcasecmp(static_vars[i].name, key); ++i)
++		;
++
++	if (i < (sizeof(static_vars) / sizeof(*static_vars)))
++		value = static_vars[i].func(qe);
++
++	return value;
++}
++
++static void operator_eval_dynamics_proceed_cb(const char *left_name, int left_value, enum skill_rule_operator_type op,
++                                              const char *right_name, int right_value, void* data)
++{
++	struct queue_ent* qe = data;
++	int left_wt = left_name && !strcasecmp(left_name, "WT");
++	int right_wt = right_name && !strcasecmp(right_name, "WT");
++	int new_check = 0;
++
++	if (left_wt && right_wt) {
++		/* WTF */
++		return;
++	}
++
++	switch(op)
++	{
++	case SKILL_RULE_OPERATOR_EQUAL:
++		if (left_wt)
++			new_check = time(NULL) + right_value - get_waiting_time(qe);
++		if (right_wt)
++			new_check = time(NULL) + left_value - get_waiting_time(qe);
++
++		break;
++	case SKILL_RULE_OPERATOR_GREATER:
++		if (right_wt)
++			new_check = time(NULL) + left_value - get_waiting_time(qe);
++		break;
++	case SKILL_RULE_OPERATOR_LESSER:
++		if (left_wt)
++			new_check = time(NULL) + right_value - get_waiting_time(qe);
++		break;
++	case SKILL_RULE_OPERATOR_DIVISION:
++	case SKILL_RULE_OPERATOR_MULTIPLICATION:
++	case SKILL_RULE_OPERATOR_SUBTRACTION:
++	case SKILL_RULE_OPERATOR_ADDITION:
++	case SKILL_RULE_OPERATOR_NOTEQUAL:
++	case SKILL_RULE_OPERATOR_AND:
++	case SKILL_RULE_OPERATOR_OR:
++	case SKILL_RULE_OPERATOR_UNKNOWN:
++		break;
++	}
++	if (new_check && (!qe->skills_next_check || qe->skills_next_check > new_check)) {
++		qe->skills_next_check = new_check;
++	}
++}
++
++static int operator_eval_dynamics(struct skill_rule_operator *op, struct ao2_container* variables, struct queue_ent* qe)
++{
++	return operator_eval(op, variables, qe->chan, operator_eval_dynamics_getvalue, qe, operator_eval_dynamics_proceed_cb);
++}
++
++/** Syntax of a rule name with their arguments: Rule(arg1=value1^arg2=value2^...)
++ *
++ * This function returns a container of 'struct rule_var' with every variables,
++ * and rulename value is set to the real rulename.
++ */
++static struct ao2_container *get_rule_variables(struct queue_ent *qe, char **rulename)
++{
++	char *ptr, *var;
++	struct rule_var *v;
++	struct ao2_container *variables = ao2_container_alloc(37, NULL, NULL);
++
++	if (!variables) {
++		return NULL;
++	}
++
++	if (!(ptr = strchr(*rulename, '(')))
++		return variables;
++
++	*ptr++ = '\0';
++	while ((var = strsep(&ptr, ",|^)"))) {
++		char *value = strchr(var, '=');
++
++		if (!value)
++			continue;
++
++		*value++ = '\0';
++		v = ao2_alloc(sizeof(*v), NULL);
++		if (!v)
++			break;
++		ast_copy_string(v->name, var, sizeof(v->name));
++		ast_copy_string(v->value, value, sizeof(v->value));
++		ao2_link(variables, v);
++		ao2_ref(v, -1);
++	}
++
++	return variables;
++}
++
++static int member_is_selected(struct queue_ent *qe, struct member *mem)
++{
++	struct member *m;
++
++	/* If there isn't any queue entry or if there isn't any ruleset on the
++	 * queue, it's because he doesn't use the skills routing.
++	 */
++	if (!qe || ast_strlen_zero(qe->skill_ruleset))
++		return 1;
++
++	/* No member is selected. */
++	if (!qe->mem_selection)
++		return 0;
++
++	m = ao2_find(qe->mem_selection, mem, OBJ_POINTER);
++
++	if (m)
++		ao2_ref(m, -1);
++
++	return m != NULL;
++}
++
++static int join_virtual_queue(struct call_queue *q, struct queue_ent *qe)
++{
++	struct virtual_queue *vq = NULL;
++
++	if (!q->vqueues) {
++		q->vqueues = ao2_container_alloc(37, NULL, NULL);
++		if (!q->vqueues)
++			return -1;
++	} else {
++		struct ao2_iterator iter;
++
++		iter = ao2_iterator_init(q->vqueues, 0);
++		while ((vq = ao2_iterator_next(&iter)) && strcmp(vq->id, qe->skill_ruleset))
++			ao2_ref(vq, -1);
++		ao2_iterator_destroy(&iter);
++	}
++
++	if (!vq) {
++		vq = ao2_alloc(sizeof(*vq), NULL);
++		if (!vq)
++			return -1;
++		ast_copy_string(vq->id, qe->skill_ruleset, sizeof(vq->id));
++		ao2_link(q->vqueues, vq);
++	}
++
++	qe->vqueue = vq;
++	/* do not unref vq because it's keept by the queue entry. */
++
++	return 0;
++}
++
++/* Use rules to search members from the queue_ent's skills.
++ *
++ * Returns -1 when an error is occured.
++ * Returns 0 when agents are selected.
++ * Returns 1 when the ruleset matches no agent.
++ */
++static int select_members_from_skills(struct queue_ent *qe)
++{
++	struct call_queue* q = qe->parent;
++	struct member *member;
++	struct ao2_container *variables;
++	struct skill_ruleset* rs;
++	struct skill_rule* rule;
++	struct ao2_iterator rule_iter, mem_iter;
++	char* ruleset_name;
++
++	if (ast_strlen_zero(qe->skill_ruleset))
++		return 0;
++
++	ruleset_name = ast_strdupa(qe->skill_ruleset);
++	qe->skills_next_check = 0;
++	variables = get_rule_variables(qe, &ruleset_name);
++
++	if (!variables)
++		return -1;
++
++	AST_LIST_LOCK(&skill_rulesets);
++	AST_LIST_LOCK(&skills_groups);
++
++	AST_LIST_TRAVERSE(&skill_rulesets, rs, entry) {
++		if (!strcmp(rs->name, ruleset_name))
++			break;
++	}
++
++	if (!rs) {
++		ast_log(LOG_WARNING, "Ruleset '%s' does not exist.\n", ruleset_name);
++	} else {
++		rule_iter = ao2_iterator_init(rs->rules, 0);
++
++		/* Clear the current selection (if any) */
++		if (qe->mem_selection) {
++			ao2_ref(qe->mem_selection, -1);
++			qe->mem_selection = NULL;
++		}
++
++		while (!qe->mem_selection && (rule = ao2_iterator_next(&rule_iter))) {
++			qe->mem_selection = ao2_container_alloc(37, member_hash_fn, member_cmp_fn);
++			mem_iter = ao2_iterator_init(q->members, 0);
++			while ((member = ao2_iterator_next(&mem_iter))) {
++				struct skills_group* skills;
++				AST_LIST_TRAVERSE(&skills_groups, skills, entry) {
++					if (!strcmp(skills->name, member->skills))
++						break;
++				}
++
++				if (!skills) {
++					ast_log(LOG_WARNING, "Skills group '%s' does not exist.\n", member->skills);
++					continue;
++				}
++
++				if (!ast_strlen_zero(member->skills) &&
++				    operator_eval_skills(rule->cond, skills, variables, qe)) {
++					ao2_link(qe->mem_selection, member);
++					ast_log(LOG_DEBUG, "Member %s is associated.\n", member->interface);
++				} else
++					ast_log(LOG_DEBUG, "Member %s is NOT associated.\n", member->interface);
++				ao2_ref(member, -1);
++			}
++			ao2_iterator_destroy(&mem_iter);
++			if (!ao2_container_count(qe->mem_selection) || (rule->dcond && !operator_eval_dynamics(rule->dcond, variables, qe))) {
++				/* CLEAR to retry. */
++				ast_log(LOG_DEBUG, "Jump to the next rule.\n");
++				ao2_ref(qe->mem_selection, -1);
++				qe->mem_selection = NULL;
++				qe->skills_next_check = 0;
++			}
++			ao2_ref(rule, -1);
++		}
++		ao2_iterator_destroy(&rule_iter);
++	}
++
++	AST_LIST_UNLOCK(&skill_rulesets);
++	AST_LIST_UNLOCK(&skills_groups);
++
++	ast_log(LOG_DEBUG, "End of member selection, found? %d\n", qe->mem_selection != NULL);
++
++	/* 0 only if a rule match. */
++	return qe->mem_selection == NULL ? 1 : 0;
++}
++
++static int update_queue_ent_skills_next_check(struct call_queue *q)
++{
++	struct queue_ent* ch = q->head;
++	time_t now = time(NULL);
++	for (; ch; ch = ch->next)
++		ch->skills_next_check = now;
++	return 0;
++}
++
+ static int join_queue(char *queuename, struct queue_ent *qe, enum queue_result *reason, int position)
+ {
+ 	struct call_queue *q;
+@@ -2474,7 +3475,9 @@ static int join_queue(char *queuename, s
+ 	/* This is our one */
+ 	if (q->joinempty) {
+ 		int status = 0;
+-		if ((status = get_member_status(q, qe->max_penalty, qe->min_penalty, q->joinempty))) {
++
++		/* do not give 'qe' because the members selection isn't made yet. */
++		if ((status = get_member_status(q, qe->max_penalty, qe->min_penalty, q->joinempty, NULL))) {
+ 			*reason = QUEUE_JOINEMPTY;
+ 			ao2_unlock(q);
+ 			queue_t_unref(q, "Done with realtime queue");
+@@ -2489,6 +3492,10 @@ static int join_queue(char *queuename, s
+ 		 * Take into account the priority of the calling user */
+ 		inserted = 0;
+ 		prev = NULL;
++
++		if (!ast_strlen_zero(qe->skill_ruleset))
++			join_virtual_queue(q, qe);
++
+ 		cur = q->head;
+ 		while (cur) {
+ 			/* We have higher priority than the current user, enter
+@@ -2520,6 +3527,7 @@ static int join_queue(char *queuename, s
+ 		ast_copy_string(qe->announce, q->announce, sizeof(qe->announce));
+ 		ast_copy_string(qe->context, q->context, sizeof(qe->context));
+ 		q->count++;
+++		update_queue_ent_skills_next_check(q);
+ 		res = 0;
+ 		ast_manager_event(qe->chan, EVENT_FLAG_CALL, "Join",
+ 			"Channel: %s\r\n"
+@@ -2609,7 +3617,7 @@ static int valid_exit(struct queue_ent *
+ 
+ static int say_position(struct queue_ent *qe, int ringing)
+ {
+-	int res = 0, avgholdmins, avgholdsecs, announceposition = 0;
++	int res = 0, avgholdmins, avgholdsecs, holdtime, announceposition = 0;
+ 	int say_thanks = 1;
+ 	time_t now;
+ 
+@@ -2674,11 +3682,12 @@ static int say_position(struct queue_ent
+ 		}
+ 	}
+ 	/* Round hold time to nearest minute */
+-	avgholdmins = abs(((qe->parent->holdtime + 30) - (now - qe->start)) / 60);
++	holdtime = get_estimated_waiting_time(qe);
++	avgholdmins = abs(((holdtime + 30) - (now - qe->start)) / 60);
+ 
+ 	/* If they have specified a rounding then round the seconds as well */
+ 	if (qe->parent->roundingseconds) {
+-		avgholdsecs = (abs(((qe->parent->holdtime + 30) - (now - qe->start))) - 60 * avgholdmins) / qe->parent->roundingseconds;
++		avgholdsecs = (abs(((holdtime + 30) - (now - qe->start))) - 60 * avgholdmins) / qe->parent->roundingseconds;
+ 		avgholdsecs *= qe->parent->roundingseconds;
+ 	} else {
+ 		avgholdsecs = 0;
+@@ -2751,6 +3760,13 @@ playout:
+ 	return res;
+ }
+ 
++static void recalc_member_holdtime(struct member *mem, int newholdtime)
++{
++	int oldvalue;
++	oldvalue = mem->holdtime;
++	mem->holdtime = (((oldvalue << 2) - oldvalue) + newholdtime) >> 2;
++}
++
+ static void recalc_holdtime(struct queue_ent *qe, int newholdtime)
+ {
+ 	int oldvalue;
+@@ -2787,6 +3803,7 @@ static void leave_queue(struct queue_ent
+ 		if (current == qe) {
+ 			char posstr[20];
+ 			q->count--;
++			update_queue_ent_skills_next_check(q);
+ 
+ 			/* Take us out of the queue */
+ 			ast_manager_event(qe->chan, EVENT_FLAG_CALL, "Leave",
+@@ -2873,9 +3890,10 @@ static void hangupcalls(struct callattem
+  * \note The queue passed in should be locked prior to this function call
+  *
+  * \param[in] q The queue for which we are couting the number of available members
++ * \param[in] qe The queue entry for which we are counting the number of available associated members (can be NULL).
+  * \return Return the number of available members in queue q
+  */
+-static int num_available_members(struct call_queue *q)
++static int num_available_members(struct call_queue *q, struct queue_ent *qe)
+ {
+ 	struct member *mem;
+ 	int avl = 0;
+@@ -2890,7 +3908,8 @@ static int num_available_members(struct
+ 			/* else fall through */
+ 		case AST_DEVICE_NOT_INUSE:
+ 		case AST_DEVICE_UNKNOWN:
+-			if (!mem->paused) {
++			if (!mem->paused &&
+++			    (!qe || member_is_selected(qe, mem))) {
+ 				avl++;
+ 			}
+ 			break;
+@@ -2935,7 +3954,7 @@ static int compare_weight(struct call_qu
+ 		if (q->count && q->members) {
+ 			if ((mem = ao2_find(q->members, member, OBJ_POINTER))) {
+ 				ast_debug(1, "Found matching member %s in queue '%s'\n", mem->interface, q->name);
+-				if (q->weight > rq->weight && q->count >= num_available_members(q)) {
++				if (q->weight > rq->weight && q->count >= num_available_members(q, NULL)) {
+ 					ast_debug(1, "Queue '%s' (weight %d, calls %d) is preferred over '%s' (weight %d, calls %d)\n", q->name, q->weight, q->count, rq->name, rq->weight, rq->count);
+ 					found = 1;
+ 				}
+@@ -3047,6 +4066,16 @@ static int ring_entry(struct queue_ent *
+ 		tmp->stillgoing = 0;
+ 		return 0;
+ 	}
++
++	if (!member_is_selected(qe, tmp->member)) {
++		if (option_debug)
++			ast_log(LOG_DEBUG, "%s doesn't match ruleset '%s'\n", tmp->interface, qe->skill_ruleset);
++		if (qe->chan->cdr)
++			ast_cdr_busy(qe->chan->cdr);
++		tmp->stillgoing = 0;
++		return 0;
++	}
++
+ 	if (use_weight && compare_weight(qe->parent,tmp->member)) {
+ 		ast_debug(1, "Priority queue delaying call to %s:%s\n", qe->parent->name, tmp->interface);
+ 		if (qe->chan->cdr)
+@@ -3936,14 +4965,14 @@ static int is_our_turn(struct queue_ent
+ 	/* This needs a lock. How many members are available to be served? */
+ 	ao2_lock(qe->parent);
+ 
+-	avl = num_available_members(qe->parent);
++	avl = num_available_members(qe->parent, qe);
+ 
+ 	ch = qe->parent->head;
+ 
+ 	ast_debug(1, "There %s %d available %s.\n", avl != 1 ? "are" : "is", avl, avl != 1 ? "members" : "member");
+ 
+ 	while ((idx < avl) && (ch) && (ch != qe)) {
+-		if (!ch->pending)
++		if (!ch->pending && ch->vqueue == qe->vqueue)
+ 			idx++;
+ 		ch = ch->next;			
+ 	}
+@@ -4021,7 +5050,7 @@ static int wait_our_turn(struct queue_en
+ 		if (qe->parent->leavewhenempty) {
+ 			int status = 0;
+ 
+-			if ((status = get_member_status(qe->parent, qe->max_penalty, qe->min_penalty, qe->parent->leavewhenempty))) {
++			if ((status = get_member_status(qe->parent, qe->max_penalty, qe->min_penalty, qe->parent->leavewhenempty, qe))) {
+ 				*reason = QUEUE_LEAVEEMPTY;
+ 				ast_queue_log(qe->parent->name, qe->chan->uniqueid, "NONE", "EXITEMPTY", "%d|%d|%ld", qe->pos, qe->opos, (long) time(NULL) - qe->start);
+ 				leave_queue(qe);
+@@ -4069,6 +5098,11 @@ static int wait_our_turn(struct queue_en
+ 			*reason = QUEUE_TIMEOUT;
+ 			break;
+ 		}
++
++		if (qe->skills_next_check && (time(NULL) >= qe->skills_next_check) &&
++			(res = select_members_from_skills(qe))) {
++			break;
++		}
+ 	}
+ 
+ 	return res;
+@@ -4709,6 +5743,7 @@ static int try_calling(struct queue_ent
+ 		member = lpeer->member;
+ 		/* Increment the refcount for this member, since we're going to be using it for awhile in here. */
+ 		ao2_ref(member, 1);
++		recalc_member_holdtime(member, (now - qe->start));
+ 		hangupcalls(outgoing, peer, qe->cancel_answered_elsewhere);
+ 		outgoing = NULL;
+ 		if (announce || qe->parent->reportholdtime || qe->parent->memberdelay) {
+@@ -5217,7 +6252,7 @@ static struct member *interface_exists(s
+ 
+ /*! \brief Dump all members in a specific queue to the database
+  *
+- * <pm_family>/<queuename> = <interface>;<penalty>;<paused>;<state_interface>[|...]
++ * <pm_family>/<queuename> = <interface>;<penalty>;<paused>;<state_interface>;<skills>[|...]
+  */
+ static void dump_queue_members(struct call_queue *pm_queue)
+ {
+@@ -5239,8 +6274,9 @@ static void dump_queue_members(struct ca
+ 			continue;
+ 		}
+ 
+-		res = snprintf(value + value_len, sizeof(value) - value_len, "%s%s;%d;%d;%s;%s",
+-			value_len ? "|" : "", cur_member->interface, cur_member->penalty, cur_member->paused, cur_member->membername, cur_member->state_interface);
++		res = snprintf(value + value_len, sizeof(value) - value_len, "%s%s;%d;%d;%s;%s;%s",
++			value_len ? "|" : "", cur_member->interface, cur_member->penalty, cur_member->paused, cur_member->membername,
++			cur_member->state_interface, cur_member->skills);
+ 
+ 		ao2_ref(cur_member, -1);
+ 
+@@ -5272,6 +6308,7 @@ static int remove_from_queue(const char
+ 		.name = queuename,	
+ 	};
+ 	struct member *mem, tmpmem;
++	struct queue_ent* qe;
+ 	int res = RES_NOSUCHQUEUE;
+ 
+ 	ast_copy_string(tmpmem.interface, interface, sizeof(tmpmem.interface));
+@@ -5291,6 +6328,13 @@ static int remove_from_queue(const char
+ 				"MemberName: %s\r\n",
+ 				q->name, mem->interface, mem->membername);
+ 			ao2_unlink(q->members, mem);
++			update_queue_ent_skills_next_check(q);
++
++			/* Remove member from selection of each callers. */
++			for(qe = q->head; qe; qe = qe->next)
++				if (qe->mem_selection)
++					ao2_unlink(qe->mem_selection, mem);
++
+ 			ao2_ref(mem, -1);
+ 
+ 			if (queue_persistent_members)
+@@ -5314,7 +6358,7 @@ static int remove_from_queue(const char
+  * \retval RES_EXISTS queue exists but no members
+  * \retval RES_OUT_OF_MEMORY queue exists but not enough memory to create member
+ */
+-static int add_to_queue(const char *queuename, const char *interface, const char *membername, int penalty, int paused, int dump, const char *state_interface)
++static int add_to_queue(const char *queuename, const char *interface, const char *membername, int penalty, int paused, int dump, const char *state_interface, const char *skills)
+ {
+ 	struct call_queue *q;
+ 	struct member *new_member, *old_member;
+@@ -5327,9 +6371,10 @@ static int add_to_queue(const char *queu
+ 
+ 	ao2_lock(q);
+ 	if ((old_member = interface_exists(q, interface)) == NULL) {
+-		if ((new_member = create_queue_member(interface, membername, penalty, paused, state_interface))) {
++		if ((new_member = create_queue_member(interface, membername, penalty, paused, state_interface, skills))) {
+ 			new_member->dynamic = 1;
+ 			ao2_link(q->members, new_member);
++            update_queue_ent_skills_next_check(q);
+ 			manager_event(EVENT_FLAG_AGENT, "QueueMemberAdded",
+ 				"Queue: %s\r\n"
+ 				"Location: %s\r\n"
+@@ -5406,6 +6451,7 @@ static int set_member_paused(const char
+ 					dump_queue_members(q);
+ 
+ 				ast_queue_log(q->name, "NONE", mem->membername, (paused ? "PAUSE" : "UNPAUSE"), "%s", S_OR(reason, ""));
++				update_queue_ent_skills_next_check(q);
+ 				
+ 				if (!ast_strlen_zero(reason)) {
+ 					manager_event(EVENT_FLAG_AGENT, "QueueMemberPaused",
+@@ -5530,6 +6576,7 @@ static void reload_queue_members(void)
+ 	char *member;
+ 	char *interface;
+ 	char *membername = NULL;
++	char *skills = NULL;
+ 	char *state_interface;
+ 	char *penalty_tok;
+ 	int penalty = 0;
+@@ -5579,6 +6626,7 @@ static void reload_queue_members(void)
+ 			paused_tok = strsep(&member, ";");
+ 			membername = strsep(&member, ";");
+ 			state_interface = strsep(&member, ";");
++			skills = strsep(&member, ";");
+ 
+ 			if (!penalty_tok) {
+ 				ast_log(LOG_WARNING, "Error parsing persistent member string for '%s' (penalty)\n", queue_name);
+@@ -5602,7 +6650,7 @@ static void reload_queue_members(void)
+ 
+ 			ast_debug(1, "Reload Members: Queue: %s  Member: %s  Name: %s  Penalty: %d  Paused: %d\n", queue_name, interface, membername, penalty, paused);
+ 			
+-			if (add_to_queue(queue_name, interface, membername, penalty, paused, 0, state_interface) == RES_OUTOFMEMORY) {
++			if (add_to_queue(queue_name, interface, membername, penalty, paused, 0, state_interface, skills) == RES_OUTOFMEMORY) {
+ 				ast_log(LOG_ERROR, "Out of Memory when reloading persistent queue member\n");
+ 				break;
+ 			}
+@@ -5756,11 +6804,12 @@ static int aqm_exec(struct ast_channel *
+ 		AST_APP_ARG(options);
+ 		AST_APP_ARG(membername);
+ 		AST_APP_ARG(state_interface);
++		AST_APP_ARG(skills);
+ 	);
+ 	int penalty = 0;
+ 
+ 	if (ast_strlen_zero(data)) {
+-		ast_log(LOG_WARNING, "AddQueueMember requires an argument (queuename[,interface[,penalty[,options[,membername[,stateinterface]]]]])\n");
++		ast_log(LOG_WARNING, "AddQueueMember requires an argument (queuename[,interface[,penalty[,options[,membername[,stateinterface[,skills]]]]]])\n");
+ 		return -1;
+ 	}
+ 
+@@ -5782,7 +6831,7 @@ static int aqm_exec(struct ast_channel *
+ 		}
+ 	}
+ 
+-	switch (add_to_queue(args.queuename, args.interface, args.membername, penalty, 0, queue_persistent_members, args.state_interface)) {
++	switch (add_to_queue(args.queuename, args.interface, args.membername, penalty, 0, queue_persistent_members, args.state_interface, args.skills)) {
+ 	case RES_OKAY:
+ 		ast_queue_log(args.queuename, chan->uniqueid, args.interface, "ADDMEMBER", "%s", "");
+ 		ast_log(LOG_NOTICE, "Added interface '%s' to queue '%s'\n", args.interface, args.queuename);
+@@ -5910,12 +6959,13 @@ static int queue_exec(struct ast_channel
+ 		AST_APP_ARG(gosub);
+ 		AST_APP_ARG(rule);
+ 		AST_APP_ARG(position);
++		AST_APP_ARG(skill_ruleset);
+ 	);
+ 	/* Our queue entry */
+ 	struct queue_ent qe = { 0 };
+ 	
+ 	if (ast_strlen_zero(data)) {
+-		ast_log(LOG_WARNING, "Queue requires an argument: queuename[,options[,URL[,announceoverride[,timeout[,agi[,macro[,gosub[,rule[,position]]]]]]]]]\n");
++		ast_log(LOG_WARNING, "Queue requires an argument: queuename[,options[,URL[,announceoverride[,timeout[,agi[,macro[,gosub[,rule[,position[,skill_ruleset]]]]]]]]]]\n");
+ 		return -1;
+ 	}
+ 	
+@@ -5999,6 +7049,9 @@ static int queue_exec(struct ast_channel
+ 	qe.prio = prio;
+ 	qe.max_penalty = max_penalty;
+ 	qe.min_penalty = min_penalty;
++	if (!ast_strlen_zero(args.skill_ruleset)) {
++		ast_copy_string(qe.skill_ruleset, args.skill_ruleset, sizeof(qe.skill_ruleset));
++	}
+ 	qe.last_pos_said = 0;
+ 	qe.last_pos = 0;
+ 	qe.last_periodic_announce_time = time(NULL);
+@@ -6024,6 +7077,18 @@ check_turns:
+ 		ast_moh_start(chan, qe.moh, NULL);
+ 	}
+ 
++	switch (select_members_from_skills(&qe)) {
++	case 1:
++		if (!qe.parent->joinempty || !get_member_status(qe.parent, qe.max_penalty, qe.min_penalty, qe.parent->joinempty, &qe))
++			break;
++		reason = QUEUE_JOINEMPTY;
++	case -1:
++		goto stop;
++		break;
++	default:
++		break;
++	}
++
+ 	/* This is the wait loop for callers 2 through maxlen */
+ 	res = wait_our_turn(&qe, ringing, &reason);
+ 	if (res) {
+@@ -6083,7 +7148,7 @@ check_turns:
+ 
+ 		if (qe.parent->leavewhenempty) {
+ 			int status = 0;
+-			if ((status = get_member_status(qe.parent, qe.max_penalty, qe.min_penalty, qe.parent->leavewhenempty))) {
++			if ((status = get_member_status(qe.parent, qe.max_penalty, qe.min_penalty, qe.parent->leavewhenempty, &qe))) {
+ 				record_abandoned(&qe);
+ 				reason = QUEUE_LEAVEEMPTY;
+ 				ast_queue_log(args.queuename, chan->uniqueid, "NONE", "EXITEMPTY", "%d|%d|%ld", qe.pos, qe.opos, (long)(time(NULL) - qe.start));
+@@ -6165,6 +7230,16 @@ stop:
+ 	if (reason != QUEUE_UNKNOWN)
+ 		set_queue_result(chan, reason);
+ 
++	if (qe.mem_selection) {
++		ao2_ref(qe.mem_selection, -1);
++	}
++
++	if (qe.vqueue && ao2_ref(qe.vqueue, -1) == 1 && qe.parent) {
++		/* unref vqueue, and if nobody has reference to vqueue except
++		 * the vqueues list, destroy the vqueue object by removing it
++		 * from list. */
++		ao2_unlink(qe.parent->vqueues, qe.vqueue);
++	}
+ 	/*
+ 	 * every queue_ent is given a reference to it's parent
+ 	 * call_queue when it joins the queue.  This ref must be taken
+@@ -6604,6 +7679,121 @@ static int reload_queue_rules(int reload
+ 	return AST_MODULE_LOAD_SUCCESS;
+ }
+ 
++static int reload_queue_skills(int reload)
++{
++	struct ast_config *cfg;
++	char *cat = NULL, *tmp;
++	struct ast_variable *var;
++	struct skills_group *skgrp;
++	struct ast_flags config_flags = { reload ? CONFIG_FLAG_FILEUNCHANGED : 0 };
++
++	if (!(cfg = ast_config_load("queueskills.conf", config_flags))) {
++		ast_log(LOG_NOTICE, "No skills groups config file (queueskills.conf), so no call queues skills\n");
++		return AST_MODULE_LOAD_SUCCESS;
++	} else if (cfg == CONFIG_STATUS_FILEUNCHANGED) {
++		ast_log(LOG_NOTICE, "queueskills.conf has not changed since it was last loaded. Not taking any action.\n");
++		return AST_MODULE_LOAD_SUCCESS;
++	} else if (cfg == CONFIG_STATUS_FILEINVALID) {
++		ast_log(LOG_ERROR, "Config file queueskills.conf is in an invalid format.  Aborting.\n");
++		return AST_MODULE_LOAD_SUCCESS;
++	}
++	AST_LIST_LOCK(&skills_groups);
++
++	/* Clear current skills */
++	AST_LIST_TRAVERSE_SAFE_BEGIN(&skills_groups, skgrp, entry) {
++		AST_LIST_REMOVE_CURRENT(entry);
++		ao2_ref(skgrp, -1);
++	}
++	AST_LIST_TRAVERSE_SAFE_END;
++
++	while ((cat = ast_category_browse(cfg, cat))) {
++		skgrp = ao2_alloc(sizeof(*skgrp), destroy_skills_group);
++
++		if (!skgrp) {
++			ast_log(LOG_WARNING, "Unable to allocate memory for skills group");
++			break;
++		}
++		ast_copy_string(skgrp->name, cat, sizeof(skgrp->name));
++		skgrp->skills = ao2_container_alloc(37, NULL, NULL);
++
++		for (var = ast_variable_browse(cfg, cat); var; var = var->next) {
++			struct skill* sk;
++			sk = ao2_alloc(sizeof(*sk), NULL);
++			if (!sk) {
++				ast_log(LOG_WARNING, "Unable to allocate memory for a skill");
++				break;
++			}
++			ast_copy_string(sk->name, var->name, sizeof(sk->name));
++			tmp = ast_skip_blanks(var->value);
++			sk->weight = atoi(tmp);
++
++			ao2_link(skgrp->skills, sk);
++			ao2_ref(sk, -1);
++		}
++
++		AST_LIST_INSERT_HEAD(&skills_groups, skgrp, entry);
++	}
++	AST_LIST_UNLOCK(&skills_groups);
++	ast_config_destroy(cfg);
++	return AST_MODULE_LOAD_SUCCESS;
++}
++
++static int reload_queue_skill_rules(int reload)
++{
++	struct ast_config *cfg;
++	struct ast_variable *var;
++	struct skill_ruleset *ruleset;
++	char *cat = NULL;
++	struct ast_flags config_flags = { reload ? CONFIG_FLAG_FILEUNCHANGED : 0 };
++
++	if (!(cfg = ast_config_load("queueskillrules.conf", config_flags))) {
++		ast_log(LOG_NOTICE, "No rules config file (queueskillrules.conf), so no call queues rules\n");
++		return AST_MODULE_LOAD_SUCCESS;
++	} else if (cfg == CONFIG_STATUS_FILEUNCHANGED) {
++		ast_log(LOG_NOTICE, "queueskillsrules.conf has not changed since it was last loaded. Not taking any action.\n");
++		return AST_MODULE_LOAD_SUCCESS;
++	} else if (cfg == CONFIG_STATUS_FILEINVALID) {
++		ast_log(LOG_ERROR, "Config file queueskillsrules.conf is in an invalid format.  Aborting.\n");
++		return AST_MODULE_LOAD_SUCCESS;
++	}
++	AST_LIST_LOCK(&skill_rulesets);
++
++	/* Clear current skill_rulesets */
++	AST_LIST_TRAVERSE_SAFE_BEGIN(&skill_rulesets, ruleset, entry) {
++		AST_LIST_REMOVE_CURRENT(entry);
++		ao2_ref(ruleset, -1);
++	}
++	AST_LIST_TRAVERSE_SAFE_END;
++
++	while ((cat = ast_category_browse(cfg, cat))) {
++		ruleset = ao2_alloc(sizeof(*ruleset), destroy_skill_ruleset);
++		if (!ruleset) {
++			ast_log(LOG_WARNING, "Unable to allocate memory for a ruleset.");
++			break;
++		}
++		ast_copy_string(ruleset->name, cat, sizeof(ruleset->name));
++		ruleset->rules = ao2_container_alloc(37, NULL, NULL);
++		for (var = ast_variable_browse(cfg, cat); var; var = var->next) {
++			struct skill_rule *r = ao2_alloc(sizeof(*r), destroy_skill_rule);
++			if (!r) {
++				ast_log(LOG_WARNING, "Unable to allocate memory for a rule.");
++				break;
++			}
++			parse_skill_rule(r, var->value);
++
++			/* check if this rule is empty. */
++			if (r->cond)
++				ao2_link(ruleset->rules, r);
++			ao2_ref(r, -1);
++		}
++
++		AST_LIST_INSERT_HEAD(&skill_rulesets, ruleset, entry);
++	}
++	AST_LIST_UNLOCK(&skill_rulesets);
++	ast_config_destroy(cfg);
++	return AST_MODULE_LOAD_SUCCESS;
++}
++
+ /*! Set the global queue parameters as defined in the "general" section of queues.conf */
+ static void queue_set_global_params(struct ast_config *cfg)
+ {
+@@ -6637,7 +7827,7 @@ static void queue_set_global_params(stru
+  */
+ static void reload_single_member(const char *memberdata, struct call_queue *q)
+ {
+-	char *membername, *interface, *state_interface, *tmp;
++	char *membername, *interface, *state_interface, *skills = NULL, *tmp;
+ 	char *parse;
+ 	struct member *cur, *newm;
+ 	struct member tmpmem;
+@@ -6647,6 +7837,7 @@ static void reload_single_member(const c
+ 		AST_APP_ARG(penalty);
+ 		AST_APP_ARG(membername);
+ 		AST_APP_ARG(state_interface);
++		AST_APP_ARG(skills);
+ 	);
+ 
+ 	if (ast_strlen_zero(memberdata)) {
+@@ -6685,14 +7876,19 @@ static void reload_single_member(const c
+ 		state_interface = interface;
+ 	}
+ 
++	if (!ast_strlen_zero(args.skills)) {
++		skills = ast_skip_blanks(args.skills);
++	}
++
+ 	/* Find the old position in the list */
+ 	ast_copy_string(tmpmem.interface, interface, sizeof(tmpmem.interface));
+ 	cur = ao2_find(q->members, &tmpmem, OBJ_POINTER | OBJ_UNLINK);
+-	if ((newm = create_queue_member(interface, membername, penalty, cur ? cur->paused : 0, state_interface))) {
++	if ((newm = create_queue_member(interface, membername, penalty, cur ? cur->paused : 0, state_interface, skills))) {
+ 		ao2_link(q->members, newm);
+ 		ao2_ref(newm, -1);
+ 	}
+ 	newm = NULL;
++	update_queue_ent_skills_next_check(q);
+ 
+ 	if (cur) {
+ 		ao2_ref(cur, -1);
+@@ -6957,6 +8153,12 @@ static int reload_handler(int reload, st
+ 	if (ast_test_flag(mask, QUEUE_RELOAD_RULES)) {
+ 		res |= reload_queue_rules(reload);
+ 	}
++	if (ast_test_flag(mask, QUEUE_RELOAD_SKILLS)) {
++		res |= reload_queue_skills(reload);
++	}
++	if (ast_test_flag(mask, QUEUE_RELOAD_SKILL_RULES)) {
++		res |= reload_queue_skill_rules(reload);
++	}
+ 	if (ast_test_flag(mask, QUEUE_RESET_STATS)) {
+ 		res |= clear_stats(queuename);
+ 	}
+@@ -7072,6 +8274,8 @@ static char *__queues_show(struct manses
+ 					mem->realtime ? " (realtime)" : "",
+ 					mem->paused ? " (paused)" : "",
+ 					ast_devstate2str(mem->status));
++				if (!ast_strlen_zero(mem->skills))
++					ast_str_append(&out, 0, " (skills: %s)", mem->skills);
+ 				if (mem->calls)
+ 					ast_str_append(&out, 0, " has taken %d calls (last was %ld secs ago)",
+ 						mem->calls, (long) (time(NULL) - mem->lastcall));
+@@ -7088,8 +8292,32 @@ static char *__queues_show(struct manses
+ 			struct queue_ent *qe;
+ 			int pos = 1;
+ 
++			if (q->vqueues) {
++				struct virtual_queue *vqueue;
++				struct ao2_iterator iter;
++				iter = ao2_iterator_init(q->vqueues, 0);
++				while ((vqueue = ao2_iterator_next(&iter)))
++				{
++					pos = 1;
++					ast_str_set(&out, 0, "   Virtual queue %s: ", vqueue->id);
++					do_print(s, fd, ast_str_buffer(out));
++					for (qe = q->head; qe; qe = qe->next) {
++						if (qe->vqueue != vqueue)
++							continue;
++						ast_str_set(&out, 0, "      %d. %s (wait: %ld:%2.2ld, prio: %d)",
++							pos++, qe->chan->name, (long) (now - qe->start) / 60,
++							(long) (now - qe->start) % 60, qe->prio);
++						do_print(s, fd, ast_str_buffer(out));
++					}
++					ao2_ref(vqueue, -1);
++				}
++				ao2_iterator_destroy(&iter);
++			}
++
+ 			do_print(s, fd, "   Callers: ");
+ 			for (qe = q->head; qe; qe = qe->next) {
++				if (qe->vqueue)
++					continue;
+ 				ast_str_set(&out, 0, "      %d. %s (wait: %ld:%2.2ld, prio: %d)",
+ 					pos++, qe->chan->name, (long) (now - qe->start) / 60,
+ 					(long) (now - qe->start) % 60, qe->prio);
+@@ -7431,10 +8659,11 @@ static int manager_queues_status(struct
+ 						"LastCall: %d\r\n"
+ 						"Status: %d\r\n"
+ 						"Paused: %d\r\n"
++						"Skills: %s\r\n"
+ 						"%s"
+ 						"\r\n",
+ 						q->name, mem->membername, mem->interface, mem->dynamic ? "dynamic" : "static",
+-						mem->penalty, mem->calls, (int)mem->lastcall, mem->status, mem->paused, idText);
++						mem->penalty, mem->calls, (int)mem->lastcall, mem->status, mem->paused, mem->skills, idText);
+ 				}
+ 				ao2_ref(mem, -1);
+ 			}
+@@ -7477,7 +8706,7 @@ static int manager_queues_status(struct
+ 
+ static int manager_add_queue_member(struct mansession *s, const struct message *m)
+ {
+-	const char *queuename, *interface, *penalty_s, *paused_s, *membername, *state_interface;
++	const char *queuename, *interface, *penalty_s, *paused_s, *membername, *state_interface, *skills;
+ 	int paused, penalty = 0;
+ 
+ 	queuename = astman_get_header(m, "Queue");
+@@ -7486,6 +8715,7 @@ static int manager_add_queue_member(stru
+ 	paused_s = astman_get_header(m, "Paused");
+ 	membername = astman_get_header(m, "MemberName");
+ 	state_interface = astman_get_header(m, "StateInterface");
++	skills = astman_get_header(m, "Skills");
+ 
+ 	if (ast_strlen_zero(queuename)) {
+ 		astman_send_error(s, m, "'Queue' not specified.");
+@@ -7507,7 +8737,7 @@ static int manager_add_queue_member(stru
+ 	else
+ 		paused = abs(ast_true(paused_s));
+ 
+-	switch (add_to_queue(queuename, interface, membername, penalty, paused, queue_persistent_members, state_interface)) {
++	switch (add_to_queue(queuename, interface, membername, penalty, paused, queue_persistent_members, state_interface, skills)) {
+ 	case RES_OKAY:
+ 		ast_queue_log(queuename, "MANAGER", interface, "ADDMEMBER", "%s", paused ? "PAUSED" : "");
+ 		astman_send_ack(s, m, "Added interface to queue");
+@@ -7620,6 +8850,14 @@ static int manager_queue_reload(struct m
+ 		ast_set_flag(&mask, QUEUE_RELOAD_RULES);
+ 		header_found = 1;
+ 	}
++	if (!strcasecmp(S_OR(astman_get_header(m, "Skills"), ""), "yes")) {
++		ast_set_flag(&mask, QUEUE_RELOAD_SKILLS);
++		header_found = 1;
++	}
++	if (!strcasecmp(S_OR(astman_get_header(m, "SkillRules"), ""), "yes")) {
++		ast_set_flag(&mask, QUEUE_RELOAD_SKILL_RULES);
++		header_found = 1;
++	}
+ 	if (!strcasecmp(S_OR(astman_get_header(m, "Parameters"), ""), "yes")) {
+ 		ast_set_flag(&mask, QUEUE_RELOAD_PARAMETERS);
+ 		header_found = 1;
+@@ -7710,7 +8948,7 @@ static int manager_queue_member_penalty(
+ 
+ static char *handle_queue_add_member(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+ {
+-	const char *queuename, *interface, *membername = NULL, *state_interface = NULL;
++	const char *queuename, *interface, *membername = NULL, *state_interface = NULL, *skills = NULL;
+ 	int penalty;
+ 
+ 	switch ( cmd ) {
+@@ -7724,7 +8962,7 @@ static char *handle_queue_add_member(str
+ 		return complete_queue_add_member(a->line, a->word, a->pos, a->n);
+ 	}
+ 
+-	if ((a->argc != 6) && (a->argc != 8) && (a->argc != 10) && (a->argc != 12)) {
++	if ((a->argc != 6) && (a->argc != 8) && (a->argc != 10) && (a->argc != 12) && (a->argc != 14)) {
+ 		return CLI_SHOWUSAGE;
+ 	} else if (strcmp(a->argv[4], "to")) {
+ 		return CLI_SHOWUSAGE;
+@@ -7734,6 +8972,8 @@ static char *handle_queue_add_member(str
+ 		return CLI_SHOWUSAGE;
+ 	} else if ((a->argc == 12) && strcmp(a->argv[10], "state_interface")) {
+ 		return CLI_SHOWUSAGE;
++	} else if ((a->argc == 14) && strcmp(a->argv[12], "skills")) {
++		return CLI_SHOWUSAGE;
+ 	}
+ 
+ 	queuename = a->argv[5];
+@@ -7760,7 +9000,11 @@ static char *handle_queue_add_member(str
+ 		state_interface = a->argv[11];
+ 	}
+ 
+-	switch (add_to_queue(queuename, interface, membername, penalty, 0, queue_persistent_members, state_interface)) {
++	if (a->argc >= 14) {
++		skills = a->argv[13];
++	}
++
++	switch (add_to_queue(queuename, interface, membername, penalty, 0, queue_persistent_members, state_interface, skills)) {
+ 	case RES_OKAY:
+ 		ast_queue_log(queuename, "CLI", interface, "ADDMEMBER", "%s", "");
+ 		ast_cli(a->fd, "Added interface '%s' to queue '%s'\n", interface, queuename);
+@@ -8063,6 +9307,147 @@ static char *handle_queue_rule_show(stru
+ 	return CLI_SUCCESS; 
+ }
+ 
++static char *complete_queue_skills_groups(const char *line, const char *word, int pos, int state)
++{
++	int which = 0;
++	struct skills_group *skills;
++	int wordlen = strlen(word);
++	char *ret = NULL;
++	if (pos != 4) /* Wha? */ {
++		return NULL;
++	}
++
++	AST_LIST_LOCK(&skills_groups);
++	AST_LIST_TRAVERSE(&skills_groups, skills, entry) {
++		if (!strncasecmp(word, skills->name, wordlen) && ++which > state) {
++			ret = ast_strdup(skills->name);
++			break;
++		}
++	}
++	AST_LIST_UNLOCK(&skills_groups);
++
++	return ret;
++}
++
++static char *handle_queue_skills_groups(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
++{
++	const char *name;
++	struct skills_group *skills;
++	struct skill *skill;
++
++	switch (cmd) {
++	case CLI_INIT:
++		e->command = "queue show skills groups";
++		e->usage =
++		"Usage: queue show skills groups [groupname]\n"
++		"	Show the list of skills associated to the group name. If no\n"
++		"	groupname is specified, list all skill groups\n";
++		return NULL;
++	case CLI_GENERATE:
++		return complete_queue_skills_groups(a->line, a->word, a->pos, a->n);
++	}
++
++	if (a->argc != 3 && a->argc != 4 && a->argc != 5)
++		return CLI_SHOWUSAGE;
++
++	name = a->argc == 5 ? a->argv[4] : "";
++
++	AST_LIST_LOCK(&skills_groups);
++	AST_LIST_TRAVERSE(&skills_groups, skills, entry) {
++		if (!name || !strcmp(skills->name, name)) {
++			struct ao2_iterator iter = ao2_iterator_init(skills->skills, 0);
++			if (name) {
++				ast_cli(a->fd, "Skill group '%s':\n", skills->name);
++			} else {
++				ast_cli(a->fd, "  - %-15s: ", skills->name);
++			}
++
++			while ((skill = ao2_iterator_next(&iter))) {
++				if (name) {
++					ast_cli(a->fd, "  - %-15s: %d\n", skill->name, skill->weight);
++				} else {
++					ast_cli(a->fd, "%s=%d ", skill->name, skill->weight);
++				}
++				ao2_ref(skill, -1);
++			}
++			ast_cli(a->fd, "\n");
++			ao2_iterator_destroy(&iter);
++		}
++	}
++	AST_LIST_UNLOCK(&skills_groups);
++	return CLI_SUCCESS;
++}
++
++static char *complete_queue_skills_rules(const char *line, const char *word, int pos, int state)
++{
++	int which = 0;
++	struct skill_ruleset *rs;
++	int wordlen = strlen(word);
++	char *ret = NULL;
++	if (pos != 4) /* Wha? */ {
++		return NULL;
++	}
++
++	AST_LIST_LOCK(&skill_rulesets);
++	AST_LIST_TRAVERSE(&skill_rulesets, rs, entry) {
++		if (!strncasecmp(word, rs->name, wordlen) && ++which > state) {
++			ret = ast_strdup(rs->name);
++			break;
++		}
++	}
++	AST_LIST_UNLOCK(&skill_rulesets);
++
++	return ret;
++}
++
++static char *handle_queue_skills_rules(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
++{
++	const char *name;
++	struct skill_ruleset *rs;
++	struct skill_rule *rule;
++
++	switch (cmd) {
++	case CLI_INIT:
++		e->command = "queue show skills rules";
++		e->usage =
++		"Usage: queue show skills rules [rulename]\n"
++		"	Show the list of rules associated to the ruleset name. If no\n"
++		"	rulename is specified, list all rulesets\n";
++		return NULL;
++	case CLI_GENERATE:
++		return complete_queue_skills_rules(a->line, a->word, a->pos, a->n);
++	}
++
++	if (a->argc != 3 && a->argc != 4 && a->argc != 5)
++		return CLI_SHOWUSAGE;
++
++	name = a->argc == 5 ? a->argv[4] : "";
++
++	AST_LIST_LOCK(&skill_rulesets);
++	AST_LIST_TRAVERSE(&skill_rulesets, rs, entry) {
++		if (!name || !strcmp(rs->name, name)) {
++			struct ao2_iterator iter = ao2_iterator_init(rs->rules, 0);
++
++			ast_cli(a->fd, "Skill rules '%s':\n", rs->name);
++			while ((rule = ao2_iterator_next(&iter))) {
++				char *cond = display_operator(rule->cond);
++				if (rule->dcond) {
++					char *dcond = display_operator(rule->dcond);
++					ast_cli(a->fd, "  => [%s] %s\n", dcond, cond);
++					ast_free(dcond);
++				}
++				else
++					ast_cli(a->fd, "  => %s\n", cond);
++				ast_free(cond);
++				ao2_ref(rule, -1);
++			}
++			ao2_iterator_destroy(&iter);
++		}
++	}
++	AST_LIST_UNLOCK(&skill_rulesets);
++	return CLI_SUCCESS;
++}
++
+ static char *handle_queue_reset(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+ {
+ 	struct ast_flags mask = {QUEUE_RESET_STATS,};
+@@ -8150,6 +9535,10 @@ static char *handle_queue_reload(struct
+ 		ast_set_flag(&mask, QUEUE_RELOAD_MEMBER);
+ 	} else if (!strcasecmp(a->argv[2], "parameters")) {
+ 		ast_set_flag(&mask, QUEUE_RELOAD_PARAMETERS);
++	} else if (!strcasecmp(a->argv[2], "skills")) {
++		ast_set_flag(&mask, QUEUE_RELOAD_SKILLS);
++	} else if (!strcasecmp(a->argv[2], "skillrules")) {
++		ast_set_flag(&mask, QUEUE_RELOAD_SKILL_RULES);
+ 	} else if (!strcasecmp(a->argv[2], "all")) {
+ 		ast_set_flag(&mask, AST_FLAGS_ALL);
+ 	}
+@@ -8184,6 +9573,8 @@ static struct ast_cli_entry cli_queue[]
+ 	AST_CLI_DEFINE(handle_queue_rule_show, "Show the rules defined in queuerules.conf"),
+ 	AST_CLI_DEFINE(handle_queue_reload, "Reload queues, members, queue rules, or parameters"),
+ 	AST_CLI_DEFINE(handle_queue_reset, "Reset statistics for a queue"),
++	AST_CLI_DEFINE(handle_queue_skills_groups, "Show the skills groups defined in queueskills.conf"),
++	AST_CLI_DEFINE(handle_queue_skills_rules, "Show the skills rules defined in queueskillrules.conf"),
+ };
+ 
+ /* struct call_queue astdata mapping. */
+@@ -8246,6 +9637,7 @@ static struct ast_cli_entry cli_queue[]
+ 	MEMBER(call_queue, rrpos, AST_DATA_INTEGER)			\
+ 	MEMBER(call_queue, memberdelay, AST_DATA_INTEGER)		\
+ 	MEMBER(call_queue, autofill, AST_DATA_INTEGER)			\
++	MEMBER(call_queue, vqueues, AST_DATA_CONTAINER)			\
+ 	MEMBER(call_queue, members, AST_DATA_CONTAINER)
+ 
+ AST_DATA_STRUCTURE(call_queue, DATA_EXPORT_CALL_QUEUE);
+@@ -8255,6 +9647,7 @@ AST_DATA_STRUCTURE(call_queue, DATA_EXPO
+ 	MEMBER(member, interface, AST_DATA_STRING)			\
+ 	MEMBER(member, state_interface, AST_DATA_STRING)		\
+ 	MEMBER(member, membername, AST_DATA_STRING)			\
++	MEMBER(member, skills, AST_DATA_STRING)				\
+ 	MEMBER(member, penalty, AST_DATA_INTEGER)			\
+ 	MEMBER(member, calls, AST_DATA_INTEGER)				\
+ 	MEMBER(member, dynamic, AST_DATA_INTEGER)			\
+@@ -8284,6 +9677,7 @@ AST_DATA_STRUCTURE(member, DATA_EXPORT_M
+ 	MEMBER(queue_ent, min_penalty, AST_DATA_INTEGER)			\
+ 	MEMBER(queue_ent, linpos, AST_DATA_INTEGER)				\
+ 	MEMBER(queue_ent, linwrapped, AST_DATA_INTEGER)				\
++	MEMBER(queue_ent, skill_ruleset, AST_DATA_STRING)			\
+ 	MEMBER(queue_ent, start, AST_DATA_INTEGER)				\
+ 	MEMBER(queue_ent, expire, AST_DATA_INTEGER)				\
+ 	MEMBER(queue_ent, cancel_answered_elsewhere, AST_DATA_INTEGER)
+Index: asterisk-1.8.17.0/configs/queueskillrules.conf.sample
+===================================================================
+--- /dev/null
++++ asterisk-1.8.17.0/configs/queueskillrules.conf.sample
+@@ -0,0 +1,67 @@
++; This file describes skill routing rules. The Queue() application can get the
++; 'skill_ruleset' argument which is the name of one skill routing ruleset. If
++; set, a selection of queue members is defined by running these rules on each
++; member, based on skills set (see the queueskills.conf file).
++;
++; A ruleset is a list of rules. Each rule has two parts:
++;     - the first part is a dynamical condition. If its evaluation is false, the
++;       next rule is tried;
++;     - the second part is tested against queue member's skills, to define a
++;       selection.
++;
++; Operators:
++; ----------
++;
++; You can define these rules with some arithmetic and logical operators:
++;      operand1 / operand2  (division)
++;      operand1 * operand2  (multiplication)
++;      operand1 - operand2  (subtraction)
++;      operand1 + operand2  (addition)
++;      operand1 ! operand2  (is not equal)
++;      operand1 = operand2  (is equal)
++;      operand1 > operand2  (is greater than)
++;      operand1 < operand2  (is lesser than)
++;      operand1 & operand2  (both are true)
++;      operand1 | operand2  (at least one of them are true)
++;
++; '/' is the operator with the higher priority, and '|' the one with the lower
++; priority. You can use brackets '()' to overload operator priorities.
++;
++; Dynamical part:
++; ---------------
++; The first part is evaluated after create a selection of queue members with
++; the second part, and determine if we keep this rule or if we switch to the
++; next one.
++;
++; On this part, these variables can be used:
++;     EWT (Estimated Waiting Time)      The waiting time estimated for the
++;                                       current selection of members
++;     WT  (Waiting time)                The time that caller has been waited
++;
++; Skills part:
++; ------------
++; This second part is evaluated against every queue member's skills, to know
++; if it is selected or not.
++;
++; Variables are skills names, which you can check with below operators. You can
++; also use meta-variables, started with a '$', to substitute them with data set
++; on the Queue() call. For example, if you call Queue() with the skill rouleset
++; argument equal to:
++;      tech(os=linux)
++; every $os occurrence will be replaced to 'linux'.
++;
++; Examples:
++; ---------
++;
++; [tech]
++; rule => WT < 60, technic & ($os > 29 & $lang > 39 | $os > 39 & $lang > 19)
++; rule => WT < 120, technic & ($os > 19 & $lang > 39 | $os > 29 & $lang > 19)
++; rule => WT < 3600, technic & $os > 10 & $lang > 19
++; rule => technic
++;
++; [client-crappy]
++; rule => technic = 0 & (sympathy > 20 | linux > 10 & windows > 10)
++;
++; [client-cool]
++; rule => EWT < 120, technic = 0 & (sympathy > 60)
++; rule => technic = 0
+Index: asterisk-1.8.17.0/configs/queueskills.conf.sample
+===================================================================
+--- /dev/null
++++ asterisk-1.8.17.0/configs/queueskills.conf.sample
+@@ -0,0 +1,46 @@
++; Describe skills groups here to assign them to queue members. You can set
++; weight to each skills. It'll be used by skill rules to know if a queue member
++; can answer to a call.
++; See the queueskillrules.conf to get more information about these rules.
++;
++; Examples:
++;
++; [linux1]
++; technic = 1
++; linux = 50
++; windows = 10
++; french = 50
++; english = 10
++;
++; [linux2]
++; technic = 1
++; linux = 30
++; windows = 20
++; french = 50
++; english = 50
++;
++; [windows1]
++; technic = 1
++; linux = 10
++; windows = 50
++; french = 30
++; english = 30
++;
++; [windows2]
++; technic = 1
++; linux = 20
++; windows = 30
++; french = 40
++; english = 10
++;
++; [commercial1]
++; technic = 0
++; linux = 10
++; windows = 20
++; sympathy = 100
++;
++; [commercial2]
++; technic = 0
++; linux = 0
++; windows = 20
++; sympathy = 50

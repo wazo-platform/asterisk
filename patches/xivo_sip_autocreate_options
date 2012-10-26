@@ -1,0 +1,189 @@
+Index: asterisk-1.8.17.0/channels/chan_sip.c
+===================================================================
+--- asterisk-1.8.17.0.orig/channels/chan_sip.c
++++ asterisk-1.8.17.0/channels/chan_sip.c
+@@ -14109,11 +14109,19 @@ static enum parse_register_result parse_
+ 		if (s) {
+ 			expires = strsep(&s, ";"); /* trim ; and beyond */
+ 			if (sscanf(expires + 9, "%30d", &expire) != 1) {
+-				expire = default_expiry;
++				if (peer->selfdestruct) {
++					expire = sip_cfg.autocreate_defaultexpiry;
++				} else {
++					expire = default_expiry;
++				}
+ 			}
+ 		} else {
+ 			/* Nothing has been specified */
+-			expire = default_expiry;
++			if (peer->selfdestruct) {
++				expire = sip_cfg.autocreate_defaultexpiry;
++			} else {
++				expire = default_expiry;
++			}
+ 		}
+ 	}
+ 
+@@ -14255,11 +14263,20 @@ static enum parse_register_result parse_
+ 	AST_SCHED_DEL_UNREF(sched, peer->expire,
+ 			unref_peer(peer, "remove register expire ref"));
+ 
+-	if (expire > max_expiry) {
+-		expire = max_expiry;
+-	}
+-	if (expire < min_expiry) {
+-		expire = min_expiry;
++	if (peer->selfdestruct) {
++		if (expire > sip_cfg.autocreate_maxexpiry) {
++			expire = sip_cfg.autocreate_maxexpiry;
++		}
++		if (expire < sip_cfg.autocreate_minexpiry) {
++			expire = sip_cfg.autocreate_minexpiry;
++		}
++	} else {
++		if (expire > max_expiry) {
++			expire = max_expiry;
++		}
++		if (expire < min_expiry) {
++			expire = min_expiry;
++		}
+ 	}
+ 	if (peer->is_realtime && !ast_test_flag(&peer->flags[1], SIP_PAGE2_RTCACHEFRIENDS)) {
+ 		peer->expire = -1;
+@@ -15017,7 +15034,7 @@ static enum check_auth_result register_v
+ 		}
+ 		ao2_unlock(peer);
+ 	}
+-	if (!peer && sip_cfg.autocreatepeer) {
++	if (!peer && sip_cfg.autocreatepeer && strstr(name, sip_cfg.autocreate_prefix) == name) {
+ 		/* Create peer if we have autocreate mode enabled */
+ 		peer = temp_peer(name);
+ 		if (peer) {
+@@ -18233,6 +18250,7 @@ static char *sip_show_settings(struct as
+ 	ast_cli(a->fd, "  Textsupport:            %s\n", AST_CLI_YESNO(ast_test_flag(&global_flags[1], SIP_PAGE2_TEXTSUPPORT)));
+ 	ast_cli(a->fd, "  Ignore SDP sess. ver.:  %s\n", AST_CLI_YESNO(ast_test_flag(&global_flags[1], SIP_PAGE2_IGNORESDPVERSION)));
+ 	ast_cli(a->fd, "  AutoCreate Peer:        %s\n", AST_CLI_YESNO(sip_cfg.autocreatepeer));
++	ast_cli(a->fd, "  AutoCreate Context:     %s\n", sip_cfg.autocreate_context);
+ 	ast_cli(a->fd, "  Match Auth Username:    %s\n", AST_CLI_YESNO(global_match_auth_username));
+ 	ast_cli(a->fd, "  Allow unknown access:   %s\n", AST_CLI_YESNO(sip_cfg.allowguest));
+ 	ast_cli(a->fd, "  Allow subscriptions:    %s\n", AST_CLI_YESNO(ast_test_flag(&global_flags[1], SIP_PAGE2_ALLOWSUBSCRIBE)));
+@@ -27395,6 +27413,9 @@ static struct sip_peer *temp_peer(const
+ 
+ 	ast_copy_string(peer->name, name, sizeof(peer->name));
+ 
++	if (sip_cfg.autocreate_type)
++		peer->type = sip_cfg.autocreate_type;
++	ast_string_field_set(peer, context, sip_cfg.autocreate_context);
+ 	peer->selfdestruct = TRUE;
+ 	peer->host_dynamic = TRUE;
+ 	peer->prefs = default_prefs;
+@@ -28152,6 +28173,15 @@ static void cleanup_all_regs(void)
+ 		} while(0));
+ }
+ 
++static int peer_mark_non_selfdestruct_func(void *device, void *arg, int flags)
++{
++	struct sip_peer *peer = device;
++	if (!peer->selfdestruct) {
++		peer->the_mark = 1;
++	}
++	return 0;
++}
++
+ /*! \brief Re-read SIP.conf config file
+ \note	This function reloads all config data, except for
+ 	active peers (with registrations). They will only
+@@ -28236,7 +28266,11 @@ static int reload_config(enum channelrel
+ 		/* Then, actually destroy users and registry */
+ 		ASTOBJ_CONTAINER_DESTROYALL(&regl, sip_registry_destroy);
+ 		ast_debug(4, "--------------- Done destroying registry list\n");
+-		ao2_t_callback(peers, OBJ_NODATA, peer_markall_func, NULL, "callback to mark all peers");
++		if (sip_cfg.autocreate_persist) {
++			ao2_t_callback(peers, OBJ_NODATA, peer_mark_non_selfdestruct_func, NULL, "callback to mark non selfdestruct peers");
++		} else {
++			ao2_t_callback(peers, OBJ_NODATA, peer_markall_func, NULL, "callback to mark all peers");
++		}
+ 	}
+ 
+ 	/* Reset certificate handling for TLS sessions */
+@@ -28325,6 +28359,13 @@ static int reload_config(enum channelrel
+ 	global_regattempts_max = 0;
+ 	sip_cfg.pedanticsipchecking = DEFAULT_PEDANTIC;
+ 	sip_cfg.autocreatepeer = DEFAULT_AUTOCREATEPEER;
++	ast_copy_string(sip_cfg.autocreate_context, DEFAULT_AUTOCREATE_CONTEXT, sizeof(sip_cfg.autocreate_context));
++	sip_cfg.autocreate_persist = DEFAULT_AUTOCREATE_PERSIST;
++	ast_copy_string(sip_cfg.autocreate_prefix, DEFAULT_AUTOCREATE_PREFIX, sizeof(sip_cfg.autocreate_prefix));
++	sip_cfg.autocreate_minexpiry = DEFAULT_AUTOCREATE_MIN_EXPIRY;
++	sip_cfg.autocreate_maxexpiry = DEFAULT_AUTOCREATE_MAX_EXPIRY;
++	sip_cfg.autocreate_defaultexpiry = DEFAULT_AUTOCREATE_DEFAULT_EXPIRY;
++	sip_cfg.autocreate_type = 0;
+ 	global_autoframing = 0;
+ 	sip_cfg.allowguest = DEFAULT_ALLOWGUEST;
+ 	global_callcounter = DEFAULT_CALLCOUNTER;
+@@ -28607,6 +28648,35 @@ static int reload_config(enum channelrel
+ 			}
+ 		} else if (!strcasecmp(v->name, "autocreatepeer")) {
+ 			sip_cfg.autocreatepeer = ast_true(v->value);
++		} else if (!strcasecmp(v->name, "autocreate_context")) {
++			ast_copy_string(sip_cfg.autocreate_context, v->value, sizeof(sip_cfg.autocreate_context));
++		} else if (!strcasecmp(v->name, "autocreate_persist")) {
++			sip_cfg.autocreate_persist = ast_true(v->value);
++		} else if (!strcasecmp(v->name, "autocreate_prefix")) {
++			ast_copy_string(sip_cfg.autocreate_prefix, v->value, sizeof(sip_cfg.autocreate_prefix));
++		} else if (!strcasecmp(v->name, "autocreate_minexpiry")) {
++			sip_cfg.autocreate_minexpiry = atoi(v->value);
++			if (sip_cfg.autocreate_minexpiry < 1) {
++				sip_cfg.autocreate_minexpiry = DEFAULT_AUTOCREATE_MIN_EXPIRY;
++			}
++		} else if (!strcasecmp(v->name, "autocreate_maxexpiry")) {
++			sip_cfg.autocreate_maxexpiry = atoi(v->value);
++			if (sip_cfg.autocreate_maxexpiry < 1) {
++				sip_cfg.autocreate_maxexpiry = DEFAULT_AUTOCREATE_MAX_EXPIRY;
++			}
++		} else if (!strcasecmp(v->name, "autocreate_defaultexpiry")) {
++			sip_cfg.autocreate_defaultexpiry = atoi(v->value);
++			if (sip_cfg.autocreate_defaultexpiry < 1) {
++				sip_cfg.autocreate_defaultexpiry = DEFAULT_AUTOCREATE_DEFAULT_EXPIRY;
++			}
++		} else if (!strcasecmp(v->name, "autocreate_type")) {
++			if (!strcasecmp(v->value, "peer")) {
++				sip_cfg.autocreate_type = SIP_TYPE_PEER;
++			} else if (!strcasecmp(v->value, "user")) {
++				sip_cfg.autocreate_type = SIP_TYPE_USER;
++			} else if (!strcasecmp(v->value, "friend")) {
++				sip_cfg.autocreate_type = SIP_TYPE_USER | SIP_TYPE_PEER;
++			}
+ 		} else if (!strcasecmp(v->name, "match_auth_username")) {
+ 			global_match_auth_username = ast_true(v->value);
+ 		} else if (!strcasecmp(v->name, "srvlookup")) {
+Index: asterisk-1.8.17.0/channels/sip/include/sip.h
+===================================================================
+--- asterisk-1.8.17.0.orig/channels/sip/include/sip.h
++++ asterisk-1.8.17.0/channels/sip/include/sip.h
+@@ -206,6 +206,12 @@
+ #define DEFAULT_NOTIFYCID      DISABLED	/*!< Include CID with ringing notifications */
+ #define DEFAULT_PEDANTIC       TRUE     /*!< Follow SIP standards for dialog matching */
+ #define DEFAULT_AUTOCREATEPEER FALSE    /*!< Don't create peers automagically */
++#define DEFAULT_AUTOCREATE_CONTEXT DEFAULT_CONTEXT
++#define DEFAULT_AUTOCREATE_PERSIST FALSE
++#define DEFAULT_AUTOCREATE_PREFIX ""
++#define DEFAULT_AUTOCREATE_DEFAULT_EXPIRY DEFAULT_DEFAULT_EXPIRY
++#define DEFAULT_AUTOCREATE_MIN_EXPIRY DEFAULT_MIN_EXPIRY
++#define DEFAULT_AUTOCREATE_MAX_EXPIRY DEFAULT_MAX_EXPIRY
+ #define	DEFAULT_MATCHEXTERNADDRLOCALLY FALSE /*!< Match extern IP locally default setting */
+ #define DEFAULT_QUALIFY        FALSE    /*!< Don't monitor devices */
+ #define DEFAULT_CALLEVENTS     FALSE    /*!< Extra manager SIP call events */
+@@ -683,6 +689,13 @@ struct sip_settings {
+ 	int directrtpsetup;         /*!< Enable support for Direct RTP setup (no re-invites) */
+ 	int pedanticsipchecking;    /*!< Extra checking ?  Default off */
+ 	int autocreatepeer;         /*!< Auto creation of peers at registration? Default off. */
++	char autocreate_context[AST_MAX_CONTEXT];
++	int autocreate_persist;
++	char autocreate_prefix[64]; /*!< Only peer with this prefix will be autocreated */
++	int autocreate_minexpiry;
++	int autocreate_maxexpiry;
++	int autocreate_defaultexpiry;
++	enum sip_peer_type autocreate_type;
+ 	int srvlookup;              /*!< SRV Lookup on or off. Default is on */
+ 	int allowguest;             /*!< allow unauthenticated peers to connect? */
+ 	int alwaysauthreject;       /*!< Send 401 Unauthorized for all failing requests */

@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+# -*- mode: makefile; coding: utf-8 -*-
+
+DEB_PKG = "asterisk"
+TARBALL_DIR := $(shell mktemp -d)
+
+ASTVER = $(shell cat $(MODULE_PATH)/ASTERISK-VERSION)
+TARBALL_NAME = "asterisk_$(ASTVER)+dfsg.orig.tar.gz"
+
+default:
+
+prepare-tarball::
+	cp $(MODULE_PATH)/tarballs/$(TARBALL_NAME) ${TARBALL_DIR}
+	@cp -a $(MODULE_PATH)/patches ${TARBALL_DIR}
+
+clean-tarball::
+	@rm -rf ${TARBALL_DIR}
+

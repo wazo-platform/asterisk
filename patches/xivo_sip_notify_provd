@@ -1,0 +1,161 @@
+Index: asterisk-1.8.17.0/channels/chan_sip.c
+===================================================================
+--- asterisk-1.8.17.0.orig/channels/chan_sip.c
++++ asterisk-1.8.17.0/channels/chan_sip.c
+@@ -553,6 +553,26 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
+ 			via multiple Variable: name=value sequences.</para>
+ 		</description>
+ 	</manager>
++	<manager name="SIPnotifyprovd" language="en_US">
++		<synopsis>
++			Send a SIP notify using the peer IP address instead of the channel name.
++		</synopsis>
++		<syntax>
++			<xi:include xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])" />
++			<parameter name="PeerIP" required="True">
++				<para>The peer IP address.</para>
++			</parameter>
++			<parameter name="Variable" required="true">
++				<para>At least one variable pair must be specified.
++				<replaceable>name</replaceable>=<replaceable>value</replaceable></para>
++			</parameter>
++		</syntax>
++		<description>
++			<para>Sends a SIP Notify event.</para>
++			<para>All parameters for this event must be specified in the body of this request
++			via multiple Variable: name=value sequences.</para>
++		</description>
++	</manager>
+  ***/
+ 
+ static int min_expiry = DEFAULT_MIN_EXPIRY;        /*!< Minimum accepted registration time */
+@@ -13036,6 +13056,113 @@ static int transmit_notify_with_sipfrag(
+ 	return send_request(p, &req, XMIT_RELIABLE, p->ocseq);
+ }
+ 
++
++/*!
++ * Match Peers by IP only.
++ */
++static int find_peer_by_ip(void *obj, void *arg, int flags)
++{
++	struct sip_peer *peer = obj, *peer2 = arg;
++	int res;
++
++	if (ast_sockaddr_cmp_addr(&peer->addr, &peer2->addr)) {
++		/* IP doesn't match */
++		res = 0;
++	} else {
++		res = CMP_MATCH | CMP_STOP;
++	}
++
++	return res;
++}
++
++
++/*! \brief create address structure from device IP address
++ *      returns TRUE (-1) on failure, FALSE on success */
++static int create_addr_provd(struct sip_pvt *dialog, struct ast_sockaddr *addr)
++{
++	struct sip_peer tmp_peer;
++	struct sip_peer *peer;
++	int res;
++
++	dialog->timer_t1 = global_t1; /* Default SIP retransmission timer T1 (RFC 3261) */
++	dialog->timer_b = global_timer_b; /* Default SIP transaction timer B (RFC 3261) */
++
++	ast_sockaddr_copy(&tmp_peer.addr, addr);
++	peer = ao2_callback(peers_by_ip, OBJ_POINTER, find_peer_by_ip, &tmp_peer);
++	if (!peer) {
++		ast_log(LOG_NOTICE, "No matching peer found for IP %s\n", ast_sockaddr_stringify(addr));
++		res = -1;
++	} else {
++		set_socket_transport(&dialog->socket, 0);
++		res = create_addr_from_peer(dialog, peer);
++		dialog->relatedpeer = ref_peer(peer, "create_addr_provd: setting dialog's relatedpeer pointer");
++		unref_peer(peer, "create_addr_provd: unref peer from ao2_callback");
++	}
++
++	return res;
++}
++
++
++static int manager_sipnotify_provd(struct mansession *s, const struct message *m)
++{
++	const char *peerip = astman_get_header(m, "PeerIP");
++	struct ast_variable *vars = astman_get_variables(m);
++	struct ast_sockaddr addr;
++	struct sip_pvt *p;
++	struct ast_variable *header, *var;
++
++	if (ast_strlen_zero(peerip)) {
++		astman_send_error(s, m, "SIPnotifyprovd requires a peer IP");
++		return 0;
++	}
++
++	if (!ast_sockaddr_parse(&addr, peerip, 0)) {
++		astman_send_error(s, m, "Could not parse peer IP");
++		return 0;
++	}
++
++	if (!(p = sip_alloc(NULL, NULL, 0, SIP_NOTIFY, NULL))) {
++		astman_send_error(s, m, "Unable to build sip pvt data for notify (memory/socket error)");
++		return 0;
++	}
++
++	if (create_addr_provd(p, &addr)) {
++		/* Maybe they're not registered, etc. */
++		dialog_unlink_all(p);
++		dialog_unref(p, "unref dialog inside for loop" );
++		/* sip_destroy(p); */
++		astman_send_error(s, m, "Could not create address");
++		return 0;
++	}
++
++	/* Notify is outgoing call */
++	ast_set_flag(&p->flags[0], SIP_OUTGOING);
++	sip_notify_allocate(p);
++
++	p->notify->headers = header = ast_variable_new("Subscription-State", "terminated", "");
++
++	for (var = vars; var; var = var->next) {
++		if (!strcasecmp(var->name, "Content")) {
++			if (ast_str_strlen(p->notify->content))
++				ast_str_append(&p->notify->content, 0, "\r\n");
++			ast_str_append(&p->notify->content, 0, "%s", var->value);
++		} else if (!strcasecmp(var->name, "Content-Length")) {
++			ast_log(LOG_WARNING, "it is not necessary to specify Content-Length, ignoring");
++		} else {
++			header->next = ast_variable_new(var->name, var->value, "");
++			header = header->next;
++		}
++	}
++
++	dialog_ref(p, "bump the count of p, which transmit_sip_request will decrement.");
++	sip_scheddestroy(p, SIP_TRANS_TIMEOUT);
++	transmit_invite(p, SIP_NOTIFY, 0, 2, NULL);
++
++	astman_send_ack(s, m, "Notify Sent");
++	ast_variables_destroy(vars);
++	return 0;
++}
++
+ static int manager_sipnotify(struct mansession *s, const struct message *m)
+ {
+ 	const char *channame = astman_get_header(m, "Channel");
+@@ -30773,6 +30900,7 @@ static int load_module(void)
+ 	ast_manager_register_xml("SIPqualifypeer", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_sip_qualify_peer);
+ 	ast_manager_register_xml("SIPshowregistry", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_show_registry);
+ 	ast_manager_register_xml("SIPnotify", EVENT_FLAG_SYSTEM, manager_sipnotify);
++	ast_manager_register_xml("SIPnotifyprovd", EVENT_FLAG_SYSTEM, manager_sipnotify_provd);
+ 	sip_poke_all_peers();	
+ 	sip_send_all_registers();
+ 	sip_send_all_mwi_subscriptions();
+@@ -30873,6 +31001,7 @@ static int unload_module(void)
+ 	ast_manager_unregister("SIPqualifypeer");
+ 	ast_manager_unregister("SIPshowregistry");
+ 	ast_manager_unregister("SIPnotify");
++	ast_manager_unregister("SIPnotifyprovd");
+ 	
+ 	/* Kill TCP/TLS server threads */
+ 	if (sip_tcp_desc.master) {
