@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
 
-DEB_PKG = "asterisk"
+DEB_PKG = "asterisk11"
 TARBALL_DIR := $(shell mktemp -d)
 
 ASTVER = $(shell cat $(MODULE_PATH)/ASTERISK-VERSION)
