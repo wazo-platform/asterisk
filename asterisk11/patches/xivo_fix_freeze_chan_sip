@@ -1,0 +1,24 @@
+Index: asterisk-1.8.20.1/channels/chan_sip.c
+===================================================================
+--- asterisk-1.8.20.1.orig/channels/chan_sip.c
++++ asterisk-1.8.20.1/channels/chan_sip.c
+@@ -18999,10 +18999,7 @@ static int show_channels_cb(void *__cur,
+ {
+ 	struct sip_pvt *cur = __cur;
+ 	struct __show_chan_arg *arg = __arg;
+-	const struct ast_sockaddr *dst;
+-
+-	sip_pvt_lock(cur);
+-	dst = sip_real_dst(cur);
++	const struct ast_sockaddr *dst = sip_real_dst(cur);
+ 
+ 	/* XXX indentation preserved to reduce diff. Will be fixed later */
+ 	if (cur->subscribed == NONE && !arg->subscriptions) {
+@@ -19038,7 +19035,6 @@ static int show_channels_cb(void *__cur,
+ 			);
+ 		arg->numchans++;
+ 	}
+-	sip_pvt_unlock(cur);
+ 	return 0;	/* don't care, we scan all channels */
+ }
+ 
