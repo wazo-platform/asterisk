@@ -1,8 +1,8 @@
-Index: asterisk-1.8.20.1/channels/chan_sip.c
+Index: asterisk-11.1.2/channels/chan_sip.c
 ===================================================================
---- asterisk-1.8.20.1.orig/channels/chan_sip.c
-+++ asterisk-1.8.20.1/channels/chan_sip.c
-@@ -18999,10 +18999,7 @@ static int show_channels_cb(void *__cur,
+--- asterisk-11.1.2.orig/channels/chan_sip.c
++++ asterisk-11.1.2/channels/chan_sip.c
+@@ -20544,10 +20544,7 @@ static int show_channels_cb(void *__cur,
  {
  	struct sip_pvt *cur = __cur;
  	struct __show_chan_arg *arg = __arg;
@@ -14,7 +14,7 @@ Index: asterisk-1.8.20.1/channels/chan_sip.c
  
  	/* XXX indentation preserved to reduce diff. Will be fixed later */
  	if (cur->subscribed == NONE && !arg->subscriptions) {
-@@ -19038,7 +19035,6 @@ static int show_channels_cb(void *__cur,
+@@ -20583,7 +20580,6 @@ static int show_channels_cb(void *__cur,
  			);
  		arg->numchans++;
  	}
