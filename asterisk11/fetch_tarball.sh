@@ -5,19 +5,14 @@ DEST_PATH=tarballs
 
 ##########################################################################
 
-usage()
-{
-	echo "Usage: $0 <version> <destination>"
-}
-
 UPVERSION=$1
 if [ -z "${UPVERSION}" ]; then
-	usage
-	exit 1
+    UPVERSION=$(cat ASTERISK-VERSION)
 fi
 
 FILENAME="asterisk_${UPVERSION}+dfsg.orig.tar.gz"
 
+mkdir -p "${DEST_PATH}"
 if [ -e "${DEST_PATH}/${FILENAME}" ]; then
 	echo "A tarball already exist for this version ; remove it if you want to regenerate."
 	exit 0
@@ -41,11 +36,8 @@ tar xfz ../${UPFILENAME}
 if [ -e "asterisk-${UPVERSION}" ]; then
 	(
 	cd asterisk-${UPVERSION}
-	find  -depth -type f -name 'fpm-*.mp3' -exec rm -rf {} \;
-	rm -f sounds/asterisk-moh-freeplay-wav.tar.gz
-	rm -rf asterisk-${UPVERSION}/contrib/firmware/
-	rm -rf codecs/ilbc/* codecs/codec_ilbc.c
-	printf "all:\nclean:\n.PHONY: all clean\n" >codecs/ilbc/Makefile
+	# remove some large files we don't need in the tarball
+	rm -f sounds/asterisk-moh*
 	)
 	tar cfz ../${FILENAME} asterisk-${UPVERSION}
 else
