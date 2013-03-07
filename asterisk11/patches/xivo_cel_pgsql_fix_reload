@@ -1,7 +1,7 @@
-Index: asterisk-11.1.2/cel/cel_pgsql.c
+Index: asterisk-11.2.1/cel/cel_pgsql.c
 ===================================================================
---- asterisk-11.1.2.orig/cel/cel_pgsql.c
-+++ asterisk-11.1.2/cel/cel_pgsql.c
+--- asterisk-11.2.1.orig/cel/cel_pgsql.c
++++ asterisk-11.2.1/cel/cel_pgsql.c
 @@ -579,7 +579,7 @@ static int load_module(void)
  static int reload(void)
  {
