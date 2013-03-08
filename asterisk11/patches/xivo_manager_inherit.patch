@@ -1,18 +1,18 @@
-Index: asterisk-1.8.17.0/main/channel.c
+Index: asterisk-11.2.1/main/channel.c
 ===================================================================
---- asterisk-1.8.17.0.orig/main/channel.c
-+++ asterisk-1.8.17.0/main/channel.c
-@@ -6149,6 +6149,13 @@ void ast_channel_inherit_variables(const
+--- asterisk-11.2.1.orig/main/channel.c
++++ asterisk-11.2.1/main/channel.c
+@@ -6469,6 +6469,13 @@ void ast_channel_inherit_variables(const
  	struct ast_var_t *current, *newvar;
  	const char *varname;
  
-+        if ((parent != NULL) && (child != NULL))
-+                manager_event(EVENT_FLAG_CALL, "Inherit",
-+                              "Parent: %s\r\n"
-+                              "Child: %s\r\n",
-+                              parent->name,
-+                              child->name);
++	if ((parent != NULL) && (child != NULL))
++		manager_event(EVENT_FLAG_CALL, "Inherit",
++			"Parent: %s\r\n"
++			"Child: %s\r\n",
++			ast_channel_name(parent),
++			ast_channel_name(child));
 +
- 	AST_LIST_TRAVERSE(&parent->varshead, current, entries) {
+ 	AST_LIST_TRAVERSE(ast_channel_varshead((struct ast_channel *) parent), current, entries) {
  		int vartype = 0;
  
