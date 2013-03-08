@@ -1,7 +1,7 @@
 ### upstream fixes
 deb_allow-tilde-destdir
 deb_astgenkey-security
-#deb_make-clean-fixes
+deb_make-clean-fixes
 ## proformatique patches
 xivo_queue_agent_talking
 xivo_cel_pgsql_fix_reload
