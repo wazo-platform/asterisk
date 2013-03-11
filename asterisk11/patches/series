@@ -9,6 +9,7 @@ xivo_manager_inherit.patch
 xivo_banner
 xivo_sip_autocreate_context
 xivo_sip_autocreate_prefix
+xivo_sip_autocreate_type
 #xivo_sip_autocreate_options
 #xivo_sip_notify_provd
 #xivo_skill_queues
