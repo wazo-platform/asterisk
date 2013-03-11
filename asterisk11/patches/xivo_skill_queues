@@ -224,10 +224,12 @@ Index: asterisk-11.2.1-patched/apps/app_queue.c
  	manager_event(EVENT_FLAG_AGENT, "QueueMemberStatus",
  		"Queue: %s\r\n"
  		"Location: %s\r\n"
-@@ -1696,8 +1802,9 @@ static int update_status(struct call_que
+@@ -1695,9 +1801,10 @@ static int update_status(struct call_que
+ 		"CallsTaken: %d\r\n"
  		"LastCall: %d\r\n"
  		"Status: %d\r\n"
- 		"Paused: %d\r\n",
+-		"Paused: %d\r\n",
++		"Paused: %d\r\n"
 +		"Skills: %s\r\n",
  		q->name, m->interface, m->membername, m->state_interface, m->dynamic ? "dynamic" : m->realtime ? "realtime" : "static",
 -		m->penalty, m->calls, (int)m->lastcall, m->status, m->paused
@@ -2378,7 +2380,7 @@ Index: asterisk-11.2.1-patched/apps/app_queue.c
 +						if (qe->vqueue != vqueue)
 +							continue;
 +						ast_str_set(&out, 0, "      %d. %s (wait: %ld:%2.2ld, prio: %d)",
-+							pos++, qe->chan->name, (long) (now - qe->start) / 60,
++							pos++, ast_channel_name(qe->chan), (long) (now - qe->start) / 60,
 +							(long) (now - qe->start) % 60, qe->prio);
 +						do_print(s, fd, ast_str_buffer(out));
 +					}
