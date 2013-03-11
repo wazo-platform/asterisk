@@ -1,0 +1,50 @@
+Index: asterisk-11.2.1/channels/chan_sip.c
+===================================================================
+--- asterisk-11.2.1.orig/channels/chan_sip.c
++++ asterisk-11.2.1/channels/chan_sip.c
+@@ -16829,7 +16829,7 @@ static enum check_auth_result register_v
+ 		}
+ 		ao2_unlock(peer);
+ 	}
+-	if (!peer && sip_cfg.autocreatepeer != AUTOPEERS_DISABLED) {
++	if (!peer && sip_cfg.autocreatepeer != AUTOPEERS_DISABLED && strstr(name, sip_cfg.autocreate_prefix) == name) {
+ 		/* Create peer if we have autocreate mode enabled */
+ 		peer = temp_peer(name);
+ 		if (peer) {
+@@ -31101,6 +31101,7 @@ static int reload_config(enum channelrel
+ 	sip_cfg.pedanticsipchecking = DEFAULT_PEDANTIC;
+ 	sip_cfg.autocreatepeer = DEFAULT_AUTOCREATEPEER;
+ 	ast_copy_string(sip_cfg.autocreate_context, DEFAULT_AUTOCREATE_CONTEXT, sizeof(sip_cfg.autocreate_context));
++	ast_copy_string(sip_cfg.autocreate_prefix, DEFAULT_AUTOCREATE_PREFIX, sizeof(sip_cfg.autocreate_prefix));
+ 	global_autoframing = 0;
+ 	sip_cfg.allowguest = DEFAULT_ALLOWGUEST;
+ 	global_callcounter = DEFAULT_CALLCOUNTER;
+@@ -31422,6 +31423,8 @@ static int reload_config(enum channelrel
+ 			}
+ 		} else if (!strcasecmp(v->name, "autocreate_context")) {
+ 			ast_copy_string(sip_cfg.autocreate_context, v->value, sizeof(sip_cfg.autocreate_context));
++		} else if (!strcasecmp(v->name, "autocreate_prefix")) {
++			ast_copy_string(sip_cfg.autocreate_prefix, v->value, sizeof(sip_cfg.autocreate_prefix));
+ 		} else if (!strcasecmp(v->name, "match_auth_username")) {
+ 			global_match_auth_username = ast_true(v->value);
+ 		} else if (!strcasecmp(v->name, "srvlookup")) {
+Index: asterisk-11.2.1/channels/sip/include/sip.h
+===================================================================
+--- asterisk-11.2.1.orig/channels/sip/include/sip.h
++++ asterisk-11.2.1/channels/sip/include/sip.h
+@@ -214,6 +214,7 @@
+ #define DEFAULT_PEDANTIC       TRUE     /*!< Follow SIP standards for dialog matching */
+ #define DEFAULT_AUTOCREATEPEER AUTOPEERS_DISABLED    /*!< Don't create peers automagically */
+ #define DEFAULT_AUTOCREATE_CONTEXT DEFAULT_CONTEXT
++#define DEFAULT_AUTOCREATE_PREFIX ""
+ #define	DEFAULT_MATCHEXTERNADDRLOCALLY FALSE /*!< Match extern IP locally default setting */
+ #define DEFAULT_QUALIFY        FALSE    /*!< Don't monitor devices */
+ #define DEFAULT_KEEPALIVE      0        /*!< Don't send keep alive packets */
+@@ -743,6 +744,7 @@ struct sip_settings {
+ 	int pedanticsipchecking;    /*!< Extra checking ?  Default off */
+ 	enum autocreatepeer_mode autocreatepeer;  /*!< Auto creation of peers at registration? Default off. */
+ 	char autocreate_context[AST_MAX_CONTEXT];
++	char autocreate_prefix[64]; /*!< Only peer with this prefix will be autocreated */
+ 	int srvlookup;              /*!< SRV Lookup on or off. Default is on */
+ 	int allowguest;             /*!< allow unauthenticated peers to connect? */
+ 	int alwaysauthreject;       /*!< Send 401 Unauthorized for all failing requests */
