@@ -1,0 +1,57 @@
+Index: asterisk-11.2.1/channels/chan_sip.c
+===================================================================
+--- asterisk-11.2.1.orig/channels/chan_sip.c
++++ asterisk-11.2.1/channels/chan_sip.c
+@@ -20333,6 +20333,7 @@ static char *sip_show_settings(struct as
+ 	ast_cli(a->fd, "  Textsupport:            %s\n", AST_CLI_YESNO(ast_test_flag(&global_flags[1], SIP_PAGE2_TEXTSUPPORT)));
+ 	ast_cli(a->fd, "  Ignore SDP sess. ver.:  %s\n", AST_CLI_YESNO(ast_test_flag(&global_flags[1], SIP_PAGE2_IGNORESDPVERSION)));
+ 	ast_cli(a->fd, "  AutoCreate Peer:        %s\n", autocreatepeer2str(sip_cfg.autocreatepeer));
++	ast_cli(a->fd, "  AutoCreate Context:     %s\n", sip_cfg.autocreate_context);
+ 	ast_cli(a->fd, "  Match Auth Username:    %s\n", AST_CLI_YESNO(global_match_auth_username));
+ 	ast_cli(a->fd, "  Allow unknown access:   %s\n", AST_CLI_YESNO(sip_cfg.allowguest));
+ 	ast_cli(a->fd, "  Allow subscriptions:    %s\n", AST_CLI_YESNO(ast_test_flag(&global_flags[1], SIP_PAGE2_ALLOWSUBSCRIBE)));
+@@ -30080,6 +30081,7 @@ static struct sip_peer *temp_peer(const
+ 
+ 	ast_copy_string(peer->name, name, sizeof(peer->name));
+ 
++	ast_string_field_set(peer, context, sip_cfg.autocreate_context);
+ 	peer->selfdestruct = TRUE;
+ 	peer->host_dynamic = TRUE;
+ 	peer->prefs = default_prefs;
+@@ -31098,6 +31100,7 @@ static int reload_config(enum channelrel
+ 	global_regattempts_max = 0;
+ 	sip_cfg.pedanticsipchecking = DEFAULT_PEDANTIC;
+ 	sip_cfg.autocreatepeer = DEFAULT_AUTOCREATEPEER;
++	ast_copy_string(sip_cfg.autocreate_context, DEFAULT_AUTOCREATE_CONTEXT, sizeof(sip_cfg.autocreate_context));
+ 	global_autoframing = 0;
+ 	sip_cfg.allowguest = DEFAULT_ALLOWGUEST;
+ 	global_callcounter = DEFAULT_CALLCOUNTER;
+@@ -31417,6 +31420,8 @@ static int reload_config(enum channelrel
+ 			} else {
+ 				sip_cfg.autocreatepeer = ast_true(v->value) ? AUTOPEERS_VOLATILE : AUTOPEERS_DISABLED;
+ 			}
++		} else if (!strcasecmp(v->name, "autocreate_context")) {
++			ast_copy_string(sip_cfg.autocreate_context, v->value, sizeof(sip_cfg.autocreate_context));
+ 		} else if (!strcasecmp(v->name, "match_auth_username")) {
+ 			global_match_auth_username = ast_true(v->value);
+ 		} else if (!strcasecmp(v->name, "srvlookup")) {
+Index: asterisk-11.2.1/channels/sip/include/sip.h
+===================================================================
+--- asterisk-11.2.1.orig/channels/sip/include/sip.h
++++ asterisk-11.2.1/channels/sip/include/sip.h
+@@ -213,6 +213,7 @@
+ #define DEFAULT_NOTIFYCID      DISABLED	/*!< Include CID with ringing notifications */
+ #define DEFAULT_PEDANTIC       TRUE     /*!< Follow SIP standards for dialog matching */
+ #define DEFAULT_AUTOCREATEPEER AUTOPEERS_DISABLED    /*!< Don't create peers automagically */
++#define DEFAULT_AUTOCREATE_CONTEXT DEFAULT_CONTEXT
+ #define	DEFAULT_MATCHEXTERNADDRLOCALLY FALSE /*!< Match extern IP locally default setting */
+ #define DEFAULT_QUALIFY        FALSE    /*!< Don't monitor devices */
+ #define DEFAULT_KEEPALIVE      0        /*!< Don't send keep alive packets */
+@@ -741,6 +742,7 @@ struct sip_settings {
+ 	int directrtpsetup;         /*!< Enable support for Direct RTP setup (no re-invites) */
+ 	int pedanticsipchecking;    /*!< Extra checking ?  Default off */
+ 	enum autocreatepeer_mode autocreatepeer;  /*!< Auto creation of peers at registration? Default off. */
++	char autocreate_context[AST_MAX_CONTEXT];
+ 	int srvlookup;              /*!< SRV Lookup on or off. Default is on */
+ 	int allowguest;             /*!< allow unauthenticated peers to connect? */
+ 	int alwaysauthreject;       /*!< Send 401 Unauthorized for all failing requests */
