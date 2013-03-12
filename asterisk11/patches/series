@@ -12,5 +12,5 @@ xivo_sip_autocreate_prefix
 xivo_sip_autocreate_type
 xivo_sip_notify_provd
 #xivo_skill_queues
-#xivo_agent_complete_wrapup
+xivo_agent_complete_wrapup
 xivo_fix_freeze_chan_sip

@@ -1,19 +1,18 @@
-Index: asterisk-1.8.20.1/apps/app_queue.c
+Index: asterisk-11.2.1/apps/app_queue.c
 ===================================================================
---- asterisk-1.8.20.1.orig/apps/app_queue.c
-+++ asterisk-1.8.20.1/apps/app_queue.c
-@@ -5450,11 +5450,16 @@ static void send_agent_complete(const st
+--- asterisk-11.2.1.orig/apps/app_queue.c
++++ asterisk-11.2.1/apps/app_queue.c
+@@ -4959,11 +4959,16 @@ static void send_agent_complete(const st
  		"MemberName: %s\r\n"
  		"HoldTime: %ld\r\n"
  		"TalkTime: %ld\r\n"
 +		"WrapupTime: %d\r\n"
  		"Reason: %s\r\n"
  		"%s",
- 		queuename, qe->chan->uniqueid, peer->name, member->interface, member->membername,
+ 		queuename, ast_channel_uniqueid(qe->chan), ast_channel_name(peer), member->interface, member->membername,
 -		(long)(callstart - qe->start), (long)(time(NULL) - callstart), reason,
--		qe->parent->eventwhencalled == QUEUE_EVENT_VARIABLES ? vars2manager(qe->chan, vars, vars_len) : "");
-+		(long)(callstart - qe->start), (long)(time(NULL) - callstart), qe->parent->wrapuptime,
-+		reason, qe->parent->eventwhencalled == QUEUE_EVENT_VARIABLES ? vars2manager(qe->chan, vars, vars_len) : "");
++		(long)(callstart - qe->start), (long)(time(NULL) - callstart), qe->parent->wrapuptime, reason,
+ 		qe->parent->eventwhencalled == QUEUE_EVENT_VARIABLES ? vars2manager(qe->chan, vars, vars_len) : "");
 +
 +	if (qe->parent->wrapuptime > 0) {
 +		ast_queue_log("NONE", "NONE", member->membername, "WRAPUPSTART", "%d", qe->parent->wrapuptime);
