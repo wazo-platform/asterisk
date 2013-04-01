@@ -12,8 +12,8 @@ Index: asterisk-11.2.1/main/asterisk.c
                  "certain conditions. Type 'core show license' for details.\n" \
 +                "=========================================================================\n" \
 +                "This package has been modified for the Debian GNU/Linux distribution\n" \
-+                "This package has then been modified for XiVO, a product of Proformatique\n" \
-+                "Please report all bugs to technique@proformatique.com\n" \
++                "This package has been modified for XiVO, a product of Avencall\n" \
++                "Please report all bugs to https://projects.xivo.fr/projects/xivo/issues\n" \
                  "=========================================================================\n", ast_get_version()) \
  
  /*! \defgroup main_options Main Configuration Options
