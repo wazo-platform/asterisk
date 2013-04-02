@@ -23,7 +23,7 @@ Index: asterisk-11.3.0/apps/app_queue.c
  						++qmemavail;
  					}
  				}
-+				if (mem->status == AST_DEVICE_BUSY) {
++				if (mem->status == AST_DEVICE_INUSE) {
 +					++qmembusy;
 +				}
  				ao2_ref(mem, -1);
