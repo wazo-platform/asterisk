@@ -3,11 +3,11 @@ Author: Faidon Liambotis <paravoid@debian.org>
 Forwarded: not-needed
 Last-Update: 2009-12-19
 
-Index: asterisk-11.3.0/Makefile
+Index: asterisk-11.4.0/Makefile
 ===================================================================
---- asterisk-11.3.0.orig/Makefile
-+++ asterisk-11.3.0/Makefile
-@@ -442,7 +442,6 @@ dist-clean: distclean
+--- asterisk-11.4.0.orig/Makefile
++++ asterisk-11.4.0/Makefile
+@@ -427,7 +427,6 @@ dist-clean: distclean
  
  distclean: $(SUBDIRS_DIST_CLEAN) _clean
  	@$(MAKE) -C menuselect dist-clean
@@ -15,14 +15,14 @@ Index: asterisk-11.3.0/Makefile
  	rm -f menuselect.makeopts makeopts menuselect-tree menuselect.makedeps
  	rm -f makeopts.embed_rules
  	rm -f config.log config.status config.cache
-@@ -452,6 +451,10 @@ distclean: $(SUBDIRS_DIST_CLEAN) _clean
+@@ -437,6 +436,10 @@ distclean: $(SUBDIRS_DIST_CLEAN) _clean
  	rm -rf doc/api
  	rm -f build_tools/menuselect-deps
  
 +# tarballs distributed by Digium include sounds
 +all-clean: distclean
-+	@$(MAKE) -C sounds dist-clean
++   @$(MAKE) -C sounds dist-clean
 +
- datafiles: _cleantest_all doc/core-en_US.xml
+ datafiles: _all doc/core-en_US.xml
  	CFLAGS="$(_ASTCFLAGS) $(ASTCFLAGS)" build_tools/mkpkgconfig "$(DESTDIR)$(libdir)/pkgconfig";
  # Should static HTTP be installed during make samples or even with its own target ala

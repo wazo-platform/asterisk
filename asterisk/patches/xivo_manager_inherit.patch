@@ -1,7 +1,7 @@
-Index: asterisk-11.3.0/main/channel.c
+Index: asterisk-11.4.0/main/channel.c
 ===================================================================
---- asterisk-11.3.0.orig/main/channel.c
-+++ asterisk-11.3.0/main/channel.c
+--- asterisk-11.4.0.orig/main/channel.c
++++ asterisk-11.4.0/main/channel.c
 @@ -6475,6 +6475,13 @@ void ast_channel_inherit_variables(const
  	struct ast_var_t *current, *newvar;
  	const char *varname;
