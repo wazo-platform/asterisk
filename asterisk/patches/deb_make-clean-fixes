@@ -21,7 +21,7 @@ Index: asterisk-11.4.0/Makefile
  
 +# tarballs distributed by Digium include sounds
 +all-clean: distclean
-+   @$(MAKE) -C sounds dist-clean
++	@$(MAKE) -C sounds dist-clean
 +
  datafiles: _all doc/core-en_US.xml
  	CFLAGS="$(_ASTCFLAGS) $(ASTCFLAGS)" build_tools/mkpkgconfig "$(DESTDIR)$(libdir)/pkgconfig";
