@@ -1,7 +1,7 @@
-Index: asterisk-11.5.0/channels/chan_sip.c
+Index: asterisk-11.5.1/channels/chan_sip.c
 ===================================================================
---- asterisk-11.5.0.orig/channels/chan_sip.c
-+++ asterisk-11.5.0/channels/chan_sip.c
+--- asterisk-11.5.1.orig/channels/chan_sip.c
++++ asterisk-11.5.1/channels/chan_sip.c
 @@ -581,6 +581,11 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
  			via multiple <literal>Variable: name=value</literal> sequences.</para>
  		</description>
