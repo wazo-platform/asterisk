@@ -1,16 +1,7 @@
-Index: asterisk-11.5.1/apps/app_queue.c
+Index: asterisk-11.6.0/apps/app_queue.c
 ===================================================================
---- asterisk-11.5.1.orig/apps/app_queue.c
-+++ asterisk-11.5.1/apps/app_queue.c
-@@ -402,7 +402,7 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
- 	</application>
- 	<application name="UnpauseQueueMember" language="en_US">
- 		<synopsis>
--			Unpauses a queue member.		
-+			Unpauses a queue member.
- 		</synopsis>
- 		<syntax>
- 			<parameter name="queuename" />
+--- asterisk-11.6.0.orig/apps/app_queue.c
++++ asterisk-11.6.0/apps/app_queue.c
 @@ -957,6 +957,8 @@ enum queue_reload_mask {
  	QUEUE_RELOAD_MEMBER = (1 << 1),
  	QUEUE_RELOAD_RULES = (1 << 2),
@@ -20,17 +11,6 @@ Index: asterisk-11.5.1/apps/app_queue.c
  };
  
  static const struct strategy {
-@@ -1083,8 +1085,8 @@ enum queue_timeout_priority {
-  *  q_next links ALL defined callattempt structures into a linked list. call_next is
-  *  a link which allows for a subset of the callattempts to be traversed. This subset
-  *  is used in wait_for_answer so that irrelevant callattempts are not traversed. This
-- *  also is helpful so that queue logs are always accurate in the case where a call to 
-- *  a member times out, especially if using the ringall strategy. 
-+ *  also is helpful so that queue logs are always accurate in the case where a call to
-+ *  a member times out, especially if using the ringall strategy.
- */
- 
- struct callattempt {
 @@ -1109,9 +1111,14 @@ struct callattempt {
  	struct ast_aoc_decoded *aoc_s_rate_list;
  };
@@ -162,12 +142,10 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	time_t lastcall;                     /*!< When last successful call was hungup */
  	struct call_queue *lastqueue;	     /*!< Last queue we received a call */
  	unsigned int dead:1;                 /*!< Used to detect members deleted in realtime */
-@@ -1292,7 +1386,8 @@ struct call_queue {
- 	int rrpos;                          /*!< Round Robin - position */
+@@ -1293,6 +1387,7 @@ struct call_queue {
  	int memberdelay;                    /*!< Seconds to delay connecting member to caller */
  	int autofill;                       /*!< Ignore the head call status and ring an available agent */
--	
-+
+ 
 +	struct ao2_container *vqueues;      /*!< Virtual queues */
  	struct ao2_container *members;             /*!< Head of the list of members */
  	struct queue_ent *head;             /*!< Head of the list of callers */
@@ -181,17 +159,6 @@ Index: asterisk-11.5.1/apps/app_queue.c
  
  static struct member *find_member_by_queuename_and_interface(const char *queuename, const char *interface);
  /*! \brief sets the QUEUESTATUS channel variable */
-@@ -1504,8 +1601,8 @@ static void set_queue_variables(struct c
- 			q->name, q->maxlen, int2strat(q->strategy), q->count, q->holdtime, q->talktime, q->callscompleted, q->callsabandoned,  q->servicelevel, sl);
- 
- 		ao2_unlock(q);
--	
--		pbx_builtin_setvar_multiple(chan, interfacevar); 
-+
-+		pbx_builtin_setvar_multiple(chan, interfacevar);
- 	} else {
- 		ao2_unlock(q);
- 	}
 @@ -1542,7 +1639,9 @@ static inline void insert_entry(struct c
   * is available, the function immediately returns 0. If no members are available,
   * then -1 is returned.
@@ -241,12 +208,12 @@ Index: asterisk-11.5.1/apps/app_queue.c
   * \retval 1 if the member is available
   * \retval 0 if the member is not available
   */
--static int is_member_available(struct member *mem)
-+static int is_member_available(struct member *mem, struct queue_ent *qe)
+-static int is_member_available(struct call_queue *q, struct member *mem)
++static int is_member_available(struct call_queue *q, struct member *mem, struct queue_ent *qe)
  {
  	int available = 0;
  
-@@ -1728,7 +1835,8 @@ static int is_member_available(struct me
+@@ -1728,7 +1835,8 @@ static int is_member_available(struct ca
  			/* else fall through */
  		case AST_DEVICE_NOT_INUSE:
  		case AST_DEVICE_UNKNOWN:
@@ -256,16 +223,16 @@ Index: asterisk-11.5.1/apps/app_queue.c
  				available = 1;
  			}
  			break;
-@@ -1774,7 +1882,7 @@ static int handle_statechange(void *data
+@@ -1778,7 +1886,7 @@ static int handle_statechange(void *data
  
  			/* check every member until we find one NOT_INUSE */
  			if (!avail) {
--				avail = is_member_available(m);
-+				avail = is_member_available(m, NULL);
+-				avail = is_member_available(q, m);
++				avail = is_member_available(q, m, NULL);
  			}
  			if (avail && found_member) {
  				/* early exit as we've found an available member and the member of interest */
-@@ -1917,7 +2025,7 @@ static int get_queue_member_status(struc
+@@ -1921,7 +2029,7 @@ static int get_queue_member_status(struc
  }
  
  /*! \brief allocate space for new queue member and set fields based on parameters passed */
@@ -274,7 +241,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  {
  	struct member *cur;
  
-@@ -1947,6 +2055,10 @@ static struct member *create_queue_membe
+@@ -1951,6 +2059,10 @@ static struct member *create_queue_membe
  			ast_copy_string(cur->state_context, S_OR(context, "default"), sizeof(cur->state_context));
  		}
  		cur->status = get_queue_member_status(cur);
@@ -285,61 +252,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	}
  
  	return cur;
-@@ -1959,7 +2071,7 @@ static int compress_char(const char c)
- 		return 0;
- 	} else if (c > 96) {
- 		return c - 64;
--	} 
-+	}
- 	return c - 32;
- }
- 
-@@ -2123,7 +2235,7 @@ static int insert_penaltychange(const ch
- 	}
- 
- 	contentdup = ast_strdupa(content);
--	
-+
- 	if (!(maxstr = strchr(contentdup, ','))) {
- 		ast_log(LOG_WARNING, "Improperly formatted penaltychange rule at line %d. Ignoring.\n", linenum);
- 		ast_free(rule);
-@@ -2144,7 +2256,7 @@ static int insert_penaltychange(const ch
- 	if ((minstr = strchr(maxstr,','))) {
- 		*minstr++ = '\0';
- 	}
--	
-+
- 	/* The last check will evaluate true if either no penalty change is indicated for a given rule
- 	 * OR if a min penalty change is indicated but no max penalty change is */
- 	if (*maxstr == '+' || *maxstr == '-' || *maxstr == '\0') {
-@@ -2176,7 +2288,7 @@ static int insert_penaltychange(const ch
- 			}
- 		}
- 		AST_LIST_TRAVERSE_SAFE_END;
--	
-+
- 		if (!inserted) {
- 			AST_LIST_INSERT_TAIL(&rl_iter->rules, rule, list);
- 			inserted = 1;
-@@ -2229,7 +2341,7 @@ static void parse_empty_options(const ch
- }
- 
- /*! \brief Configure a queue parameter.
-- * 
-+ *
-  * The failunknown flag is set for config files (and static realtime) to show
-  * errors for unknown parameters. It is cleared for dynamic realtime to allow
-  *  extra fields in the tables.
-@@ -2238,7 +2350,7 @@ static void parse_empty_options(const ch
- */
- static void queue_set_param(struct call_queue *q, const char *param, const char *val, int linenum, int failunknown)
- {
--	if (!strcasecmp(param, "musicclass") || 
-+	if (!strcasecmp(param, "musicclass") ||
- 		!strcasecmp(param, "music") || !strcasecmp(param, "musiconhold")) {
- 		ast_string_field_set(q, moh, val);
- 	} else if (!strcasecmp(param, "announce")) {
-@@ -2496,6 +2608,7 @@ static void rt_handle_member_record(stru
+@@ -2500,6 +2612,7 @@ static void rt_handle_member_record(stru
  	const char *state_interface = S_OR(ast_variable_retrieve(member_config, interface, "state_interface"), interface);
  	const char *penalty_str = ast_variable_retrieve(member_config, interface, "penalty");
  	const char *paused_str = ast_variable_retrieve(member_config, interface, "paused");
@@ -347,7 +260,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  
  	if (ast_strlen_zero(rt_uniqueid)) {
  		ast_log(LOG_WARNING, "Realtime field uniqueid is empty for member %s\n", S_OR(membername, "NULL"));
-@@ -2541,9 +2654,15 @@ static void rt_handle_member_record(stru
+@@ -2545,9 +2658,15 @@ static void rt_handle_member_record(stru
  				ast_copy_string(m->state_interface, state_interface, sizeof(m->state_interface));
  			}
  			m->penalty = penalty;
@@ -363,7 +276,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  			break;
  		}
  		ao2_ref(m, -1);
-@@ -2552,9 +2671,10 @@ static void rt_handle_member_record(stru
+@@ -2556,9 +2675,10 @@ static void rt_handle_member_record(stru
  
  	/* Create a new member */
  	if (!found) {
@@ -375,7 +288,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  			ast_copy_string(m->rt_uniqueid, rt_uniqueid, sizeof(m->rt_uniqueid));
  			if (!log_membername_as_agent) {
  				ast_queue_log(q->name, "REALTIME", m->interface, "ADDMEMBER", "%s", paused ? "PAUSED" : "");
-@@ -2598,6 +2718,10 @@ static void destroy_queue(void *obj)
+@@ -2602,6 +2722,10 @@ static void destroy_queue(void *obj)
  		}
  	}
  	ao2_ref(q->members, -1);
@@ -386,54 +299,10 @@ Index: asterisk-11.5.1/apps/app_queue.c
  }
  
  static struct call_queue *alloc_queue(const char *queuename)
-@@ -2645,7 +2769,7 @@ static struct call_queue *find_queue_by_
- 				ao2_unlock(q);
- 				queue_t_unref(q, "Queue is dead; can't return it");
- 				return NULL;
--			} 
-+			}
- 			ast_log(LOG_WARNING, "Static queue '%s' already exists. Not loading from realtime\n", q->name);
- 			ao2_unlock(q);
- 			return q;
-@@ -2863,38 +2987,921 @@ static void update_realtime_members(stru
- 		return;
- 	}
+@@ -2901,6 +3025,889 @@ static void update_realtime_members(stru
+ 	ast_config_destroy(member_config);
+ }
  
--	ao2_lock(q);
-+	ao2_lock(q);
-+
-+	/* Temporarily set realtime  members dead so we can detect deleted ones.*/
-+	mem_iter = ao2_iterator_init(q->members, 0);
-+	while ((m = ao2_iterator_next(&mem_iter))) {
-+		if (m->realtime) {
-+			m->dead = 1;
-+		}
-+		ao2_ref(m, -1);
-+	}
-+	ao2_iterator_destroy(&mem_iter);
-+
-+	while ((interface = ast_category_browse(member_config, interface))) {
-+		rt_handle_member_record(q, interface, member_config);
-+	}
-+
-+	/* Delete all realtime members that have been deleted in DB. */
-+	mem_iter = ao2_iterator_init(q->members, 0);
-+	while ((m = ao2_iterator_next(&mem_iter))) {
-+		if (m->dead) {
-+			if (ast_strlen_zero(m->membername) || !log_membername_as_agent) {
-+				ast_queue_log(q->name, "REALTIME", m->interface, "REMOVEMEMBER", "%s", "");
-+			} else {
-+				ast_queue_log(q->name, "REALTIME", m->membername, "REMOVEMEMBER", "%s", "");
-+			}
-+			member_remove_from_queue(q, m);
-+		}
-+		ao2_ref(m, -1);
-+	}
-+	ao2_iterator_destroy(&mem_iter);
-+	ao2_unlock(q);
-+	ast_config_destroy(member_config);
-+}
-+
 +static void destroy_skills_group(void *obj)
 +{
 +	struct skills_group *skgrp = obj;
@@ -1255,24 +1124,13 @@ Index: asterisk-11.5.1/apps/app_queue.c
 +		ast_log(LOG_WARNING, "Ruleset '%s' does not exist.\n", ruleset_name);
 +	} else {
 +		rule_iter = ao2_iterator_init(rs->rules, 0);
- 
--	/* Temporarily set realtime  members dead so we can detect deleted ones.*/
--	mem_iter = ao2_iterator_init(q->members, 0);
--	while ((m = ao2_iterator_next(&mem_iter))) {
--		if (m->realtime) {
--			m->dead = 1;
++
 +		/* Clear the current selection (if any) */
 +		if (qe->mem_selection) {
 +			ao2_ref(qe->mem_selection, -1);
 +			qe->mem_selection = NULL;
- 		}
--		ao2_ref(m, -1);
--	}
--	ao2_iterator_destroy(&mem_iter);
- 
--	while ((interface = ast_category_browse(member_config, interface))) {
--		rt_handle_member_record(q, interface, member_config);
--	}
++		}
++
 +		while (!qe->mem_selection && (rule = ao2_iterator_next(&rule_iter))) {
 +			qe->mem_selection = ao2_container_alloc(37, member_hash_fn, member_cmp_fn);
 +			mem_iter = ao2_iterator_init(q->members, 0);
@@ -1282,15 +1140,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
 +					if (!strcmp(skills->name, member->skills))
 +						break;
 +				}
- 
--	/* Delete all realtime members that have been deleted in DB. */
--	mem_iter = ao2_iterator_init(q->members, 0);
--	while ((m = ao2_iterator_next(&mem_iter))) {
--		if (m->dead) {
--			if (ast_strlen_zero(m->membername) || !log_membername_as_agent) {
--				ast_queue_log(q->name, "REALTIME", m->interface, "REMOVEMEMBER", "%s", "");
--			} else {
--				ast_queue_log(q->name, "REALTIME", m->membername, "REMOVEMEMBER", "%s", "");
++
 +				if (!skills) {
 +					ast_log(LOG_WARNING, "Skills group '%s' does not exist.\n", member->skills);
 +					continue;
@@ -1303,8 +1153,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
 +				} else
 +					ast_log(LOG_DEBUG, "Member %s is NOT associated.\n", member->interface);
 +				ao2_ref(member, -1);
- 			}
--			member_remove_from_queue(q, m);
++			}
 +			ao2_iterator_destroy(&mem_iter);
 +			if (!ao2_container_count(qe->mem_selection) || (rule->dcond && !operator_eval_dynamics(rule->dcond, variables, qe))) {
 +				/* CLEAR to retry. */
@@ -1314,13 +1163,9 @@ Index: asterisk-11.5.1/apps/app_queue.c
 +				qe->skills_next_check = 0;
 +			}
 +			ao2_ref(rule, -1);
- 		}
--		ao2_ref(m, -1);
++		}
 +		ao2_iterator_destroy(&rule_iter);
- 	}
--	ao2_iterator_destroy(&mem_iter);
--	ao2_unlock(q);
--	ast_config_destroy(member_config);
++	}
 +
 +	AST_LIST_UNLOCK(&skill_rulesets);
 +	AST_LIST_UNLOCK(&skills_groups);
@@ -1339,10 +1184,12 @@ Index: asterisk-11.5.1/apps/app_queue.c
 +	for (; ch; ch = ch->next)
 +		ch->skills_next_check = now;
 +	return 0;
- }
- 
++}
++
  static int join_queue(char *queuename, struct queue_ent *qe, enum queue_result *reason, int position)
-@@ -2913,7 +3920,9 @@ static int join_queue(char *queuename, s
+ {
+ 	struct call_queue *q;
+@@ -2917,7 +3924,9 @@ static int join_queue(char *queuename, s
  	/* This is our one */
  	if (q->joinempty) {
  		int status = 0;
@@ -1353,7 +1200,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  			*reason = QUEUE_JOINEMPTY;
  			ao2_unlock(q);
  			queue_t_unref(q, "Done with realtime queue");
-@@ -2928,6 +3937,10 @@ static int join_queue(char *queuename, s
+@@ -2932,6 +3941,10 @@ static int join_queue(char *queuename, s
  		 * Take into account the priority of the calling user */
  		inserted = 0;
  		prev = NULL;
@@ -1364,7 +1211,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  		cur = q->head;
  		while (cur) {
  			/* We have higher priority than the current user, enter
-@@ -2960,6 +3973,7 @@ static int join_queue(char *queuename, s
+@@ -2964,6 +3977,7 @@ static int join_queue(char *queuename, s
  		ast_copy_string(qe->announce, q->announce, sizeof(qe->announce));
  		ast_copy_string(qe->context, q->context, sizeof(qe->context));
  		q->count++;
@@ -1372,7 +1219,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  		if (q->count == 1) {
  			ast_devstate_changed(AST_DEVICE_RINGING, AST_DEVSTATE_CACHABLE, "Queue:%s", q->name);
  		}
-@@ -3073,7 +4087,7 @@ static int valid_exit(struct queue_ent *
+@@ -3077,7 +4091,7 @@ static int valid_exit(struct queue_ent *
  
  static int say_position(struct queue_ent *qe, int ringing)
  {
@@ -1381,7 +1228,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	int say_thanks = 1;
  	time_t now;
  
-@@ -3147,11 +4161,12 @@ static int say_position(struct queue_ent
+@@ -3151,11 +4165,12 @@ static int say_position(struct queue_ent
  		}
  	}
  	/* Round hold time to nearest minute */
@@ -1396,7 +1243,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  		avgholdsecs *= qe->parent->roundingseconds;
  	} else {
  		avgholdsecs = 0;
-@@ -3231,6 +4246,13 @@ playout:
+@@ -3235,6 +4250,13 @@ playout:
  	return res;
  }
  
@@ -1410,16 +1257,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  static void recalc_holdtime(struct queue_ent *qe, int newholdtime)
  {
  	int oldvalue;
-@@ -3246,7 +4268,7 @@ static void recalc_holdtime(struct queue
- }
- 
- /*! \brief Caller leaving queue.
-- * 
-+ *
-  * Search the queue to find the leaving client, if found remove from queue
-  * create manager event, move others up the queue.
- */
-@@ -3268,6 +4290,8 @@ static void leave_queue(struct queue_ent
+@@ -3272,6 +4294,8 @@ static void leave_queue(struct queue_ent
  		if (current == qe) {
  			char posstr[20];
  			q->count--;
@@ -1428,7 +1266,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  			if (!q->count) {
  				ast_devstate_changed(AST_DEVICE_NOT_INUSE, AST_DEVSTATE_CACHABLE, "Queue:%s", q->name);
  			}
-@@ -3373,9 +4397,10 @@ static void hangupcalls(struct callattem
+@@ -3377,9 +4401,10 @@ static void hangupcalls(struct callattem
   * \note The queue passed in should be locked prior to this function call
   *
   * \param[in] q The queue for which we are couting the number of available members
@@ -1440,16 +1278,16 @@ Index: asterisk-11.5.1/apps/app_queue.c
  {
  	struct member *mem;
  	int avl = 0;
-@@ -3384,7 +4409,7 @@ static int num_available_members(struct
+@@ -3388,7 +4413,7 @@ static int num_available_members(struct
  	mem_iter = ao2_iterator_init(q->members, 0);
  	while ((mem = ao2_iterator_next(&mem_iter))) {
  
--		avl += is_member_available(mem);
-+		avl += is_member_available(mem, qe);
+-		avl += is_member_available(q, mem);
++		avl += is_member_available(q, mem, qe);
  		ao2_ref(mem, -1);
  
  		/* If autofill is not enabled or if the queue's strategy is ringall, then
-@@ -3425,7 +4450,7 @@ static int compare_weight(struct call_qu
+@@ -3429,7 +4454,7 @@ static int compare_weight(struct call_qu
  		if (q->count && q->members) {
  			if ((mem = ao2_find(q->members, member, OBJ_POINTER))) {
  				ast_debug(1, "Found matching member %s in queue '%s'\n", mem->interface, q->name);
@@ -1458,7 +1296,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  					ast_debug(1, "Queue '%s' (weight %d, calls %d) is preferred over '%s' (weight %d, calls %d)\n", q->name, q->weight, q->count, rq->name, rq->weight, rq->count);
  					found = 1;
  				}
-@@ -3547,7 +4572,7 @@ static int member_call_pending_set(struc
+@@ -3551,7 +4576,7 @@ static int member_call_pending_set(struc
   *
   * \retval non-zero if an entry can be called.
   */
@@ -1467,7 +1305,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  {
  	if (call->member->paused) {
  		ast_debug(1, "%s paused, can't receive call\n", call->interface);
-@@ -3567,6 +4592,13 @@ static int can_ring_entry(struct queue_e
+@@ -3571,6 +4596,13 @@ static int can_ring_entry(struct queue_e
  		return 0;
  	}
  
@@ -1481,22 +1319,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	if (use_weight && compare_weight(qe->parent, call->member)) {
  		ast_debug(1, "Priority queue delaying call to %s:%s\n",
  			qe->parent->name, call->interface);
-@@ -3596,11 +4628,11 @@ static int can_ring_entry(struct queue_e
- 	return 1;
- }
- 
--/*! 
-+/*!
-  * \brief Part 2 of ring_one
-  *
-- * Does error checking before attempting to request a channel and call a member. 
-- * This function is only called from ring_one(). 
-+ * Does error checking before attempting to request a channel and call a member.
-+ * This function is only called from ring_one().
-  * Failure can occur if:
-  * - Agent on call
-  * - Agent is paused
-@@ -3619,7 +4651,7 @@ static int ring_entry(struct queue_ent *
+@@ -3623,7 +4655,7 @@ static int ring_entry(struct queue_ent *
  	const char *macrocontext, *macroexten;
  
  	/* on entry here, we know that tmp->chan == NULL */
@@ -1505,70 +1328,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  		if (ast_channel_cdr(qe->chan)) {
  			ast_cdr_busy(ast_channel_cdr(qe->chan));
  		}
-@@ -3675,7 +4707,7 @@ static int ring_entry(struct queue_ent *
- 		} else if (!ast_strlen_zero(ast_channel_dialed(qe->chan)->number.str)) {
- 			ast_set_callerid(tmp->chan, ast_channel_dialed(qe->chan)->number.str, NULL, NULL);
- 		} else if (!ast_strlen_zero(S_OR(ast_channel_macroexten(qe->chan), ast_channel_exten(qe->chan)))) {
--			ast_set_callerid(tmp->chan, S_OR(ast_channel_macroexten(qe->chan), ast_channel_exten(qe->chan)), NULL, NULL); 
-+			ast_set_callerid(tmp->chan, S_OR(ast_channel_macroexten(qe->chan), ast_channel_exten(qe->chan)), NULL, NULL);
- 		}
- 		tmp->dial_callerid_absent = 1;
- 	}
-@@ -3807,7 +4839,7 @@ static struct callattempt *find_best(str
- 	return best;
- }
- 
--/*! 
-+/*!
-  * \brief Place a call to a queue member.
-  *
-  * Once metrics have been calculated for each member, this function is used
-@@ -3841,7 +4873,7 @@ static int ring_one(struct queue_ent *qe
- 			ast_debug(1, "Trying '%s' with metric %d\n", best->interface, best->metric);
- 			ret = ring_entry(qe, best, busies);
- 		}
--		
-+
- 		/* If we have timed out, break out */
- 		if (qe->expire && (time(NULL) >= qe->expire)) {
- 			ast_debug(1, "Queue timed out while ringing members.\n");
-@@ -3923,14 +4955,14 @@ static int say_periodic_announcement(str
- 	}
- 
- 	ast_verb(3, "Playing periodic announcement\n");
--	
-+
- 	if (qe->parent->randomperiodicannounce && qe->parent->numperiodicannounce) {
- 		qe->last_periodic_announce_sound = ((unsigned long) ast_random()) % qe->parent->numperiodicannounce;
--	} else if (qe->last_periodic_announce_sound >= qe->parent->numperiodicannounce || 
-+	} else if (qe->last_periodic_announce_sound >= qe->parent->numperiodicannounce ||
- 		ast_str_strlen(qe->parent->sound_periodicannounce[qe->last_periodic_announce_sound]) == 0) {
- 		qe->last_periodic_announce_sound = 0;
- 	}
--	
-+
- 	/* play the announcement */
- 	res = play_file(qe->chan, ast_str_buffer(qe->parent->sound_periodicannounce[qe->last_periodic_announce_sound]));
- 
-@@ -3958,7 +4990,7 @@ static int say_periodic_announcement(str
- 	if (!qe->parent->randomperiodicannounce) {
- 		qe->last_periodic_announce_sound++;
- 	}
--	
-+
- 	return res;
- }
- 
-@@ -4619,7 +5651,7 @@ skip_frame:;
- 	return peer;
- }
- 
--/*! 
-+/*!
-  * \brief Check if we should start attempting to call queue members.
-  *
-  * A simple process, really. Count the number of members who are available
-@@ -4639,21 +5671,21 @@ static int is_our_turn(struct queue_ent
+@@ -4643,14 +5675,14 @@ static int is_our_turn(struct queue_ent
  	/* This needs a lock. How many members are available to be served? */
  	ao2_lock(qe->parent);
  
@@ -1584,26 +1344,8 @@ Index: asterisk-11.5.1/apps/app_queue.c
 +		if (!ch->pending && ch->vqueue == qe->vqueue) {
  			idx++;
  		}
--		ch = ch->next;			
-+		ch = ch->next;
- 	}
- 
- 	ao2_unlock(qe->parent);
--	/* If the queue entry is within avl [the number of available members] calls from the top ... 
-+	/* If the queue entry is within avl [the number of available members] calls from the top ...
- 	 * Autofill and position check added to support autofill=no (as only calls
- 	 * from the front of the queue are valid when autofill is disabled)
- 	 */
-@@ -4678,7 +5710,7 @@ static void update_qe_rule(struct queue_
- {
- 	int max_penalty = qe->pr->max_relative ? qe->max_penalty + qe->pr->max_value : qe->pr->max_value;
- 	int min_penalty = qe->pr->min_relative ? qe->min_penalty + qe->pr->min_value : qe->pr->min_value;
--	char max_penalty_str[20], min_penalty_str[20]; 
-+	char max_penalty_str[20], min_penalty_str[20];
- 	/* a relative change to the penalty could put it below 0 */
- 	if (max_penalty < 0) {
- 		max_penalty = 0;
-@@ -4729,7 +5761,7 @@ static int wait_our_turn(struct queue_en
+ 		ch = ch->next;
+@@ -4733,7 +5765,7 @@ static int wait_our_turn(struct queue_en
  		if (qe->parent->leavewhenempty) {
  			int status = 0;
  
@@ -1612,32 +1354,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  				*reason = QUEUE_LEAVEEMPTY;
  				ast_queue_log(qe->parent->name, ast_channel_uniqueid(qe->chan), "NONE", "EXITEMPTY", "%d|%d|%ld", qe->pos, qe->opos, (long) time(NULL) - qe->start);
  				leave_queue(qe);
-@@ -4753,7 +5785,7 @@ static int wait_our_turn(struct queue_en
- 		if (qe->parent->periodicannouncefrequency &&
- 			(res = say_periodic_announcement(qe,ringing)))
- 			break;
--		
-+
- 		/* see if we need to move to the next penalty level for this queue */
- 		while (qe->pr && ((time(NULL) - qe->start) >= qe->pr->time)) {
- 			update_qe_rule(qe);
-@@ -4764,7 +5796,7 @@ static int wait_our_turn(struct queue_en
- 			*reason = QUEUE_TIMEOUT;
- 			break;
- 		}
--		
-+
- 		/* Wait a second before checking again */
- 		if ((res = ast_waitfordigit(qe->chan, RECHECK * 1000))) {
- 			if (res > 0 && !valid_exit(qe, res)) {
-@@ -4773,12 +5805,19 @@ static int wait_our_turn(struct queue_en
- 				break;
- 			}
- 		}
--		
-+
- 		/* If we have timed out, break out */
- 		if (qe->expire && (time(NULL) >= qe->expire)) {
+@@ -4783,6 +5815,13 @@ static int wait_our_turn(struct queue_en
  			*reason = QUEUE_TIMEOUT;
  			break;
  		}
@@ -1651,61 +1368,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	}
  
  	return res;
-@@ -4816,7 +5855,7 @@ static int update_queue(struct call_queu
- 		member->calls++;
- 		member->lastqueue = q;
- 		ao2_unlock(q);
--	}	
-+	}
- 	ao2_lock(q);
- 	q->callscompleted++;
- 	if (callcompletedinsl) {
-@@ -5024,7 +6063,7 @@ static void queue_transfer_fixup(void *d
- 				(long) (time(NULL) - callstart), qe->opos);
- 
- 	update_queue(qe->parent, member, callcompletedinsl, (time(NULL) - callstart));
--	
-+
- 	/* No need to lock the channels because they are already locked in ast_do_masquerade */
- 	if ((datastore = ast_channel_datastore_find(old_chan, &queue_transfer_info, NULL))) {
- 		ast_channel_datastore_remove(old_chan, datastore);
-@@ -5123,7 +6162,7 @@ static void end_bridge_callback(void *da
-  * \param[in] qe the queue_ent structure which corresponds to the caller attempting to reach members
-  * \param[in] opts the options passed as the third parameter to the Queue() application
-  * \param[in] opt_args the options passed as the third parameter to the Queue() application
-- * \param[in] announceoverride filename to play to user when waiting 
-+ * \param[in] announceoverride filename to play to user when waiting
-  * \param[in] url the url passed as the fourth parameter to the Queue() application
-  * \param[in,out] tries the number of times we have tried calling queue members
-  * \param[out] noption set if the call to Queue() has the 'n' option set.
-@@ -5223,7 +6262,7 @@ static int try_calling(struct queue_ent
- 		ast_set_flag(&(bridge_config.features_caller), AST_FEATURE_PARKCALL);
- 	}
- 	if (ast_test_flag(&opts, OPT_NO_RETRY)) {
--		if (qe->parent->strategy == QUEUE_STRATEGY_RRMEMORY || qe->parent->strategy == QUEUE_STRATEGY_LINEAR 
-+		if (qe->parent->strategy == QUEUE_STRATEGY_RRMEMORY || qe->parent->strategy == QUEUE_STRATEGY_LINEAR
- 			|| qe->parent->strategy == QUEUE_STRATEGY_RRORDERED) {
- 			(*tries)++;
- 		} else {
-@@ -5304,7 +6343,7 @@ static int try_calling(struct queue_ent
- 		AST_LIST_LOCK(dialed_interfaces);
- 		AST_LIST_TRAVERSE(dialed_interfaces, di, list) {
- 			if (!strcasecmp(cur->interface, di->interface)) {
--				ast_debug(1, "Skipping dialing interface '%s' since it has already been dialed\n", 
-+				ast_debug(1, "Skipping dialing interface '%s' since it has already been dialed\n",
- 					di->interface);
- 				break;
- 			}
-@@ -5359,7 +6398,7 @@ static int try_calling(struct queue_ent
- 			   XXX If we're forcibly removed, these outgoing calls won't get
- 			   hung up XXX */
- 			tmp->q_next = outgoing;
--			outgoing = tmp;		
-+			outgoing = tmp;
- 			/* If this line is up, don't try anybody else */
- 			if (outgoing->chan && (ast_channel_state(outgoing->chan) == AST_STATE_UP))
- 				break;
-@@ -5464,6 +6503,7 @@ static int try_calling(struct queue_ent
+@@ -5468,6 +6507,7 @@ static int try_calling(struct queue_ent
  		member = lpeer->member;
  		/* Increment the refcount for this member, since we're going to be using it for awhile in here. */
  		ao2_ref(member, 1);
@@ -1713,85 +1376,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  		hangupcalls(outgoing, peer, qe->cancel_answered_elsewhere);
  		outgoing = NULL;
  		if (announce || qe->parent->reportholdtime || qe->parent->memberdelay) {
-@@ -5583,7 +6623,7 @@ static int try_calling(struct queue_ent
- 		 	pbx_builtin_setvar_multiple(qe->chan, interfacevar);
- 			pbx_builtin_setvar_multiple(peer, interfacevar);
- 		}
--		
-+
- 		/* if setqueueentryvar is defined, make queue entry (i.e. the caller) variables available to the channel */
- 		/* use  pbx_builtin_setvar to set a load of variables with one call */
- 		if (qe->parent->setqueueentryvar) {
-@@ -5592,7 +6632,7 @@ static int try_calling(struct queue_ent
- 			pbx_builtin_setvar_multiple(qe->chan, interfacevar);
- 			pbx_builtin_setvar_multiple(peer, interfacevar);
- 		}
--	
-+
- 		ao2_unlock(qe->parent);
- 
- 		/* try to set queue variables if configured to do so*/
-@@ -5636,7 +6676,7 @@ static int try_calling(struct queue_ent
- 				}
- 			} else {
- 				mixmonapp = pbx_findapp("MixMonitor");
--				
-+
- 				if (mixmonapp) {
- 					ast_debug(1, "Starting MixMonitor as requested.\n");
- 					if (!monitorfilename) {
-@@ -5703,7 +6743,7 @@ static int try_calling(struct queue_ent
- 
- 						pbx_substitute_variables_helper(qe->chan, meid2, meid, sizeof(meid) - 1);
- 					}
--	
-+
- 					snprintf(tmpid2, sizeof(tmpid2), "%s.%s", tmpid, qe->parent->monfmt);
- 
- 					if (!ast_strlen_zero(monitor_exec)) {
-@@ -5711,7 +6751,7 @@ static int try_calling(struct queue_ent
- 					} else {
- 						snprintf(mixmonargs, sizeof(mixmonargs), "%s,b%s", tmpid2, monitor_options);
- 					}
--					
-+
- 					ast_debug(1, "Arguments being passed to MixMonitor: %s\n", mixmonargs);
- 					/* We purposely lock the CDR so that pbx_exec does not update the application data */
- 					if (ast_channel_cdr(qe->chan)) {
-@@ -5727,12 +6767,12 @@ static int try_calling(struct queue_ent
- 			}
- 		}
- 		/* Drop out of the queue at this point, to prepare for next caller */
--		leave_queue(qe);			
-+		leave_queue(qe);
- 		if (!ast_strlen_zero(url) && ast_channel_supports_html(peer)) {
- 			ast_debug(1, "app_queue: sendurl=%s.\n", url);
- 			ast_channel_sendurl(peer, url);
- 		}
--		
-+
- 		/* run a macro for this connection if defined. The macro simply returns, no action is taken on the result */
- 		/* use macro from dialplan if passed as a option, otherwise use the default queue macro */
- 		if (!ast_strlen_zero(macro)) {
-@@ -5869,7 +6909,7 @@ static int try_calling(struct queue_ent
- 					qe->parent->eventwhencalled == QUEUE_EVENT_VARIABLES ? vars2manager(qe->chan, vars, sizeof(vars)) : "");
- 		ast_copy_string(oldcontext, ast_channel_context(qe->chan), sizeof(oldcontext));
- 		ast_copy_string(oldexten, ast_channel_exten(qe->chan), sizeof(oldexten));
--	
-+
- 		if ((queue_end_bridge = ao2_alloc(sizeof(*queue_end_bridge), NULL))) {
- 			queue_end_bridge->q = qe->parent;
- 			queue_end_bridge->chan = qe->chan;
-@@ -5910,7 +6950,7 @@ static int try_calling(struct queue_ent
- 					(long) (callstart - qe->start), (long) (time(NULL) - callstart), qe->opos);
- 				send_agent_complete(qe, queuename, peer, member, callstart, vars, sizeof(vars), AGENT);
- 			}
--			if ((tds = ast_channel_datastore_find(qe->chan, &queue_transfer_info, NULL))) {	
-+			if ((tds = ast_channel_datastore_find(qe->chan, &queue_transfer_info, NULL))) {
- 				ast_channel_datastore_remove(qe->chan, tds);
- 			}
- 			ast_channel_unlock(qe->chan);
-@@ -5989,7 +7029,7 @@ static struct member *interface_exists(s
+@@ -5993,7 +7033,7 @@ static struct member *interface_exists(s
  
  /*! \brief Dump all members in a specific queue to the database
   *
@@ -1800,7 +1385,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
   */
  static void dump_queue_members(struct call_queue *pm_queue)
  {
-@@ -6014,13 +7054,14 @@ static void dump_queue_members(struct ca
+@@ -6018,13 +7058,14 @@ static void dump_queue_members(struct ca
  			continue;
  		}
  
@@ -1817,16 +1402,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  
  		ao2_ref(cur_member, -1);
  	}
-@@ -6038,7 +7079,7 @@ static void dump_queue_members(struct ca
- 	ast_free(value);
- }
- 
--/*! \brief Remove member from queue 
-+/*! \brief Remove member from queue
-  * \retval RES_NOT_DYNAMIC when they aren't a RT member
-  * \retval RES_NOSUCHQUEUE queue does not exist
-  * \retval RES_OKAY removed member from queue
-@@ -6050,6 +7091,7 @@ static int remove_from_queue(const char
+@@ -6054,6 +7095,7 @@ static int remove_from_queue(const char
  		.name = queuename,
  	};
  	struct member *mem, tmpmem;
@@ -1834,7 +1410,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	int res = RES_NOSUCHQUEUE;
  
  	ast_copy_string(tmpmem.interface, interface, sizeof(tmpmem.interface));
-@@ -6086,13 +7128,20 @@ static int remove_from_queue(const char
+@@ -6090,13 +7132,20 @@ static int remove_from_queue(const char
  				"MemberName: %s\r\n",
  				q->name, mem->interface, mem->membername);
  			member_remove_from_queue(q, mem);
@@ -1856,15 +1432,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  				ast_devstate_changed(AST_DEVICE_INUSE, AST_DEVSTATE_CACHABLE, "Queue:%s_avail", q->name);
  			}
  
-@@ -6107,14 +7156,14 @@ static int remove_from_queue(const char
- 	return res;
- }
- 
--/*! \brief Add member to queue 
-+/*! \brief Add member to queue
-  * \retval RES_NOT_DYNAMIC when they aren't a RT member
-  * \retval RES_NOSUCHQUEUE queue does not exist
-  * \retval RES_OKAY added member from queue
+@@ -6118,7 +7167,7 @@ static int remove_from_queue(const char
   * \retval RES_EXISTS queue exists but no members
   * \retval RES_OUT_OF_MEMORY queue exists but not enough memory to create member
  */
@@ -1873,7 +1441,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  {
  	struct call_queue *q;
  	struct member *new_member, *old_member;
-@@ -6128,10 +7177,11 @@ static int add_to_queue(const char *queu
+@@ -6132,10 +7181,11 @@ static int add_to_queue(const char *queu
  
  	ao2_lock(q);
  	if ((old_member = interface_exists(q, interface)) == NULL) {
@@ -1886,21 +1454,21 @@ Index: asterisk-11.5.1/apps/app_queue.c
  			/*** DOCUMENTATION
  			<managerEventInstance>
  				<synopsis>Raised when a member is added to the queue.</synopsis>
-@@ -6169,7 +7219,7 @@ static int add_to_queue(const char *queu
+@@ -6173,7 +7223,7 @@ static int add_to_queue(const char *queu
  				new_member->penalty, new_member->calls, (int) new_member->lastcall,
  				new_member->status, new_member->paused);
  
--			if (is_member_available(new_member)) {
-+			if (is_member_available(new_member, NULL)) {
+-			if (is_member_available(q, new_member)) {
++			if (is_member_available(q, new_member, NULL)) {
  				ast_devstate_changed(AST_DEVICE_NOT_INUSE, AST_DEVSTATE_CACHABLE, "Queue:%s_avail", q->name);
  			}
  
-@@ -6235,13 +7285,14 @@ static int set_member_paused(const char
+@@ -6239,13 +7289,14 @@ static int set_member_paused(const char
  					dump_queue_members(q);
  				}
  
--				if (is_member_available(mem)) {
-+				if (is_member_available(mem, NULL)) {
+-				if (is_member_available(q, mem)) {
++				if (is_member_available(q, mem, NULL)) {
  					ast_devstate_changed(AST_DEVICE_NOT_INUSE, AST_DEVSTATE_CACHABLE, "Queue:%s_avail", q->name);
 -				} else if (!num_available_members(q)) {
 +				} else if (!num_available_members(q, NULL)) {
@@ -1912,7 +1480,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  
  				/*** DOCUMENTATION
  				<managerEventInstance>
-@@ -6526,6 +7577,7 @@ static void reload_queue_members(void)
+@@ -6530,6 +7581,7 @@ static void reload_queue_members(void)
  	char *member;
  	char *interface;
  	char *membername = NULL;
@@ -1920,7 +1488,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	char *state_interface;
  	char *penalty_tok;
  	int penalty = 0;
-@@ -6577,6 +7629,7 @@ static void reload_queue_members(void)
+@@ -6581,6 +7633,7 @@ static void reload_queue_members(void)
  			paused_tok = strsep(&member, ";");
  			membername = strsep(&member, ";");
  			state_interface = strsep(&member, ";");
@@ -1928,27 +1496,16 @@ Index: asterisk-11.5.1/apps/app_queue.c
  
  			if (!penalty_tok) {
  				ast_log(LOG_WARNING, "Error parsing persistent member string for '%s' (penalty)\n", queue_name);
-@@ -6587,7 +7640,7 @@ static void reload_queue_members(void)
- 				ast_log(LOG_WARNING, "Error converting penalty: %s: Out of range.\n", penalty_tok);
- 				break;
- 			}
--			
-+
- 			if (!paused_tok) {
- 				ast_log(LOG_WARNING, "Error parsing persistent member string for '%s' (paused)\n", queue_name);
- 				break;
-@@ -6599,8 +7652,8 @@ static void reload_queue_members(void)
- 			}
+@@ -6604,7 +7657,7 @@ static void reload_queue_members(void)
  
  			ast_debug(1, "Reload Members: Queue: %s  Member: %s  Name: %s  Penalty: %d  Paused: %d\n", queue_name, interface, membername, penalty, paused);
--			
+ 
 -			if (add_to_queue(queue_name, interface, membername, penalty, paused, 0, state_interface) == RES_OUTOFMEMORY) {
-+
 +			if (add_to_queue(queue_name, interface, membername, penalty, paused, 0, state_interface, skills) == RES_OUTOFMEMORY) {
  				ast_log(LOG_ERROR, "Out of Memory when reloading persistent queue member\n");
  				break;
  			}
-@@ -6770,11 +7823,12 @@ static int aqm_exec(struct ast_channel *
+@@ -6774,11 +7827,12 @@ static int aqm_exec(struct ast_channel *
  		AST_APP_ARG(options);
  		AST_APP_ARG(membername);
  		AST_APP_ARG(state_interface);
@@ -1962,7 +1519,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  		return -1;
  	}
  
-@@ -6797,7 +7851,7 @@ static int aqm_exec(struct ast_channel *
+@@ -6801,7 +7855,7 @@ static int aqm_exec(struct ast_channel *
  		}
  	}
  
@@ -1971,33 +1528,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	case RES_OKAY:
  		if (ast_strlen_zero(args.membername) || !log_membername_as_agent) {
  			ast_queue_log(args.queuename, ast_channel_uniqueid(chan), args.interface, "ADDMEMBER", "%s", "");
-@@ -6854,7 +7908,7 @@ static int ql_exec(struct ast_channel *c
- 		return -1;
- 	}
- 
--	ast_queue_log(args.queuename, args.uniqueid, args.membername, args.event, 
-+	ast_queue_log(args.queuename, args.uniqueid, args.membername, args.event,
- 		"%s", args.params ? args.params : "");
- 
- 	return 0;
-@@ -6892,14 +7946,14 @@ static void copy_rules(struct queue_ent
- 
- /*!\brief The starting point for all queue calls
-  *
-- * The process involved here is to 
-+ * The process involved here is to
-  * 1. Parse the options specified in the call to Queue()
-  * 2. Join the queue
-  * 3. Wait in a loop until it is our turn to try calling a queue member
-  * 4. Attempt to call a queue member
-  * 5. If 4. did not result in a bridged call, then check for between
-  *    call options such as periodic announcements etc.
-- * 6. Try 4 again unless some condition (such as an expiration time) causes us to 
-+ * 6. Try 4 again unless some condition (such as an expiration time) causes us to
-  *    exit the queue.
-  */
- static int queue_exec(struct ast_channel *chan, const char *data)
-@@ -6930,6 +7984,7 @@ static int queue_exec(struct ast_channel
+@@ -6934,6 +7988,7 @@ static int queue_exec(struct ast_channel
  		AST_APP_ARG(gosub);
  		AST_APP_ARG(rule);
  		AST_APP_ARG(position);
@@ -2005,7 +1536,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	);
  	/* Our queue entry */
  	struct queue_ent qe = { 0 };
-@@ -6937,7 +7992,7 @@ static int queue_exec(struct ast_channel
+@@ -6941,7 +7996,7 @@ static int queue_exec(struct ast_channel
  	char *opt_args[OPT_ARG_ARRAY_SIZE];
  
  	if (ast_strlen_zero(data)) {
@@ -2014,7 +1545,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  		return -1;
  	}
  
-@@ -7040,6 +8095,9 @@ static int queue_exec(struct ast_channel
+@@ -7044,6 +8099,9 @@ static int queue_exec(struct ast_channel
  	qe.prio = prio;
  	qe.max_penalty = max_penalty;
  	qe.min_penalty = min_penalty;
@@ -2024,7 +1555,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	qe.last_pos_said = 0;
  	qe.last_pos = 0;
  	qe.last_periodic_announce_time = time(NULL);
-@@ -7065,6 +8123,18 @@ check_turns:
+@@ -7069,6 +8127,18 @@ check_turns:
  		ast_moh_start(chan, qe.moh, NULL);
  	}
  
@@ -2043,25 +1574,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	/* This is the wait loop for callers 2 through maxlen */
  	res = wait_our_turn(&qe, ringing, &reason);
  	if (res) {
-@@ -7084,7 +8154,7 @@ check_turns:
- 			record_abandoned(&qe);
- 			reason = QUEUE_TIMEOUT;
- 			res = 0;
--			ast_queue_log(args.queuename, ast_channel_uniqueid(chan),"NONE", "EXITWITHTIMEOUT", "%d|%d|%ld", 
-+			ast_queue_log(args.queuename, ast_channel_uniqueid(chan),"NONE", "EXITWITHTIMEOUT", "%d|%d|%ld",
- 				qe.pos, qe.opos, (long) time(NULL) - qe.start);
- 			break;
- 		}
-@@ -7103,7 +8173,7 @@ check_turns:
- 				goto stop;
- 			}
- 		}
--	
-+
- 		/* Leave if we have exceeded our queuetimeout */
- 		if (qe.expire && (time(NULL) >= qe.expire)) {
- 			record_abandoned(&qe);
-@@ -7126,7 +8196,7 @@ check_turns:
+@@ -7130,7 +8200,7 @@ check_turns:
  
  		if (qe.parent->leavewhenempty) {
  			int status = 0;
@@ -2070,31 +1583,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  				record_abandoned(&qe);
  				reason = QUEUE_LEAVEEMPTY;
  				ast_queue_log(args.queuename, ast_channel_uniqueid(chan), "NONE", "EXITEMPTY", "%d|%d|%ld", qe.pos, qe.opos, (long)(time(NULL) - qe.start));
-@@ -7145,7 +8215,7 @@ check_turns:
- 			break;
- 		}
- 
--		
-+
- 		/* Leave if we have exceeded our queuetimeout */
- 		if (qe.expire && (time(NULL) >= qe.expire)) {
- 			record_abandoned(&qe);
-@@ -7194,12 +8264,12 @@ stop:
- 
- 	/* Don't allow return code > 0 */
- 	if (res >= 0) {
--		res = 0;	
-+		res = 0;
- 		if (ringing) {
- 			ast_indicate(chan, -1);
- 		} else {
- 			ast_moh_stop(chan);
--		}			
-+		}
- 		ast_stopstream(chan);
- 	}
- 
-@@ -7209,6 +8279,16 @@ stop:
+@@ -7213,6 +8283,16 @@ stop:
  	if (reason != QUEUE_UNKNOWN)
  		set_queue_result(chan, reason);
  
@@ -2111,34 +1600,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	/*
  	 * every queue_ent is given a reference to it's parent
  	 * call_queue when it joins the queue.  This ref must be taken
-@@ -7488,7 +8568,7 @@ static int queue_function_qac_dep(struct
- 		ast_log(LOG_ERROR, "%s requires an argument: queuename\n", cmd);
- 		return -1;
- 	}
--	
-+
- 	if ((q = find_load_queue_rt_friendly(data))) {
- 		ao2_lock(q);
- 		mem_iter = ao2_iterator_init(q->members, 0);
-@@ -7622,7 +8702,7 @@ static int queue_function_memberpenalty_
- 	}
- 
- 	penalty = get_member_penalty (args.queuename, args.interface);
--	
-+
- 	if (penalty >= 0) { /* remember that buf is already '\0' */
- 		snprintf (buf, len, "%d", penalty);
- 	}
-@@ -7718,7 +8798,7 @@ static int reload_queue_rules(int reload
- 	char *rulecat = NULL;
- 	struct ast_variable *rulevar = NULL;
- 	struct ast_flags config_flags = { reload ? CONFIG_FLAG_FILEUNCHANGED : 0 };
--	
-+
- 	if (!(cfg = ast_config_load("queuerules.conf", config_flags))) {
- 		ast_log(LOG_NOTICE, "No queuerules.conf file found, queues will not follow penalty rules\n");
- 		return AST_MODULE_LOAD_SUCCESS;
-@@ -7758,6 +8838,121 @@ static int reload_queue_rules(int reload
+@@ -7765,6 +8845,121 @@ static int reload_queue_rules(int reload
  	return AST_MODULE_LOAD_SUCCESS;
  }
  
@@ -2260,7 +1722,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  /*! Set the global queue parameters as defined in the "general" section of queues.conf */
  static void queue_set_global_params(struct ast_config *cfg)
  {
-@@ -7803,7 +8998,7 @@ static void queue_set_global_params(stru
+@@ -7810,7 +9005,7 @@ static void queue_set_global_params(stru
   */
  static void reload_single_member(const char *memberdata, struct call_queue *q)
  {
@@ -2269,7 +1731,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	char *parse;
  	struct member *cur, *newm;
  	struct member tmpmem;
-@@ -7815,6 +9010,7 @@ static void reload_single_member(const c
+@@ -7822,6 +9017,7 @@ static void reload_single_member(const c
  		AST_APP_ARG(membername);
  		AST_APP_ARG(state_interface);
  		AST_APP_ARG(ringinuse);
@@ -2277,7 +1739,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	);
  
  	if (ast_strlen_zero(memberdata)) {
-@@ -7869,11 +9065,15 @@ static void reload_single_member(const c
+@@ -7876,11 +9072,15 @@ static void reload_single_member(const c
  		ringinuse = q->ringinuse;
  	}
  
@@ -2294,7 +1756,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  		if (cur) {
  			/* Round Robin Queue Position must be copied if this is replacing an existing member */
  			ao2_lock(q->members);
-@@ -7888,6 +9088,7 @@ static void reload_single_member(const c
+@@ -7895,6 +9095,7 @@ static void reload_single_member(const c
  		ao2_ref(newm, -1);
  	}
  	newm = NULL;
@@ -2302,34 +1764,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  
  	if (cur) {
  		ao2_ref(cur, -1);
-@@ -7919,7 +9120,7 @@ static int kill_dead_members(void *obj,
-  *
-  * Once we have isolated a queue within reload_queues, we call this. This will either
-  * reload information for the queue or if we're just reloading member information, we'll just
-- * reload that without touching other settings within the queue 
-+ * reload that without touching other settings within the queue
-  *
-  * \param cfg The configuration which we are reading
-  * \param mask Tells us what information we need to reload
-@@ -7955,7 +9156,7 @@ static void reload_single_queue(struct a
- 	} else {
- 		new = 0;
- 	}
--	
-+
- 	if (!new) {
- 		ao2_lock(q);
- 		prev_weight = q->weight ? 1 : 0;
-@@ -8074,7 +9275,7 @@ static int kill_dead_queues(void *obj, v
-  * \param mask Gives flags telling us what information to actually reload
-  * \param queuename If set to a non-zero string, then only reload information from
-  * that particular queue. Otherwise inspect all queues
-- * \retval -1 Failure occurred 
-+ * \retval -1 Failure occurred
-  * \retval 0 All clear!
-  */
- static int reload_queues(int reload, struct ast_flags *mask, const char *queuename)
-@@ -8179,6 +9380,12 @@ static int reload_handler(int reload, st
+@@ -8186,6 +9387,12 @@ static int reload_handler(int reload, st
  	if (ast_test_flag(mask, QUEUE_RELOAD_RULES)) {
  		res |= reload_queue_rules(reload);
  	}
@@ -2342,20 +1777,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	if (ast_test_flag(mask, QUEUE_RESET_STATS)) {
  		res |= clear_stats(queuename);
  	}
-@@ -8198,9 +9405,9 @@ static void do_print(struct mansession *
- 	}
- }
- 
--/*! 
-- * \brief Show queue(s) status and statistics 
-- * 
-+/*!
-+ * \brief Show queue(s) status and statistics
-+ *
-  * List the queues strategy, calls processed, members logged in,
-  * other queue statistics such as avg hold time.
- */
-@@ -8306,6 +9513,8 @@ static char *__queues_show(struct manses
+@@ -8313,6 +9520,8 @@ static char *__queues_show(struct manses
  					mem->realtime ? " (realtime)" : "",
  					mem->paused ? " (paused)" : "",
  					ast_devstate2str(mem->status));
@@ -2364,7 +1786,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  				if (mem->calls) {
  					ast_str_append(&out, 0, " has taken %d calls (last was %ld secs ago)",
  						mem->calls, (long) (time(NULL) - mem->lastcall));
-@@ -8323,8 +9532,32 @@ static char *__queues_show(struct manses
+@@ -8330,8 +9539,32 @@ static char *__queues_show(struct manses
  			struct queue_ent *qe;
  			int pos = 1;
  
@@ -2397,48 +1819,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  				ast_str_set(&out, 0, "      %d. %s (wait: %ld:%2.2ld, prio: %d)",
  					pos++, ast_channel_name(qe->chan), (long) (now - qe->start) / 60,
  					(long) (now - qe->start) % 60, qe->prio);
-@@ -8348,7 +9581,7 @@ static char *__queues_show(struct manses
- 	return CLI_SUCCESS;
- }
- 
--/*! 
-+/*!
-  * \brief Check if a given word is in a space-delimited list
-  *
-  * \param list Space delimited list of words
-@@ -8405,11 +9638,11 @@ static int word_in_list(const char *list
- 		/* terminating conditions satisfied, word at beginning or separated by ' ' */
- 		return 1;
- 	}
--	
-+
- 	return 0;
- }
- 
--/*! 
-+/*!
-  * \brief Check if a given word is in a space-delimited list
-  *
-  * \param line The line as typed not including the current word being completed
-@@ -8475,7 +9708,7 @@ static char *queue_show(struct ast_cli_e
- 			"       Provides summary information on a specified queue.\n";
- 		return NULL;
- 	case CLI_GENERATE:
--		return complete_queue_show(a->line, a->word, a->pos, a->n);	
-+		return complete_queue_show(a->line, a->word, a->pos, a->n);
- 	}
- 
- 	return __queues_show(NULL, a->fd, a->argc, a->argv);
-@@ -8591,7 +9824,7 @@ static int manager_queues_summary(struct
- 				"LoggedIn: %d\r\n"
- 				"Available: %d\r\n"
- 				"Talking: %d\r\n"
--				"Callers: %d\r\n" 
-+				"Callers: %d\r\n"
- 				"HoldTime: %d\r\n"
- 				"TalkTime: %d\r\n"
- 				"LongestHoldTime: %d\r\n"
-@@ -8671,10 +9904,11 @@ static int manager_queues_status(struct
+@@ -8678,10 +9911,11 @@ static int manager_queues_status(struct
  						"LastCall: %d\r\n"
  						"Status: %d\r\n"
  						"Paused: %d\r\n"
@@ -2451,7 +1832,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  				}
  				ao2_ref(mem, -1);
  			}
-@@ -8717,7 +9951,7 @@ static int manager_queues_status(struct
+@@ -8724,7 +9958,7 @@ static int manager_queues_status(struct
  
  static int manager_add_queue_member(struct mansession *s, const struct message *m)
  {
@@ -2460,7 +1841,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	int paused, penalty = 0;
  
  	queuename = astman_get_header(m, "Queue");
-@@ -8726,6 +9960,7 @@ static int manager_add_queue_member(stru
+@@ -8733,6 +9967,7 @@ static int manager_add_queue_member(stru
  	paused_s = astman_get_header(m, "Paused");
  	membername = astman_get_header(m, "MemberName");
  	state_interface = astman_get_header(m, "StateInterface");
@@ -2468,7 +1849,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  
  	if (ast_strlen_zero(queuename)) {
  		astman_send_error(s, m, "'Queue' not specified.");
-@@ -8749,7 +9984,7 @@ static int manager_add_queue_member(stru
+@@ -8756,7 +9991,7 @@ static int manager_add_queue_member(stru
  		paused = abs(ast_true(paused_s));
  	}
  
@@ -2477,7 +1858,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	case RES_OKAY:
  		if (ast_strlen_zero(membername) || !log_membername_as_agent) {
  			ast_queue_log(queuename, "MANAGER", interface, "ADDMEMBER", "%s", paused ? "PAUSED" : "");
-@@ -8880,6 +10115,14 @@ static int manager_queue_reload(struct m
+@@ -8887,6 +10122,14 @@ static int manager_queue_reload(struct m
  		ast_set_flag(&mask, QUEUE_RELOAD_RULES);
  		header_found = 1;
  	}
@@ -2492,25 +1873,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	if (!strcasecmp(S_OR(astman_get_header(m, "Parameters"), ""), "yes")) {
  		ast_set_flag(&mask, QUEUE_RELOAD_PARAMETERS);
  		header_found = 1;
-@@ -8901,7 +10144,7 @@ static int manager_queue_reset(struct ma
- {
- 	const char *queuename = NULL;
- 	struct ast_flags mask = {QUEUE_RESET_STATS,};
--	
-+
- 	queuename = astman_get_header(m, "Queue");
- 
- 	if (!reload_handler(1, &mask, queuename)) {
-@@ -8991,7 +10234,7 @@ static int manager_queue_member_penalty(
- 		astman_send_error(s, m, "Need 'Interface' and 'Penalty' parameters.");
- 		return 0;
- 	}
-- 
-+
- 	penalty = atoi(penalty_s);
- 
- 	if (set_member_value((char *)queuename, (char *)interface, MEMBER_PENALTY, penalty)) {
-@@ -9005,7 +10248,7 @@ static int manager_queue_member_penalty(
+@@ -9012,7 +10255,7 @@ static int manager_queue_member_penalty(
  
  static char *handle_queue_add_member(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
  {
@@ -2519,7 +1882,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	int penalty;
  
  	switch ( cmd ) {
-@@ -9019,7 +10262,7 @@ static char *handle_queue_add_member(str
+@@ -9026,7 +10269,7 @@ static char *handle_queue_add_member(str
  		return complete_queue_add_member(a->line, a->word, a->pos, a->n);
  	}
  
@@ -2528,7 +1891,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  		return CLI_SHOWUSAGE;
  	} else if (strcmp(a->argv[4], "to")) {
  		return CLI_SHOWUSAGE;
-@@ -9029,6 +10272,8 @@ static char *handle_queue_add_member(str
+@@ -9036,6 +10279,8 @@ static char *handle_queue_add_member(str
  		return CLI_SHOWUSAGE;
  	} else if ((a->argc == 12) && strcmp(a->argv[10], "state_interface")) {
  		return CLI_SHOWUSAGE;
@@ -2537,7 +1900,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	}
  
  	queuename = a->argv[5];
-@@ -9055,7 +10300,11 @@ static char *handle_queue_add_member(str
+@@ -9062,7 +10307,11 @@ static char *handle_queue_add_member(str
  		state_interface = a->argv[11];
  	}
  
@@ -2550,41 +1913,10 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	case RES_OKAY:
  		if (ast_strlen_zero(membername) || !log_membername_as_agent) {
  			ast_queue_log(queuename, "CLI", interface, "ADDMEMBER", "%s", "");
-@@ -9213,7 +10462,7 @@ static char *handle_queue_pause_member(s
- 	switch (cmd) {
- 	case CLI_INIT:
- 		e->command = "queue {pause|unpause} member";
--		e->usage = 
-+		e->usage =
- 			"Usage: queue {pause|unpause} member <member> [queue <queue> [reason <reason>]]\n"
- 			"	Pause or unpause a queue member. Not specifying a particular queue\n"
- 			"	will pause or unpause a member across all queues to which the member\n"
-@@ -9348,7 +10597,7 @@ static char *handle_queue_set_member_pen
- 	switch (cmd) {
- 	case CLI_INIT:
- 		e->command = "queue set penalty";
--		e->usage = 
-+		e->usage =
- 		"Usage: queue set penalty <penalty> on <interface> [in <queue>]\n"
- 		"	Set a member's penalty in the queue specified. If no queue is specified\n"
- 		"	then that interface's penalty is set in all queues to which that interface is a member\n";
-@@ -9381,7 +10630,7 @@ static char *handle_queue_set_member_pen
- 	}
+@@ -9445,6 +10694,147 @@ static char *handle_queue_rule_show(stru
+ 	return CLI_SUCCESS;
  }
  
--static char *complete_queue_rule_show(const char *line, const char *word, int pos, int state) 
-+static char *complete_queue_rule_show(const char *line, const char *word, int pos, int state)
- {
- 	int which = 0;
- 	struct rule_list *rl_iter;
-@@ -9435,7 +10684,148 @@ static char *handle_queue_rule_show(stru
- 		}
- 	}
- 	AST_LIST_UNLOCK(&rule_lists);
--	return CLI_SUCCESS; 
-+	return CLI_SUCCESS;
-+}
-+
 +static char *complete_queue_skills_groups(const char *line, const char *word, int pos, int state)
 +{
 +	int which = 0;
@@ -2724,10 +2056,12 @@ Index: asterisk-11.5.1/apps/app_queue.c
 +	}
 +	AST_LIST_UNLOCK(&skill_rulesets);
 +	return CLI_SUCCESS;
- }
- 
++}
++
  static char *handle_queue_reset(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
-@@ -9525,6 +10915,10 @@ static char *handle_queue_reload(struct
+ {
+ 	struct ast_flags mask = {QUEUE_RESET_STATS,};
+@@ -9532,6 +10922,10 @@ static char *handle_queue_reload(struct
  		ast_set_flag(&mask, QUEUE_RELOAD_MEMBER);
  	} else if (!strcasecmp(a->argv[2], "parameters")) {
  		ast_set_flag(&mask, QUEUE_RELOAD_PARAMETERS);
@@ -2738,16 +2072,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	} else if (!strcasecmp(a->argv[2], "all")) {
  		ast_set_flag(&mask, AST_FLAGS_ALL);
  	}
-@@ -9541,7 +10935,7 @@ static char *handle_queue_reload(struct
- 	return CLI_SUCCESS;
- }
- 
--static const char qpm_cmd_usage[] = 
-+static const char qpm_cmd_usage[] =
- "Usage: queue pause member <channel> in <queue> reason <reason>\n";
- 
- static const char qum_cmd_usage[] =
-@@ -9560,6 +10954,8 @@ static struct ast_cli_entry cli_queue[]
+@@ -9567,6 +10961,8 @@ static struct ast_cli_entry cli_queue[]
  	AST_CLI_DEFINE(handle_queue_set_member_ringinuse, "Set ringinuse for a channel of a specified queue"),
  	AST_CLI_DEFINE(handle_queue_reload, "Reload queues, members, queue rules, or parameters"),
  	AST_CLI_DEFINE(handle_queue_reset, "Reset statistics for a queue"),
@@ -2756,7 +2081,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  };
  
  /* struct call_queue astdata mapping. */
-@@ -9623,6 +11019,7 @@ static struct ast_cli_entry cli_queue[]
+@@ -9630,6 +11026,7 @@ static struct ast_cli_entry cli_queue[]
  	MEMBER(call_queue, rrpos, AST_DATA_INTEGER)			\
  	MEMBER(call_queue, memberdelay, AST_DATA_INTEGER)		\
  	MEMBER(call_queue, autofill, AST_DATA_INTEGER)			\
@@ -2764,7 +2089,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	MEMBER(call_queue, members, AST_DATA_CONTAINER)
  
  AST_DATA_STRUCTURE(call_queue, DATA_EXPORT_CALL_QUEUE);
-@@ -9632,6 +11029,7 @@ AST_DATA_STRUCTURE(call_queue, DATA_EXPO
+@@ -9639,6 +11036,7 @@ AST_DATA_STRUCTURE(call_queue, DATA_EXPO
  	MEMBER(member, interface, AST_DATA_STRING)			\
  	MEMBER(member, state_interface, AST_DATA_STRING)		\
  	MEMBER(member, membername, AST_DATA_STRING)			\
@@ -2772,7 +2097,7 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	MEMBER(member, penalty, AST_DATA_INTEGER)			\
  	MEMBER(member, calls, AST_DATA_INTEGER)				\
  	MEMBER(member, dynamic, AST_DATA_INTEGER)			\
-@@ -9661,6 +11059,7 @@ AST_DATA_STRUCTURE(member, DATA_EXPORT_M
+@@ -9668,6 +11066,7 @@ AST_DATA_STRUCTURE(member, DATA_EXPORT_M
  	MEMBER(queue_ent, min_penalty, AST_DATA_INTEGER)			\
  	MEMBER(queue_ent, linpos, AST_DATA_INTEGER)				\
  	MEMBER(queue_ent, linwrapped, AST_DATA_INTEGER)				\
@@ -2780,10 +2105,10 @@ Index: asterisk-11.5.1/apps/app_queue.c
  	MEMBER(queue_ent, start, AST_DATA_INTEGER)				\
  	MEMBER(queue_ent, expire, AST_DATA_INTEGER)				\
  	MEMBER(queue_ent, cancel_answered_elsewhere, AST_DATA_INTEGER)
-Index: asterisk-11.5.1/configs/queueskillrules.conf.sample
+Index: asterisk-11.6.0/configs/queueskillrules.conf.sample
 ===================================================================
 --- /dev/null
-+++ asterisk-11.5.1/configs/queueskillrules.conf.sample
++++ asterisk-11.6.0/configs/queueskillrules.conf.sample
 @@ -0,0 +1,67 @@
 +; This file describes skill routing rules. The Queue() application can get the
 +; 'skill_ruleset' argument which is the name of one skill routing ruleset. If
@@ -2852,10 +2177,10 @@ Index: asterisk-11.5.1/configs/queueskillrules.conf.sample
 +; [client-cool]
 +; rule => EWT < 120, technic = 0 & (sympathy > 60)
 +; rule => technic = 0
-Index: asterisk-11.5.1/configs/queueskills.conf.sample
+Index: asterisk-11.6.0/configs/queueskills.conf.sample
 ===================================================================
 --- /dev/null
-+++ asterisk-11.5.1/configs/queueskills.conf.sample
++++ asterisk-11.6.0/configs/queueskills.conf.sample
 @@ -0,0 +1,46 @@
 +; Describe skills groups here to assign them to queue members. You can set
 +; weight to each skills. It'll be used by skill rules to know if a queue member
