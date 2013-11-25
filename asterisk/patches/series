@@ -5,7 +5,6 @@ deb_make-clean-fixes
 ## proformatique patches
 xivo_queue_agent_talking
 xivo_cel_pgsql_fix_reload
-xivo_manager_inherit.patch
 xivo_banner
 xivo_sip_autocreate_context
 xivo_sip_autocreate_prefix
