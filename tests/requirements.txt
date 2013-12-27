@@ -1,0 +1,15 @@
+git+https://github.com/xivo-pbx/xivo-acceptance.git@pip_installable
+selenium
+git+https://github.com/xivo-pbx/xivo-ws.git
+sqlalchemy
+execnet
+svn+https://github.com/xivo-pbx/xivo-dao/trunk/xivo-dao
+psycopg2
+requests
+-e svn+https://github.com/xivo-pbx/xivo-provisioning/trunk/xivo-provisioning#egg=provd
+pyhamcrest
+-e svn+https://github.com/xivo-pbx/xivo-bus/trunk/xivo-bus#egg=xivo-bus
+pika
+svn+https://github.com/xivo-pbx/xivo-lib-python/trunk/xivo-lib-python
+python-ldap
+PyVirtualDisplay==0.1.2
