@@ -20,7 +20,16 @@ Index: asterisk-11.7.0/channels/chan_sip.c
  			ast_log(LOG_WARNING, "Not a SIP header (%s)?\n", from);
  			return SIP_GET_DEST_INVALID_URI;
  		}
-@@ -18386,7 +18386,7 @@ static enum check_auth_result check_user
+@@ -18372,6 +18372,8 @@ static enum check_auth_result check_user
+ 			t+= 4;
+ 		else if (!strncasecmp(t, "sips:", 5))
+ 			t += 5;
++		else if (!strncasecmp(t, "tel:", 4))
++			t += 4;
+ 		ast_string_field_set(p, exten, t);
+ 		t = strchr(p->exten, '@');
+ 		if (t)
+@@ -18386,38 +18388,47 @@ static enum check_auth_result check_user
  	/* save the URI part of the From header */
  	ast_string_field_set(p, from, of);
  
@@ -29,6 +38,69 @@ Index: asterisk-11.7.0/channels/chan_sip.c
  		ast_log(LOG_NOTICE, "From address missing 'sip:', using it anyway\n");
  	}
  
+-	SIP_PEDANTIC_DECODE(name);
+-	SIP_PEDANTIC_DECODE(domain);
+-
+-	extract_host_from_hostport(&domain);
+-
+-	if (ast_strlen_zero(domain)) {
+-		/* <sip:name@[EMPTY]>, never good */
+-		ast_log(LOG_ERROR, "Empty domain name in FROM header\n");
+-		return res;
+-	}
+-
+-	if (ast_strlen_zero(name)) {
+-		/* <sip:[EMPTY][@]hostport>. Asterisk 1.4 and 1.6 have always
+-		 * treated that as a username, so we continue the tradition:
+-		 * uri is now <sip:host@hostport>. */
+-		name = domain;
+-	} else {
+-		/* Non-empty name, try to get caller id from it */
++	if (!strncasecmp(of, "tel:", 4)) {
+ 		char *tmp = ast_strdupa(name);
+-		/* We need to be able to handle from-headers looking like
+-			<sip:8164444422;phone-context=+1@1.2.3.4:5060;user=phone;tag=SDadkoa01-gK0c3bdb43>
+-		*/
+-		tmp = strsep(&tmp, ";");
++
+ 		if (global_shrinkcallerid && ast_is_shrinkable_phonenumber(tmp)) {
+ 			ast_shrink_phone_number(tmp);
+ 		}
+ 		ast_string_field_set(p, cid_num, tmp);
+-	}
++	} else {
++		SIP_PEDANTIC_DECODE(name);
++		SIP_PEDANTIC_DECODE(domain);
++
++		extract_host_from_hostport(&domain);
++
++		if (ast_strlen_zero(domain)) {
++			/* <sip:name@[EMPTY]>, never good */
++			ast_log(LOG_ERROR, "Empty domain name in FROM header\n");
++			return res;
++		}
++
++		if (ast_strlen_zero(name)) {
++			/* <sip:[EMPTY][@]hostport>. Asterisk 1.4 and 1.6 have always
++			 * treated that as a username, so we continue the tradition:
++			 * uri is now <sip:host@hostport>. */
++			name = domain;
++		} else {
++			/* Non-empty name, try to get caller id from it */
++			char *tmp = ast_strdupa(name);
++			/* We need to be able to handle from-headers looking like
++				<sip:8164444422;phone-context=+1@1.2.3.4:5060;user=phone;tag=SDadkoa01-gK0c3bdb43>
++			*/
++			tmp = strsep(&tmp, ";");
++			if (global_shrinkcallerid && ast_is_shrinkable_phonenumber(tmp)) {
++				ast_shrink_phone_number(tmp);
++			}
++			ast_string_field_set(p, cid_num, tmp);
++		}
++    }
+ 
+ 	if (global_match_auth_username) {
+ 		/*
 Index: asterisk-11.7.0/channels/sip/reqresp_parser.c
 ===================================================================
 --- asterisk-11.7.0.orig/channels/sip/reqresp_parser.c
