@@ -1,0 +1,67 @@
+asterisk (8:11.6.0+pf.xivo.13.23~20131112.202019.ac3e4d8-2) squeeze-xivo-skaro-dev; urgency=low
+
+  * update comments in the rules file
+
+ -- Etienne Lessard <elessard@avencall.com>  Wed, 20 Nov 2013 11:38:00 -0500
+
+asterisk (8:11.5.0+pf.xivo.13.15~20130722.141054.2668289-2) squeeze-xivo-skaro-dev; urgency=low
+
+  * update version
+
+ -- Etienne Lessard <elessard@avencall.com>  Wed, 17 Apr 2013 08:46:35 -0400
+
+asterisk (8:11.3.0+pf.xivo.13.08~20130415.171049.693b5fb-2) squeeze-xivo-skaro-dev; urgency=low
+
+  * update version
+
+ -- Etienne Lessard <elessard@avencall.com>  Tue, 16 Apr 2013 11:25:19 -0400
+
+asterisk (8:11.3.0+pf.xivo.13.08~20130402.171506.c346435-2) squeeze-xivo-skaro-dev; urgency=low
+
+  * rename package asterisk
+  * fix epoch
+
+ -- Nicolas HICHER <nhicher@avencall.com>  Mon, 15 Apr 2013 12:56:51 -0400
+
+asterisk11 (11.2.1+pf.xivo.13.05~20130312.141540.ebe5465-2) squeeze-xivo-skaro-dev; urgency=low
+
+  * Enable app_meetme
+
+ -- Pascal Cadotte Michaud <pcadottemichaud@avencall.com>  Tue, 12 Mar 2013 14:28:08 -0400
+
+asterisk11 (11.1.2+pf.xivo.13.04~20130107.150857.298cca9-7) squeeze-xivo-skaro-dev; urgency=low
+
+  * fix typo 
+
+ -- Nicolas HICHER <nhicher@avencall.com>  Mon, 25 Feb 2013 10:32:26 -0500
+
+asterisk11 (11.1.2+pf.xivo.13.04~20130107.150857.298cca9-6) squeeze-xivo-skaro-dev; urgency=low
+
+  * fix lib install
+  * rename init file
+
+ -- Nicolas HICHER <nhicher@avencall.com>  Mon, 25 Feb 2013 09:51:50 -0500
+
+asterisk11 (11.1.2+pf.xivo.13.04~20130107.150857.298cca9-5) squeeze-xivo-skaro-dev; urgency=low
+
+  * revert init script 
+
+ -- Nicolas HICHER <nhicher@avencall.com>  Sat, 23 Feb 2013 08:49:59 -0500
+
+asterisk11 (11.1.2+pf.xivo.13.04~20130107.150857.298cca9-3) squeeze-xivo-skaro-dev; urgency=low
+
+  * add provides, replaces, conflicts with asterisk 
+
+ -- Nicolas HICHER <nhicher@avencall.com>  Fri, 22 Feb 2013 14:40:04 -0500
+
+asterisk11 (11.1.2+pf.xivo.13.04~20130107.150857.298cca9-2) squeeze-xivo-skaro-dev; urgency=low
+
+  * fix init script (status on stopped service must return 3)
+
+ -- Nicolas HICHER <nhicher@avencall.com>  Fri, 22 Feb 2013 12:32:20 -0500
+
+asterisk11 (11.0.0-0) squeeze-xivo-skaro-dev; urgency=low
+
+  * asterisk 11 
+
+ -- Nicolas HICHER (atarakt) <nhicher@proformatique.com>  Fri, 26 Oct 2012 15:19:17 -0400

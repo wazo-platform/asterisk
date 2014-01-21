@@ -1,0 +1,226 @@
+Source: asterisk
+Priority: optional
+Section: comm
+Maintainer: XiVO Dev Team <dev@avencall.com>
+Uploaders: XiVO Builder Team <release@xivo.fr>
+Build-Depends:
+ autoconf,
+ automake,
+ autotools-dev, 
+ bison, 
+ cdbs (>= 0.4.23-1.1), 
+ dahdi-linux-dev (>= 2.1.0), 
+ debhelper (>= 5),
+ doxygen, 
+ freetds-dev,
+ graphviz,
+ gsfonts, 
+ libasound2-dev, 
+ libbluetooth-dev,
+ libc-client-dev, 
+ libcap-dev (>= 1:2.16-4) | libcap2-dev,
+ libcurl4-openssl-dev, 
+ libgsm1-dev, 
+ libical-dev, 
+ libiksemel-dev, 
+ liblua5.1-dev, 
+ libneon27-dev, 
+ libnewt-dev, 
+ libopenais-dev,
+ libopenr2-dev,
+ libpopt-dev, 
+ libpq-dev, 
+ libpri-dev (>= 1.4.7), 
+ libradiusclient-ng-dev, 
+ libreadline-dev |libreadline6-dev, 
+ libresample1-dev,
+ libsnmp9-dev | libsnmp-dev, 
+ libspandsp-dev, 
+ libspeex-dev (>= 1.1.12-3), 
+ libspeexdsp-dev,
+ libsqlite-dev, 
+ libsqlite3-dev,
+ libsrtp0-dev, 
+ libss7-dev,
+ libssl-dev, 
+ libtonezone-dev (>= 1:2.0.0), 
+ libvorbis-dev, 
+ libxml2-dev,
+ lsb-base (>= 3.2-14),
+ postgresql-server-dev-all, 
+ python, 
+ quilt, 
+ sed,
+ sox, 
+ udev,
+ uuid-dev,
+ unixodbc-dev, 
+ wget, 
+ zlib1g-dev
+Build-Conflicts: zaptel-source
+XS-Vcs-Svn: svn://svn.debian.org/pkg-voip/
+XS-Vcs-Browser: http://svn.debian.org/wsvn/pkg-voip/
+
+Package: asterisk
+Architecture: any
+Section: comm
+Replaces: asterisk11
+Conflicts: asterisk11
+Provides: asterisk11
+Depends: ${shlibs:Depends}, mpg123
+Description: Open Source Private Branch Exchange (PBX) - XiVO version
+ Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
+ sense, middleware between Internet and telephony channels on the bottom,
+ and Internet and telephony applications at the top.
+ .
+ Asterisk can be used with Voice over IP (SIP, H.323, IAX and more) standards,
+ or the Public Switched Telephone Network (PSTN) through supported hardware.
+ .
+ Supported hardware:
+ .
+  * All Wildcard (tm) ISDN PRI cards from Digium (http://www.digium.com)
+  * HFC-S/HFC-4S-based ISDN BRI cards (Junghanns.NET, beroNet, Digium etc.)
+  * All TDM (FXO/FXS) cards from Digium
+  * Various clones of Digium cards such as those by OpenVox
+  * Xorcom Astribank USB telephony adapter (http://www.xorcom.com)
+  * Voicetronix OpenPCI, OpenLine and OpenSwitch cards
+  * CAPI-compatible ISDN cards (using the add-on package chan-capi)
+  * Full Duplex Sound Card (ALSA or OSS) supported by Linux
+  * Tormenta T1/E1 card (http://www.zapatatelephony.org)
+  * QuickNet Internet PhoneJack and LineJack (http://www.quicknet.net)
+ .
+ This software was heavily patched by Debian and Proformatique.
+ .
+ This Debian package contains the classic Asterisk binary.
+ .
+  Homepage: http://www.asterisk.org.
+
+Package: asterisk-dbg
+Architecture: any
+Section: comm
+Priority: extra
+Replaces: asterisk11-dbg
+Conflicts: asterisk11-dbg
+Provides: asterisk11-dbg
+Depends: asterisk (= ${binary:Version})
+Description: Open Source Private Branch Exchange (PBX) - XiVO version
+ Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
+ sense, middleware between Internet and telephony channels on the bottom,
+ and Internet and telephony applications at the top.
+ .
+ Asterisk can be used with Voice over IP (SIP, H.323, IAX and more) standards,
+ or the Public Switched Telephone Network (PSTN) through supported hardware.
+ .
+ Supported hardware:
+ .
+  * All Wildcard (tm) ISDN PRI cards from Digium (http://www.digium.com)
+  * HFC-S/HFC-4S-based ISDN BRI cards (Junghanns.NET, beroNet, Digium etc.)
+  * All TDM (FXO/FXS) cards from Digium
+  * Various clones of Digium cards such as those by OpenVox
+  * Xorcom Astribank USB telephony adapter (http://www.xorcom.com)
+  * Voicetronix OpenPCI, OpenLine and OpenSwitch cards
+  * CAPI-compatible ISDN cards (using the add-on package chan-capi)
+  * Full Duplex Sound Card (ALSA or OSS) supported by Linux
+  * Tormenta T1/E1 card (http://www.zapatatelephony.org)
+  * QuickNet Internet PhoneJack and LineJack (http://www.quicknet.net)
+ .
+ This software was heavily patched by Debian and Proformatique.
+ .
+ This package contains gdb debugging symbols for the classic Asterisk binary.
+ .
+  Homepage: http://www.asterisk.org.
+
+Package: asterisk-dev
+Architecture: all
+Recommends: asterisk
+Section: devel
+Description: development files for asterisk
+ Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
+ sense, middleware between Internet and telephony channels on the bottom,
+ and Internet and telephony applications at the top.
+ .
+ Asterisk can be used with Voice over IP (SIP, H.323, IAX and more) standards,
+ or the Public Switched Telephone Network (PSTN) through supported hardware.
+ .
+ Supported hardware:
+ .
+  * All Wildcard (tm) ISDN PRI cards from Digium (http://www.digium.com)
+  * HFC-S/HFC-4S-based ISDN BRI cards (Junghanns.NET, beroNet, Digium etc.)
+  * All TDM (FXO/FXS) cards from Digium
+  * Various clones of Digium cards such as those by OpenVox
+  * Xorcom Astribank USB telephony adapter (http://www.xorcom.com)
+  * Voicetronix OpenPCI, OpenLine and OpenSwitch cards
+  * CAPI-compatible ISDN cards (using the add-on package chan-capi)
+  * Full Duplex Sound Card (ALSA or OSS) supported by Linux
+  * Tormenta T1/E1 card (http://www.zapatatelephony.org)
+  * QuickNet Internet PhoneJack and LineJack (http://www.quicknet.net)
+ .
+ This software was heavily patched by Debian and Proformatique.
+ .
+ This package contains the include files used if you wish to compile a
+ package which requires asterisk source file headers.
+ .
+  Homepage: http://www.asterisk.org.
+
+Package: asterisk-doc
+Architecture: all
+Recommends: asterisk
+Section: doc
+Description: Source code documentation for Asterisk
+ Asterisk is an Open Source PBX and telephony toolkit.
+ .
+ This package contains the documentation for configuring an Asterisk system.
+ Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
+ sense, middleware between Internet and telephony channels on the bottom,
+ and Internet and telephony applications at the top.
+ .
+ Asterisk can be used with Voice over IP (SIP, H.323, IAX and more) standards,
+ or the Public Switched Telephone Network (PSTN) through supported hardware.
+ .
+ Supported hardware:
+ .
+  * All Wildcard (tm) ISDN PRI cards from Digium (http://www.digium.com)
+  * HFC-S/HFC-4S-based ISDN BRI cards (Junghanns.NET, beroNet, Digium etc.)
+  * All TDM (FXO/FXS) cards from Digium
+  * Various clones of Digium cards such as those by OpenVox
+  * Xorcom Astribank USB telephony adapter (http://www.xorcom.com)
+  * Voicetronix OpenPCI, OpenLine and OpenSwitch cards
+  * CAPI-compatible ISDN cards (using the add-on package chan-capi)
+  * Full Duplex Sound Card (ALSA or OSS) supported by Linux
+  * Tormenta T1/E1 card (http://www.zapatatelephony.org)
+  * QuickNet Internet PhoneJack and LineJack (http://www.quicknet.net)
+ .
+  This package contains the documentation for configuring an Asterisk system.
+ .
+  Homepage: http://www.asterisk.org.
+
+Package: asterisk-sounds-main
+Architecture: all
+Enhances: asterisk
+Section: comm
+Description: sound files for asterisk
+ Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
+ sense, middleware between Internet and telephony channels on the bottom,
+ and Internet and telephony applications at the top.
+ .
+ Asterisk can be used with Voice over IP (SIP, H.323, IAX and more) standards,
+ or the Public Switched Telephone Network (PSTN) through supported hardware.
+ .
+ Supported hardware:
+ .
+  * All Wildcard (tm) ISDN PRI cards from Digium (http://www.digium.com)
+  * HFC-S/HFC-4S-based ISDN BRI cards (Junghanns.NET, beroNet, Digium etc.)
+  * All TDM (FXO/FXS) cards from Digium
+  * Various clones of Digium cards such as those by OpenVox
+  * Xorcom Astribank USB telephony adapter (http://www.xorcom.com)
+  * Voicetronix OpenPCI, OpenLine and OpenSwitch cards
+  * CAPI-compatible ISDN cards (using the add-on package chan-capi)
+  * Full Duplex Sound Card (ALSA or OSS) supported by Linux
+  * Tormenta T1/E1 card (http://www.zapatatelephony.org)
+  * QuickNet Internet PhoneJack and LineJack (http://www.quicknet.net)
+ .
+ This software was heavily patched by Debian and Proformatique.
+ .
+ This package contains the default sound files for operation of asterisk
+ .
+  Homepage: http://www.asterisk.org.

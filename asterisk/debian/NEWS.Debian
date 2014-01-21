@@ -1,0 +1,10 @@
+Debian asterisk-xxx.dfsg.tar.gz
+===============================
+The Debian version of the upstream asterisk source has had the fpm Music on Hold
+removed as this music has only been licenced for use within asterisk which is
+incompatible with the Debian Free Software Guildlines 
+<http://www.debian.org/social_contract#guidelines>. Please drop your alternative
+Music on Hold into the directory /usr/share/asterisk/mohmp3/
+
+The iLBC codec library code has been removed from the Debian asterisk
+package as it does not conform with the DFSG.

@@ -1,0 +1,84 @@
+Welcome to the world of telephone switch owners. Asterisk is a quite powerful
+and probably one of the feature-richest open-source PBXes out there. To get you
+a brief impression where to start tweaking, we've included this doc. (Thanks to
+Tzafrir Cohen for a proposal of this)
+
+File Locations
+==============
+See /etc/asterisk/asterisk.conf for pathnames. All the configuration is done
+from the *.conf files there.
+
+Sounds reside at /usr/share/asterisk/sounds. Voicemail mailboxes are below
+/var/spool/asterisk/voicemail using symlinks.
+
+User, Groups, Permissions
+=========================
+By default the package will create user and group 'asterisk' and will run as
+them. It will run with real-time priority (-p) by default. It will also add
+itself to the group audio to enable the daemon to access sound cards. Running
+as root is disabled in /etc/init.d/asterisk for security reasons. If you use
+zaptel devices (like zaphfc too), you need to set permissions on /dev/zap to
+root.dialout or whatever other group you like and add the asterisk user to that
+group. Then make sure all the devicenodes below /dev/zap/ are 660 or asterisk
+will not have any access still. When no -G is given to the asterisk PARAMS,
+then asterisk will automatically initialize all groups of the asterisk user. 
+
+To change those values you can edit /etc/default/asterisk. 
+
+Alternatively, edit /etc/asterisk/asterisk.conf .
+
+init.d Script Commands
+======================
+In addition to reload, that runs the asterisk CLI command 'reload' there
+are also extensions-reload ('extensions reload') and logger-reload 
+('logger-reload') to load only parts of the configuration file. 
+
+Asterisk supports a number of non-default paramters at startup.  For debugging
+it is often useful to run 'asterisk -U asterisk -vvvgc' from the console.  Add
+more -v for even higher verbosity. You can attach a remote console to a running
+asterisk daemon with 'asterisk -vcr'.  When testing, make sure to use the "-U
+asterisk", or asterisk may write files with root ownership. In that case you
+might not be able to restart the daemon without altering permissions to the
+files first. Alternatively use '/etc/init.d/asterisk debug'.
+
+Asterisk is run with a umask of 002 by default, to allow writing 
+group-owned voicemail files. To change this value, set the value if 'UMASK'
+in /etc/default/asterisk .
+
+Getting started with config and more features
+=============================================
+Of course the default config is far from a plug'n'play for every environment.
+You need to setup a proper dialplan in extensions.conf, remove the demo entries
+and maybe remove FreeWorldDialup too in case you don't participate there. For
+more info on how to setup a proper dialplan, fax, enum and configuration of
+asterisk, please checkout
+	http://www.voip-info.org/wiki-Asterisk+quickstart
+	http://www.voip-info.org/wiki-Asterisk+config+files
+or the larger HowTos at:
+	http://www.automated.it/guidetoasterisk.htm
+or
+	http://www.asteriskdocs.org/ (Asterisk Handbook)
+
+safe_asterisk (not so safe)
+===========================
+The asterisk source includes a script called "safe_asterisk" that is 
+intended to run asterisk in a loop in case it ever crashes. 
+
+I (Tzafrir) do not recommend using that script, as it has bad error 
+handling and it is generally badly written. It adds a layer of 
+complexity that does not add much overall sability. All too many times I 
+have found systems where safe_asterisk was running in a loop because, 
+e.g. some configuration eror. The result was that the init.d script of 
+Asterisk has become ineffective. 
+
+If there are any features that safe_asterisk provides that you think
+that the default Asterisk init.d or package should provide by default,
+please let us know. For instance, the package already supports colors
+in the CLI. I don't think that the option -g (to generate core files) 
+be of much help, but if it does, look for core_patterns in the sysctl 
+documentation (http://lxr.linux.no/source/Documentation/sysctl/kernel.txt ).
+
+
+Enjoy your PBX!
+
+Kilian Krause (for the pkg-voip team)

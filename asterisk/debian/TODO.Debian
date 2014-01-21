@@ -1,0 +1,7 @@
+* Asterisk 1.4 (see the experimental branch for the moemnt)
+* If we set the asterisk user in asterisk.con, the check for a user in the 
+  init.d script is unnecessary?
+* Is there any problem with having the [general] section in the common 
+  indications.conf ?
+
+$ID$
