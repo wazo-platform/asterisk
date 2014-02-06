@@ -13,3 +13,4 @@ xivo_sip_notify_provd
 xivo_skill_queues
 xivo_agent_complete_wrapup
 xivo_cel_pgsql_fix_deadlock_event
+xivo_sip_tel_uri
