@@ -4,7 +4,6 @@ deb_astgenkey-security
 deb_make-clean-fixes
 ## proformatique patches
 xivo_queue_agent_talking
-xivo_cel_pgsql_fix_reload
 xivo_banner
 xivo_sip_autocreate_context
 xivo_sip_autocreate_prefix
@@ -12,5 +11,4 @@ xivo_sip_autocreate_type
 xivo_sip_notify_provd
 xivo_skill_queues
 xivo_agent_complete_wrapup
-xivo_cel_pgsql_fix_deadlock_event
 xivo_sip_tel_uri
