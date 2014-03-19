@@ -15,7 +15,7 @@ Index: asterisk-11.8.1/apps/app_queue.c
  		qe->parent->eventwhencalled == QUEUE_EVENT_VARIABLES ? vars2manager(qe->chan, vars, vars_len) : "");
 +
 +	if (qe->parent->wrapuptime > 0) {
-+		ast_queue_log("NONE", "NONE", member->membername, "WRAPUPSTART", "%d", qe->parent->wrapuptime);
++		ast_queue_log(queuename, "NONE", member->membername, "WRAPUPSTART", "%d", qe->parent->wrapuptime);
 +	}
  }
  
