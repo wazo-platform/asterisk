@@ -235,11 +235,22 @@ Index: asterisk-11.8.1/main/rtp_engine.c
  					ast_format_cap_append(oldcap1, cap1);
  				}
  				/* Since UPDATE_BRIDGE_PEER is only used by the bridging code, don't forward it */
-@@ -1404,6 +1526,8 @@ static enum ast_bridge_result remote_bri
+@@ -1404,6 +1526,19 @@ static enum ast_bridge_result remote_bri
  		cs[1] = cs[2];
  	}
  
 +remote_bridge_loop_end:
++	/* if we left the loop because of a safe_glue error, return the same
++	 * value as if it was detected at the start of the loop, i.e. return
++	 * AST_BRIDGE_RETRY.
++	 *
++	 * That said, if error is set, this is because one of the chan is a zombie,
++	 * and ast_channel_bridge does check that no chan is a zombie before
++	 * retrying the bridge, so at the end, the bridge will never be retried.
++	 */
++	if (safe_glue0.error || safe_glue1.error) {
++		res = AST_BRIDGE_RETRY;
++	}
 +
  	if (ast_test_flag(ast_channel_flags(c0), AST_FLAG_ZOMBIE)) {
  		ast_debug(1, "Channel '%s' Zombie cleardown from bridge\n", ast_channel_name(c0));
