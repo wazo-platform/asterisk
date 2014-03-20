@@ -12,3 +12,4 @@ xivo_sip_notify_provd
 xivo_skill_queues
 xivo_agent_complete_wrapup
 xivo_sip_tel_uri
+xivo_workaround_remote_bridge_crash
