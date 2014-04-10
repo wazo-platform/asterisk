@@ -2,38 +2,38 @@ Index: asterisk-11.8.1/main/rtp_engine.c
 ===================================================================
 --- asterisk-11.8.1.orig/main/rtp_engine.c
 +++ asterisk-11.8.1/main/rtp_engine.c
-@@ -1123,6 +1123,83 @@ static enum ast_bridge_result local_brid
+@@ -1123,6 +1123,85 @@ static enum ast_bridge_result local_brid
  	return res;
  }
  
 +struct safe_rtp_glue {
 +	struct ast_rtp_glue *glue;
++	struct ast_channel *chan;
++	void *pvt;
 +	int check;
 +	int error;
 +};
 +
-+static void safe_rtp_glue_init(struct safe_rtp_glue *safe_glue, struct ast_rtp_glue *glue)
++static void safe_rtp_glue_init(struct safe_rtp_glue *safe_glue, struct ast_rtp_glue *glue, struct ast_channel *chan)
 +{
 +	safe_glue->glue = glue;
++	safe_glue->chan = chan;
++	safe_glue->pvt = ast_channel_tech_pvt(chan);
 +	safe_glue->error = 0;
 +
 +	if (!strcasecmp(glue->type, "sip") || !strcasecmp(glue->type, "sccp")) {
-+		ast_debug(1, "safe rtp glue check enable for glue type %s\n", glue->type);
++		ast_debug(1, "safe rtp glue check enabled for glue type %s\n", glue->type);
 +		safe_glue->check = 1;
 +	} else {
-+		ast_debug(1, "safe rtp glue check disable for glue type %s\n", glue->type);
++		ast_debug(1, "safe rtp glue check disabled for glue type %s\n", glue->type);
 +		safe_glue->check = 0;
 +	}
 +}
 +
-+static int lock_chan_and_test_for_zombie(struct ast_channel *chan)
++static int lock_chan_and_test_pvt(struct ast_channel *chan, void *pvt)
 +{
-+	/* the rationale is that a channel will be a zombie only after the masquerade, where
-+	 * if the two channels in the masquerade were using different channel technology, the
-+	 * rtp glue won't be the right one, which will cause garbage!
-+	 */
 +	ast_channel_lock(chan);
-+	if (ast_test_flag(ast_channel_flags(chan), AST_FLAG_ZOMBIE)) {
++	if (ast_channel_tech_pvt(chan) != pvt) {
 +		ast_channel_unlock(chan);
 +		return -1;
 +	}
@@ -41,17 +41,18 @@ Index: asterisk-11.8.1/main/rtp_engine.c
 +	return 0;
 +}
 +
-+static int safe_rtp_glue_update_peer(struct safe_rtp_glue *safe_glue, struct ast_channel *chan, struct ast_rtp_instance *instance, struct ast_rtp_instance *vinstance, struct ast_rtp_instance *tinstance, const struct ast_format_cap *cap, int nat_active)
++static int safe_rtp_glue_update_peer(struct safe_rtp_glue *safe_glue, struct ast_rtp_instance *instance, struct ast_rtp_instance *vinstance, struct ast_rtp_instance *tinstance, const struct ast_format_cap *cap, int nat_active)
 +{
 +	struct ast_rtp_glue *glue = safe_glue->glue;
++	struct ast_channel *chan = safe_glue->chan;
 +	int ret;
 +
 +	if (!safe_glue->check) {
 +		return glue->update_peer(chan, instance, vinstance, tinstance, cap, nat_active);
 +	}
 +
-+	if (lock_chan_and_test_for_zombie(chan)) {
-+		ast_debug(1, "update peer failed since channel is a zombie and check is enabled\n");
++	if (lock_chan_and_test_pvt(chan, safe_glue->pvt)) {
++		ast_debug(1, "update peer failed since pvt changed\n");
 +		safe_glue->error = 1;
 +		return -1;
 +	}
@@ -63,17 +64,18 @@ Index: asterisk-11.8.1/main/rtp_engine.c
 +	return ret;
 +}
 +
-+static void safe_rtp_glue_get_codec(struct safe_rtp_glue *safe_glue, struct ast_channel *chan, struct ast_format_cap *result_cap)
++static void safe_rtp_glue_get_codec(struct safe_rtp_glue *safe_glue, struct ast_format_cap *result_cap)
 +{
 +	struct ast_rtp_glue *glue = safe_glue->glue;
++	struct ast_channel *chan = safe_glue->chan;
 +
 +	if (!safe_glue->check) {
 +		glue->get_codec(chan, result_cap);
 +		return;
 +	}
 +
-+	if (lock_chan_and_test_for_zombie(chan)) {
-+		ast_debug(1, "get codec failed since channel is a zombie and check is enabled\n");
++	if (lock_chan_and_test_pvt(chan, safe_glue->pvt)) {
++		ast_debug(1, "get codec failed since pvt changed\n");
 +		safe_glue->error = 1;
 +		return;
 +	}
@@ -86,19 +88,19 @@ Index: asterisk-11.8.1/main/rtp_engine.c
  static enum ast_bridge_result remote_bridge_loop(struct ast_channel *c0,
  	struct ast_channel *c1,
  	struct ast_rtp_instance *instance0,
-@@ -1150,6 +1227,11 @@ static enum ast_bridge_result remote_bri
+@@ -1150,6 +1229,11 @@ static enum ast_bridge_result remote_bri
  	struct ast_sockaddr t1 = {{0,}}, vt1 = {{0,}}, tt1 = {{0,}}, t0 = {{0,}}, vt0 = {{0,}}, tt0 = {{0,}};
  	struct ast_frame *fr = NULL;
  	struct timeval start;
 +	struct safe_rtp_glue safe_glue0;
 +	struct safe_rtp_glue safe_glue1;
 +
-+	safe_rtp_glue_init(&safe_glue0, glue0);
-+	safe_rtp_glue_init(&safe_glue1, glue1);
++	safe_rtp_glue_init(&safe_glue0, glue0, c0);
++	safe_rtp_glue_init(&safe_glue1, glue1, c1);
  
  	if (!oldcap0 || !oldcap1) {
  		ast_channel_unlock(c0);
-@@ -1157,6 +1239,7 @@ static enum ast_bridge_result remote_bri
+@@ -1157,6 +1241,7 @@ static enum ast_bridge_result remote_bri
  		goto remote_bridge_cleanup;
  	}
  	/* Test the first channel */
@@ -106,7 +108,7 @@ Index: asterisk-11.8.1/main/rtp_engine.c
  	if (!(glue0->update_peer(c0, instance1, vinstance1, tinstance1, cap1, 0))) {
  		ast_rtp_instance_get_remote_address(instance1, &ac1);
  		if (vinstance1) {
-@@ -1170,6 +1253,7 @@ static enum ast_bridge_result remote_bri
+@@ -1170,6 +1255,7 @@ static enum ast_bridge_result remote_bri
  	}
  
  	/* Test the second channel */
@@ -114,36 +116,36 @@ Index: asterisk-11.8.1/main/rtp_engine.c
  	if (!(glue1->update_peer(c1, instance0, vinstance0, tinstance0, cap0, 0))) {
  		ast_rtp_instance_get_remote_address(instance0, &ac0);
  		if (vinstance0) {
-@@ -1218,7 +1302,10 @@ static enum ast_bridge_result remote_bri
+@@ -1218,7 +1304,10 @@ static enum ast_bridge_result remote_bri
  		}
  		if (glue1->get_codec) {
  			ast_format_cap_remove_all(cap1);
 -			glue1->get_codec(c1, cap1);
-+			safe_rtp_glue_get_codec(&safe_glue1, c1, cap1);
++			safe_rtp_glue_get_codec(&safe_glue1, cap1);
 +			if (safe_glue1.error) {
 +				goto remote_bridge_loop_end;
 +			}
  		}
  
  		ast_rtp_instance_get_remote_address(instance0, &t0);
-@@ -1230,7 +1317,10 @@ static enum ast_bridge_result remote_bri
+@@ -1230,7 +1319,10 @@ static enum ast_bridge_result remote_bri
  		}
  		if (glue0->get_codec) {
  			ast_format_cap_remove_all(cap0);
 -			glue0->get_codec(c0, cap0);
-+			safe_rtp_glue_get_codec(&safe_glue0, c0, cap0);
++			safe_rtp_glue_get_codec(&safe_glue0, cap0);
 +			if (safe_glue0.error) {
 +				goto remote_bridge_loop_end;
 +			}
  		}
  
  		if ((ast_sockaddr_cmp(&t1, &ac1)) ||
-@@ -1256,11 +1346,15 @@ static enum ast_bridge_result remote_bri
+@@ -1256,11 +1348,15 @@ static enum ast_bridge_result remote_bri
  			ast_debug(1, "Oooh, '%s' was %s/(format %s)\n",
  				  ast_channel_name(c1), ast_sockaddr_stringify(&tac1),
  				  ast_getformatname_multiple(tmp_buf, sizeof(tmp_buf), oldcap1));
 -			if (glue0->update_peer(c0,
-+			if (safe_rtp_glue_update_peer(&safe_glue0, c0,
++			if (safe_rtp_glue_update_peer(&safe_glue0,
  					       ast_sockaddr_isnull(&t1)  ? NULL : instance1,
  					       ast_sockaddr_isnull(&vt1) ? NULL : vinstance1,
  					       ast_sockaddr_isnull(&tt1) ? NULL : tinstance1,
@@ -155,12 +157,12 @@ Index: asterisk-11.8.1/main/rtp_engine.c
  				ast_log(LOG_WARNING, "Channel '%s' failed to update to '%s'\n", ast_channel_name(c0), ast_channel_name(c1));
  			}
  			ast_sockaddr_copy(&ac1, &t1);
-@@ -1279,10 +1373,14 @@ static enum ast_bridge_result remote_bri
+@@ -1279,10 +1375,14 @@ static enum ast_bridge_result remote_bri
  			ast_debug(1, "Oooh, '%s' was %s/(format %s)\n",
  				  ast_channel_name(c0), ast_sockaddr_stringify(&ac0),
  				  ast_getformatname_multiple(tmp_buf, sizeof(tmp_buf), oldcap0));
 -			if (glue1->update_peer(c1, t0.len ? instance0 : NULL,
-+			if (safe_rtp_glue_update_peer(&safe_glue1, c1, t0.len ? instance0 : NULL,
++			if (safe_rtp_glue_update_peer(&safe_glue1, t0.len ? instance0 : NULL,
  						vt0.len ? vinstance0 : NULL,
  						tt0.len ? tinstance0 : NULL,
  						cap0, 0)) {
@@ -171,19 +173,19 @@ Index: asterisk-11.8.1/main/rtp_engine.c
  				ast_log(LOG_WARNING, "Channel '%s' failed to update to '%s'\n", ast_channel_name(c1), ast_channel_name(c0));
  			}
  			ast_sockaddr_copy(&ac0, &t0);
-@@ -1325,18 +1423,34 @@ static enum ast_bridge_result remote_bri
+@@ -1325,18 +1425,34 @@ static enum ast_bridge_result remote_bri
  				if (fr->subclass.integer == AST_CONTROL_HOLD) {
  					/* If we someone went on hold we want the other side to reinvite back to us */
  					if (who == c0) {
 -						glue1->update_peer(c1, NULL, NULL, NULL, 0, 0);
-+						safe_rtp_glue_update_peer(&safe_glue1, c1, NULL, NULL, NULL, 0, 0);
++						safe_rtp_glue_update_peer(&safe_glue1, NULL, NULL, NULL, 0, 0);
 +						if (safe_glue1.error) {
 +							ast_frfree(fr);
 +							goto remote_bridge_loop_end;
 +						}
  					} else {
 -						glue0->update_peer(c0, NULL, NULL, NULL, 0, 0);
-+						safe_rtp_glue_update_peer(&safe_glue0, c0, NULL, NULL, NULL, 0, 0);
++						safe_rtp_glue_update_peer(&safe_glue0, NULL, NULL, NULL, 0, 0);
 +						if (safe_glue0.error) {
 +							ast_frfree(fr);
 +							goto remote_bridge_loop_end;
@@ -195,14 +197,14 @@ Index: asterisk-11.8.1/main/rtp_engine.c
  					 * been told to force a peer update, go ahead and do it. */
  					if (who == c0) {
 -						glue1->update_peer(c1, instance0, vinstance0, tinstance0, cap0, 0);
-+						safe_rtp_glue_update_peer(&safe_glue1, c1, instance0, vinstance0, tinstance0, cap0, 0);
++						safe_rtp_glue_update_peer(&safe_glue1, instance0, vinstance0, tinstance0, cap0, 0);
 +						if (safe_glue1.error) {
 +							ast_frfree(fr);
 +							goto remote_bridge_loop_end;
 +						}
  					} else {
 -						glue0->update_peer(c0, instance1, vinstance1, tinstance1, cap1, 0);
-+						safe_rtp_glue_update_peer(&safe_glue0, c0, instance1, vinstance1, tinstance1, cap1, 0);
++						safe_rtp_glue_update_peer(&safe_glue0, instance1, vinstance1, tinstance1, cap1, 0);
 +						if (safe_glue0.error) {
 +							ast_frfree(fr);
 +							goto remote_bridge_loop_end;
@@ -210,12 +212,12 @@ Index: asterisk-11.8.1/main/rtp_engine.c
  					}
  				}
  				/* Update local address information */
-@@ -1348,14 +1462,22 @@ static enum ast_bridge_result remote_bri
+@@ -1348,14 +1464,22 @@ static enum ast_bridge_result remote_bri
  				if (glue0->get_codec && ast_channel_tech_pvt(c0)) {
  					ast_format_cap_remove_all(cap0);
  					ast_format_cap_remove_all(oldcap0);
 -					glue0->get_codec(c0, cap0);
-+					safe_rtp_glue_get_codec(&safe_glue0, c0, cap0);
++					safe_rtp_glue_get_codec(&safe_glue0, cap0);
 +					if (safe_glue0.error) {
 +						ast_frfree(fr);
 +						goto remote_bridge_loop_end;
@@ -227,7 +229,7 @@ Index: asterisk-11.8.1/main/rtp_engine.c
  					ast_format_cap_remove_all(cap1);
  					ast_format_cap_remove_all(oldcap1);
 -					glue1->get_codec(c1, cap1);
-+					safe_rtp_glue_get_codec(&safe_glue1, c1, cap1);
++					safe_rtp_glue_get_codec(&safe_glue1, cap1);
 +					if (safe_glue1.error) {
 +						ast_frfree(fr);
 +						goto remote_bridge_loop_end;
@@ -235,7 +237,7 @@ Index: asterisk-11.8.1/main/rtp_engine.c
  					ast_format_cap_append(oldcap1, cap1);
  				}
  				/* Since UPDATE_BRIDGE_PEER is only used by the bridging code, don't forward it */
-@@ -1404,6 +1526,19 @@ static enum ast_bridge_result remote_bri
+@@ -1404,6 +1528,15 @@ static enum ast_bridge_result remote_bri
  		cs[1] = cs[2];
  	}
  
@@ -243,10 +245,6 @@ Index: asterisk-11.8.1/main/rtp_engine.c
 +	/* if we left the loop because of a safe_glue error, return the same
 +	 * value as if it was detected at the start of the loop, i.e. return
 +	 * AST_BRIDGE_RETRY.
-+	 *
-+	 * That said, if error is set, this is because one of the chan is a zombie,
-+	 * and ast_channel_bridge does check that no chan is a zombie before
-+	 * retrying the bridge, so at the end, the bridge will never be retried.
 +	 */
 +	if (safe_glue0.error || safe_glue1.error) {
 +		res = AST_BRIDGE_RETRY;
