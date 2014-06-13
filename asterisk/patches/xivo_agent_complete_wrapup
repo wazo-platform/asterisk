@@ -1,7 +1,7 @@
-Index: asterisk-11.10.0/apps/app_queue.c
+Index: asterisk-11.10.2/apps/app_queue.c
 ===================================================================
---- asterisk-11.10.0.orig/apps/app_queue.c
-+++ asterisk-11.10.0/apps/app_queue.c
+--- asterisk-11.10.2.orig/apps/app_queue.c
++++ asterisk-11.10.2/apps/app_queue.c
 @@ -6095,11 +6095,16 @@ static void send_agent_complete(const st
  		"MemberName: %s\r\n"
  		"HoldTime: %ld\r\n"
