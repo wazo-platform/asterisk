@@ -13,7 +13,7 @@ Index: asterisk-11.9.0/main/asterisk.c
 +                "=========================================================================\n" \
 +                "This package has been modified for the Debian GNU/Linux distribution\n" \
 +                "This package has been modified for XiVO, a product of Avencall\n" \
-+                "Please report all bugs to https://projects.xivo.fr/projects/xivo/issues\n" \
++                "Please report all bugs to https://projects.xivo.io/projects/xivo/issues\n" \
                  "=========================================================================\n", ast_get_version()) \
  
  /*! \defgroup main_options Main Configuration Options
