@@ -116,31 +116,33 @@ Index: asterisk-11.10.2/main/rtp_engine.c
  	if (!(glue1->update_peer(c1, instance0, vinstance0, tinstance0, cap0, 0))) {
  		ast_rtp_instance_get_remote_address(instance0, &ac0);
  		if (vinstance0) {
-@@ -1227,7 +1313,10 @@ static enum ast_bridge_result remote_bri
+@@ -1227,7 +1313,11 @@ static enum ast_bridge_result remote_bri
  		ast_channel_lock(c1);
  		if (glue1->get_codec && ast_channel_tech_pvt(c1)) {
  			ast_format_cap_remove_all(cap1);
 -			glue1->get_codec(c1, cap1);
 +			safe_rtp_glue_get_codec(&safe_glue1, cap1);
 +			if (safe_glue1.error) {
++				ast_channel_unlock(c1);
 +				goto remote_bridge_loop_end;
 +			}
  		}
  		ast_channel_unlock(c1);
  
-@@ -1241,7 +1330,10 @@ static enum ast_bridge_result remote_bri
+@@ -1241,7 +1331,11 @@ static enum ast_bridge_result remote_bri
  		ast_channel_lock(c0);
  		if (glue0->get_codec && ast_channel_tech_pvt(c0)) {
  			ast_format_cap_remove_all(cap0);
 -			glue0->get_codec(c0, cap0);
 +			safe_rtp_glue_get_codec(&safe_glue0, cap0);
 +			if (safe_glue0.error) {
++				ast_channel_unlock(c0);
 +				goto remote_bridge_loop_end;
 +			}
  		}
  		ast_channel_unlock(c0);
  
-@@ -1268,11 +1360,15 @@ static enum ast_bridge_result remote_bri
+@@ -1268,11 +1362,15 @@ static enum ast_bridge_result remote_bri
  			ast_debug(1, "Oooh, '%s' was %s/(format %s)\n",
  				  ast_channel_name(c1), ast_sockaddr_stringify(&tac1),
  				  ast_getformatname_multiple(tmp_buf, sizeof(tmp_buf), oldcap1));
@@ -157,7 +159,7 @@ Index: asterisk-11.10.2/main/rtp_engine.c
  				ast_log(LOG_WARNING, "Channel '%s' failed to update to '%s'\n", ast_channel_name(c0), ast_channel_name(c1));
  			}
  			ast_sockaddr_copy(&ac1, &t1);
-@@ -1291,10 +1387,14 @@ static enum ast_bridge_result remote_bri
+@@ -1291,10 +1389,14 @@ static enum ast_bridge_result remote_bri
  			ast_debug(1, "Oooh, '%s' was %s/(format %s)\n",
  				  ast_channel_name(c0), ast_sockaddr_stringify(&ac0),
  				  ast_getformatname_multiple(tmp_buf, sizeof(tmp_buf), oldcap0));
@@ -173,7 +175,7 @@ Index: asterisk-11.10.2/main/rtp_engine.c
  				ast_log(LOG_WARNING, "Channel '%s' failed to update to '%s'\n", ast_channel_name(c1), ast_channel_name(c0));
  			}
  			ast_sockaddr_copy(&ac0, &t0);
-@@ -1337,18 +1437,34 @@ static enum ast_bridge_result remote_bri
+@@ -1337,18 +1439,34 @@ static enum ast_bridge_result remote_bri
  				if (fr->subclass.integer == AST_CONTROL_HOLD) {
  					/* If we someone went on hold we want the other side to reinvite back to us */
  					if (who == c0) {
@@ -212,33 +214,35 @@ Index: asterisk-11.10.2/main/rtp_engine.c
  					}
  				}
  				/* Update local address information */
-@@ -1361,7 +1477,11 @@ static enum ast_bridge_result remote_bri
+@@ -1361,7 +1479,12 @@ static enum ast_bridge_result remote_bri
  				if (glue0->get_codec && ast_channel_tech_pvt(c0)) {
  					ast_format_cap_remove_all(cap0);
  					ast_format_cap_remove_all(oldcap0);
 -					glue0->get_codec(c0, cap0);
 +					safe_rtp_glue_get_codec(&safe_glue0, cap0);
 +					if (safe_glue0.error) {
++						ast_channel_unlock(c0);
 +						ast_frfree(fr);
 +						goto remote_bridge_loop_end;
 +					}
  					ast_format_cap_append(oldcap0, cap0);
  
  				}
-@@ -1370,7 +1490,11 @@ static enum ast_bridge_result remote_bri
+@@ -1370,7 +1493,12 @@ static enum ast_bridge_result remote_bri
  				if (glue1->get_codec && ast_channel_tech_pvt(c1)) {
  					ast_format_cap_remove_all(cap1);
  					ast_format_cap_remove_all(oldcap1);
 -					glue1->get_codec(c1, cap1);
 +					safe_rtp_glue_get_codec(&safe_glue1, cap1);
 +					if (safe_glue1.error) {
++						ast_channel_unlock(c1);
 +						ast_frfree(fr);
 +						goto remote_bridge_loop_end;
 +					}
  					ast_format_cap_append(oldcap1, cap1);
  				}
  				ast_channel_unlock(c1);
-@@ -1420,6 +1544,15 @@ static enum ast_bridge_result remote_bri
+@@ -1420,6 +1548,15 @@ static enum ast_bridge_result remote_bri
  		cs[1] = cs[2];
  	}
  
