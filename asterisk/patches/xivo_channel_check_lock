@@ -1,0 +1,42 @@
+Index: asterisk/tmp/asterisk-11.9.0/include/asterisk/channel.h
+===================================================================
+--- asterisk-11.9.0.orig/include/asterisk/channel.h
++++ asterisk-11.9.0/include/asterisk/channel.h
+@@ -3715,6 +3715,17 @@ int ast_channel_get_cc_agent_type(struct
+ void ast_channel_unlink(struct ast_channel *chan);
+ 
+ /*!
++ * \brief Tries to the the global channels container
++ *
++ * \param n number of times to try to lock the container
++ * \param m_seconds number of micro seconds to wait between each try
++ * \return 0 Success
++ * \return -1 Fail
++ */
++int ast_channel_check_lock(unsigned int n, unsigned int m_seconds);
++
++
++/*!
+  * \brief Sets the HANGUPCAUSE hash and optionally the SIP_CAUSE hash 
+  * on the given channel
+  *
+Index: asterisk/tmp/asterisk-11.9.0/main/channel.c
+===================================================================
+--- asterisk-11.9.0.orig/main/channel.c
++++ asterisk-11.9.0/main/channel.c
+@@ -11192,3 +11192,15 @@ void ast_channel_unlink(struct ast_chann
+ {
+ 	ao2_unlink(channels, chan);
+ }
++
++int ast_channel_check_lock(unsigned int n, unsigned int m_seconds)
++{
++	while (n--) {
++		if (!ao2_trylock(channels)) {
++			ao2_unlock(channels);
++			return 0;
++		}
++		usleep(m_seconds);
++	}
++	return -1;
++}
