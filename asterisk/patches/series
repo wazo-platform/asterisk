@@ -1,5 +1,4 @@
 ### upstream fixes
-xivo_channel_check_lock
 deb_allow-tilde-destdir
 deb_astgenkey-security
 deb_make-clean-fixes
@@ -14,3 +13,4 @@ xivo_skill_queues
 xivo_agent_complete_wrapup
 xivo_sip_tel_uri
 xivo_workaround_remote_bridge_crash
+xivo_channel_check_lock

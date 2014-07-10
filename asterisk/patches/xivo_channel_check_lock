@@ -1,4 +1,4 @@
-Index: asterisk/tmp/asterisk-11.9.0/include/asterisk/channel.h
+Index: asterisk-11.9.0/include/asterisk/channel.h
 ===================================================================
 --- asterisk-11.9.0.orig/include/asterisk/channel.h
 +++ asterisk-11.9.0/include/asterisk/channel.h
@@ -20,7 +20,7 @@ Index: asterisk/tmp/asterisk-11.9.0/include/asterisk/channel.h
   * \brief Sets the HANGUPCAUSE hash and optionally the SIP_CAUSE hash 
   * on the given channel
   *
-Index: asterisk/tmp/asterisk-11.9.0/main/channel.c
+Index: asterisk-11.9.0/main/channel.c
 ===================================================================
 --- asterisk-11.9.0.orig/main/channel.c
 +++ asterisk-11.9.0/main/channel.c
