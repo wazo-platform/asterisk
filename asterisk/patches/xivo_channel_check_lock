@@ -10,24 +10,24 @@ Index: asterisk-11.9.0/include/asterisk/channel.h
 + * \brief Tries to lock the the global channels container
 + *
 + * \param secs the number of seconds to try to acquire the lock before failing
-+ * \return 0 Success
-+ * \return -1 Fail
++ * \return 0 on success
++ * \return non-zero on error
 + */
 +int ast_channels_check_lock(unsigned int secs);
 +
 +/*!
 + * \brief Locks the global channel container
 + *
-+ * \return 0 Success
-+ * \return 1 Fail
++ * \return 0 on success
++ * \return non-zero on error
 + */
 +int ast_channels_lock(void);
 +
 +/*!
 + * \brief Unlocks the global channel container
 + *
-+ * \return 0 Success
-+ * \return 1 Fail
++ * \return 0 on success
++ * \return non-zero on error
 + */
 +int ast_channels_unlock(void);
 +
