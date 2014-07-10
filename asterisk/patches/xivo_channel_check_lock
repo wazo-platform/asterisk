@@ -2,41 +2,67 @@ Index: asterisk-11.9.0/include/asterisk/channel.h
 ===================================================================
 --- asterisk-11.9.0.orig/include/asterisk/channel.h
 +++ asterisk-11.9.0/include/asterisk/channel.h
-@@ -3715,6 +3715,17 @@ int ast_channel_get_cc_agent_type(struct
- void ast_channel_unlink(struct ast_channel *chan);
+@@ -4029,5 +4029,30 @@ int ast_channel_dialed_causes_add(const
+  */
+ void ast_channel_dialed_causes_clear(const struct ast_channel *chan);
  
- /*!
-+ * \brief Tries to the the global channels container
++/*!
++ * \brief Tries to lock the the global channels container
 + *
-+ * \param n number of times to try to lock the container
-+ * \param m_seconds number of micro seconds to wait between each try
++ * \param secs the number of seconds to try to acquire the lock before failing
 + * \return 0 Success
 + * \return -1 Fail
 + */
-+int ast_channel_check_lock(unsigned int n, unsigned int m_seconds);
-+
++int ast_channels_check_lock(unsigned int secs);
 +
 +/*!
-  * \brief Sets the HANGUPCAUSE hash and optionally the SIP_CAUSE hash 
-  * on the given channel
-  *
++ * \brief Locks the global channel container
++ *
++ * \return 0 Success
++ * \return 1 Fail
++ */
++int ast_channels_lock(void);
++
++/*!
++ * \brief Unlocks the global channel container
++ *
++ * \return 0 Success
++ * \return 1 Fail
++ */
++int ast_channels_unlock(void);
++
+ struct ast_flags *ast_channel_flags(struct ast_channel *chan);
+ #endif /* _ASTERISK_CHANNEL_H */
 Index: asterisk-11.9.0/main/channel.c
 ===================================================================
 --- asterisk-11.9.0.orig/main/channel.c
 +++ asterisk-11.9.0/main/channel.c
-@@ -11192,3 +11192,15 @@ void ast_channel_unlink(struct ast_chann
+@@ -11192,3 +11192,28 @@ void ast_channel_unlink(struct ast_chann
  {
  	ao2_unlink(channels, chan);
  }
 +
-+int ast_channel_check_lock(unsigned int n, unsigned int m_seconds)
++int ast_channels_lock(void)
 +{
++	return ao2_lock(channels);
++}
++
++int ast_channels_unlock(void)
++{
++	return ao2_unlock(channels);
++}
++
++int ast_channels_check_lock(unsigned int secs)
++{
++	unsigned int sleep_time_micro = 1000;
++	unsigned int n = secs * 1000000 / sleep_time_micro;
++
 +	while (n--) {
 +		if (!ao2_trylock(channels)) {
 +			ao2_unlock(channels);
 +			return 0;
 +		}
-+		usleep(m_seconds);
++		usleep(sleep_time_micro);
 +	}
 +	return -1;
 +}
