@@ -2276,8 +2276,8 @@ Index: asterisk-11.10.2/apps/app_queue.c
 Index: asterisk-11.10.2/configs/queueskillrules.conf.sample
 ===================================================================
 --- /dev/null
-+++ asterisk-11.10.2/configs/queueskillrules.conf.sample
-@@ -0,0 +1,67 @@
++++ asterisk-11.9.0/configs/queueskillrules.conf.sample
+@@ -0,0 +1,63 @@
 +; This file describes skill routing rules. The Queue() application can get the
 +; 'skill_ruleset' argument which is the name of one skill routing ruleset. If
 +; set, a selection of queue members is defined by running these rules on each
@@ -2292,11 +2292,7 @@ Index: asterisk-11.10.2/configs/queueskillrules.conf.sample
 +; Operators:
 +; ----------
 +;
-+; You can define these rules with some arithmetic and logical operators:
-+;      operand1 / operand2  (division)
-+;      operand1 * operand2  (multiplication)
-+;      operand1 - operand2  (subtraction)
-+;      operand1 + operand2  (addition)
++; You can define these rules with some comparison and logical operators:
 +;      operand1 ! operand2  (is not equal)
 +;      operand1 = operand2  (is equal)
 +;      operand1 > operand2  (is greater than)
@@ -2304,7 +2300,7 @@ Index: asterisk-11.10.2/configs/queueskillrules.conf.sample
 +;      operand1 & operand2  (both are true)
 +;      operand1 | operand2  (at least one of them are true)
 +;
-+; '/' is the operator with the higher priority, and '|' the one with the lower
++; '!' is the operator with the higher priority, and '|' the one with the lower
 +; priority. You can use brackets '()' to overload operator priorities.
 +;
 +; Dynamical part:
