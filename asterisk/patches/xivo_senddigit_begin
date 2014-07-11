@@ -1,0 +1,30 @@
+Index: asterisk-11.9.0/main/channel.c
+===================================================================
+--- asterisk-11.9.0.orig/main/channel.c
++++ asterisk-11.9.0/main/channel.c
+@@ -4777,7 +4777,24 @@ int ast_senddigit_begin(struct ast_chann
+ 	ast_channel_sending_dtmf_tv_set(chan, ast_tvnow());
+ 	ast_channel_unlock(chan);
+ 
+-	if (!ast_channel_tech(chan)->send_digit_begin(chan, digit))
++	/*
++	 * Check that send_digit_begin is not NULL once again.
++	 *
++	 * If a masquerade happens between the first check above and this check, then we won't segfault if
++	 * the "new" channel tech doesn't have a send_digit_begin callback.
++	 *
++	 * This only reduce the probability that a crash will happen. If the masquerade happens just
++	 * after this check, then we'll get undefined behaviour (i.e. probably a crash).
++	 *
++	 * For example, we could find ourselves in the situation where the chan_local send_digit_begin
++	 * function is called with a channel that has a chan_sip tech_pvt, and this is not good.
++	 *
++	 * Also, we can't lock the channel when calling send_digit_begin, because:
++	 * - it would break the ast_channel_tech API contract
++	 * - it might cause deadlock, since some channel driver relies on the fact that the channel is
++	 *   not locked to do some shenanigans
++	 */
++	if (!ast_channel_tech(chan)->send_digit_begin || !ast_channel_tech(chan)->send_digit_begin(chan, digit))
+ 		return 0;
+ 
+ 	if (digit >= '0' && digit <='9')
