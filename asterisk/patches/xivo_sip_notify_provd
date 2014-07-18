@@ -1,7 +1,7 @@
-Index: asterisk-11.10.2/channels/chan_sip.c
+Index: asterisk-11.11.0/channels/chan_sip.c
 ===================================================================
---- asterisk-11.10.2.orig/channels/chan_sip.c
-+++ asterisk-11.10.2/channels/chan_sip.c
+--- asterisk-11.11.0.orig/channels/chan_sip.c
++++ asterisk-11.11.0/channels/chan_sip.c
 @@ -566,6 +566,11 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
  			via multiple <literal>Variable: name=value</literal> sequences.</para>
  		</description>
@@ -14,7 +14,7 @@ Index: asterisk-11.10.2/channels/chan_sip.c
  	<manager name="SIPpeerstatus" language="en_US">
  		<synopsis>
  			Show the status of one or all of the sip peers.
-@@ -14921,20 +14926,54 @@ static int transmit_notify_with_sipfrag(
+@@ -14959,20 +14964,54 @@ static int transmit_notify_with_sipfrag(
  	return send_request(p, &req, XMIT_RELIABLE, p->ocseq);
  }
  
@@ -35,7 +35,7 @@ Index: asterisk-11.10.2/channels/chan_sip.c
  	const char *channame = astman_get_header(m, "Channel");
 +	const char *peerip = astman_get_header(m, "PeerIP");
 +	char peername[80];
- 	struct ast_variable *vars = astman_get_variables(m);
+ 	struct ast_variable *vars = astman_get_variables_order(m, ORDER_NATURAL);
  	struct sip_pvt *p;
  	struct ast_variable *header, *var;
  
@@ -75,7 +75,7 @@ Index: asterisk-11.10.2/channels/chan_sip.c
  	}
  
  	if (!(p = sip_alloc(NULL, NULL, 0, SIP_NOTIFY, NULL, NULL))) {
-@@ -14942,7 +14981,7 @@ static int manager_sipnotify(struct mans
+@@ -14980,7 +15019,7 @@ static int manager_sipnotify(struct mans
  		return 0;
  	}
  
@@ -84,7 +84,7 @@ Index: asterisk-11.10.2/channels/chan_sip.c
  		/* Maybe they're not registered, etc. */
  		dialog_unlink_all(p);
  		dialog_unref(p, "unref dialog inside for loop" );
-@@ -34751,6 +34790,7 @@ static int load_module(void)
+@@ -34786,6 +34825,7 @@ static int load_module(void)
  	ast_manager_register_xml("SIPqualifypeer", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_sip_qualify_peer);
  	ast_manager_register_xml("SIPshowregistry", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_show_registry);
  	ast_manager_register_xml("SIPnotify", EVENT_FLAG_SYSTEM, manager_sipnotify);
@@ -92,7 +92,7 @@ Index: asterisk-11.10.2/channels/chan_sip.c
  	ast_manager_register_xml("SIPpeerstatus", EVENT_FLAG_SYSTEM, manager_sip_peer_status);
  	sip_poke_all_peers();
  	sip_keepalive_all_peers();
-@@ -34870,6 +34910,7 @@ static int unload_module(void)
+@@ -34905,6 +34945,7 @@ static int unload_module(void)
  	ast_manager_unregister("SIPqualifypeer");
  	ast_manager_unregister("SIPshowregistry");
  	ast_manager_unregister("SIPnotify");

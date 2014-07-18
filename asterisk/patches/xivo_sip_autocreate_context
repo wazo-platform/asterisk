@@ -1,8 +1,8 @@
-Index: asterisk-11.10.2/channels/chan_sip.c
+Index: asterisk-11.11.0/channels/chan_sip.c
 ===================================================================
---- asterisk-11.10.2.orig/channels/chan_sip.c
-+++ asterisk-11.10.2/channels/chan_sip.c
-@@ -20687,6 +20687,7 @@ static char *sip_show_settings(struct as
+--- asterisk-11.11.0.orig/channels/chan_sip.c
++++ asterisk-11.11.0/channels/chan_sip.c
+@@ -20727,6 +20727,7 @@ static char *sip_show_settings(struct as
  	ast_cli(a->fd, "  Textsupport:            %s\n", AST_CLI_YESNO(ast_test_flag(&global_flags[1], SIP_PAGE2_TEXTSUPPORT)));
  	ast_cli(a->fd, "  Ignore SDP sess. ver.:  %s\n", AST_CLI_YESNO(ast_test_flag(&global_flags[1], SIP_PAGE2_IGNORESDPVERSION)));
  	ast_cli(a->fd, "  AutoCreate Peer:        %s\n", autocreatepeer2str(sip_cfg.autocreatepeer));
@@ -10,7 +10,7 @@ Index: asterisk-11.10.2/channels/chan_sip.c
  	ast_cli(a->fd, "  Match Auth Username:    %s\n", AST_CLI_YESNO(global_match_auth_username));
  	ast_cli(a->fd, "  Allow unknown access:   %s\n", AST_CLI_YESNO(sip_cfg.allowguest));
  	ast_cli(a->fd, "  Allow subscriptions:    %s\n", AST_CLI_YESNO(ast_test_flag(&global_flags[1], SIP_PAGE2_ALLOWSUBSCRIBE)));
-@@ -30594,6 +30595,7 @@ static struct sip_peer *temp_peer(const
+@@ -30621,6 +30622,7 @@ static struct sip_peer *temp_peer(const
  
  	ast_copy_string(peer->name, name, sizeof(peer->name));
  
@@ -18,7 +18,7 @@ Index: asterisk-11.10.2/channels/chan_sip.c
  	peer->selfdestruct = TRUE;
  	peer->host_dynamic = TRUE;
  	peer->prefs = default_prefs;
-@@ -31621,6 +31623,7 @@ static int reload_config(enum channelrel
+@@ -31650,6 +31652,7 @@ static int reload_config(enum channelrel
  	global_reg_retry_403 = 0;
  	sip_cfg.pedanticsipchecking = DEFAULT_PEDANTIC;
  	sip_cfg.autocreatepeer = DEFAULT_AUTOCREATEPEER;
@@ -26,7 +26,7 @@ Index: asterisk-11.10.2/channels/chan_sip.c
  	global_autoframing = 0;
  	sip_cfg.allowguest = DEFAULT_ALLOWGUEST;
  	global_callcounter = DEFAULT_CALLCOUNTER;
-@@ -31942,6 +31945,8 @@ static int reload_config(enum channelrel
+@@ -31971,6 +31974,8 @@ static int reload_config(enum channelrel
  			} else {
  				sip_cfg.autocreatepeer = ast_true(v->value) ? AUTOPEERS_VOLATILE : AUTOPEERS_DISABLED;
  			}
@@ -35,10 +35,10 @@ Index: asterisk-11.10.2/channels/chan_sip.c
  		} else if (!strcasecmp(v->name, "match_auth_username")) {
  			global_match_auth_username = ast_true(v->value);
  		} else if (!strcasecmp(v->name, "srvlookup")) {
-Index: asterisk-11.10.2/channels/sip/include/sip.h
+Index: asterisk-11.11.0/channels/sip/include/sip.h
 ===================================================================
---- asterisk-11.10.2.orig/channels/sip/include/sip.h
-+++ asterisk-11.10.2/channels/sip/include/sip.h
+--- asterisk-11.11.0.orig/channels/sip/include/sip.h
++++ asterisk-11.11.0/channels/sip/include/sip.h
 @@ -213,6 +213,7 @@
  #define DEFAULT_NOTIFYCID      DISABLED	/*!< Include CID with ringing notifications */
  #define DEFAULT_PEDANTIC       TRUE     /*!< Follow SIP standards for dialog matching */
@@ -47,7 +47,7 @@ Index: asterisk-11.10.2/channels/sip/include/sip.h
  #define	DEFAULT_MATCHEXTERNADDRLOCALLY FALSE /*!< Match extern IP locally default setting */
  #define DEFAULT_QUALIFY        FALSE    /*!< Don't monitor devices */
  #define DEFAULT_KEEPALIVE      0        /*!< Don't send keep alive packets */
-@@ -745,6 +746,7 @@ struct sip_settings {
+@@ -746,6 +747,7 @@ struct sip_settings {
  	int directrtpsetup;         /*!< Enable support for Direct RTP setup (no re-invites) */
  	int pedanticsipchecking;    /*!< Extra checking ?  Default off */
  	enum autocreatepeer_mode autocreatepeer;  /*!< Auto creation of peers at registration? Default off. */
