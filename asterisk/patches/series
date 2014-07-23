@@ -18,3 +18,4 @@ xivo_senddigit_begin
 xivo_event_sip_ringing
 xivo_cel_event_hold
 xivo_cel_odbc_time_precision
+xivo_ccss_exten_context_var
