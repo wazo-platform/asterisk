@@ -15,3 +15,4 @@ xivo_sip_tel_uri
 xivo_workaround_remote_bridge_crash
 xivo_channel_check_lock
 xivo_senddigit_begin
+xivo_event_sip_ringing
