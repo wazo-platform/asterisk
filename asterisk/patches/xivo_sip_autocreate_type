@@ -1,8 +1,8 @@
-Index: asterisk-11.11.0/channels/chan_sip.c
+Index: asterisk-11.12.0/channels/chan_sip.c
 ===================================================================
---- asterisk-11.11.0.orig/channels/chan_sip.c
-+++ asterisk-11.11.0/channels/chan_sip.c
-@@ -30622,6 +30622,9 @@ static struct sip_peer *temp_peer(const
+--- asterisk-11.12.0.orig/channels/chan_sip.c
++++ asterisk-11.12.0/channels/chan_sip.c
+@@ -30471,6 +30471,9 @@ static struct sip_peer *temp_peer(const
  
  	ast_copy_string(peer->name, name, sizeof(peer->name));
  
@@ -12,7 +12,7 @@ Index: asterisk-11.11.0/channels/chan_sip.c
  	ast_string_field_set(peer, context, sip_cfg.autocreate_context);
  	peer->selfdestruct = TRUE;
  	peer->host_dynamic = TRUE;
-@@ -31654,6 +31657,7 @@ static int reload_config(enum channelrel
+@@ -31503,6 +31506,7 @@ static int reload_config(enum channelrel
  	sip_cfg.autocreatepeer = DEFAULT_AUTOCREATEPEER;
  	ast_copy_string(sip_cfg.autocreate_context, DEFAULT_AUTOCREATE_CONTEXT, sizeof(sip_cfg.autocreate_context));
  	ast_copy_string(sip_cfg.autocreate_prefix, DEFAULT_AUTOCREATE_PREFIX, sizeof(sip_cfg.autocreate_prefix));
@@ -20,7 +20,7 @@ Index: asterisk-11.11.0/channels/chan_sip.c
  	global_autoframing = 0;
  	sip_cfg.allowguest = DEFAULT_ALLOWGUEST;
  	global_callcounter = DEFAULT_CALLCOUNTER;
-@@ -31979,6 +31983,14 @@ static int reload_config(enum channelrel
+@@ -31828,6 +31832,14 @@ static int reload_config(enum channelrel
  			ast_copy_string(sip_cfg.autocreate_context, v->value, sizeof(sip_cfg.autocreate_context));
  		} else if (!strcasecmp(v->name, "autocreate_prefix")) {
  			ast_copy_string(sip_cfg.autocreate_prefix, v->value, sizeof(sip_cfg.autocreate_prefix));
@@ -35,10 +35,10 @@ Index: asterisk-11.11.0/channels/chan_sip.c
  		} else if (!strcasecmp(v->name, "match_auth_username")) {
  			global_match_auth_username = ast_true(v->value);
  		} else if (!strcasecmp(v->name, "srvlookup")) {
-Index: asterisk-11.11.0/channels/sip/include/sip.h
+Index: asterisk-11.12.0/channels/sip/include/sip.h
 ===================================================================
---- asterisk-11.11.0.orig/channels/sip/include/sip.h
-+++ asterisk-11.11.0/channels/sip/include/sip.h
+--- asterisk-11.12.0.orig/channels/sip/include/sip.h
++++ asterisk-11.12.0/channels/sip/include/sip.h
 @@ -750,6 +750,7 @@ struct sip_settings {
  	enum autocreatepeer_mode autocreatepeer;  /*!< Auto creation of peers at registration? Default off. */
  	char autocreate_context[AST_MAX_CONTEXT];

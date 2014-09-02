@@ -1,8 +1,8 @@
-Index: asterisk-11.11.0/channels/chan_sip.c
+Index: asterisk-11.12.0/channels/chan_sip.c
 ===================================================================
---- asterisk-11.11.0.orig/channels/chan_sip.c
-+++ asterisk-11.11.0/channels/chan_sip.c
-@@ -17085,7 +17085,7 @@ static enum check_auth_result register_v
+--- asterisk-11.12.0.orig/channels/chan_sip.c
++++ asterisk-11.12.0/channels/chan_sip.c
+@@ -16934,7 +16934,7 @@ static enum check_auth_result register_v
  		}
  		ao2_unlock(peer);
  	}
@@ -11,7 +11,7 @@ Index: asterisk-11.11.0/channels/chan_sip.c
  		/* Create peer if we have autocreate mode enabled */
  		peer = temp_peer(name);
  		if (peer) {
-@@ -31653,6 +31653,7 @@ static int reload_config(enum channelrel
+@@ -31502,6 +31502,7 @@ static int reload_config(enum channelrel
  	sip_cfg.pedanticsipchecking = DEFAULT_PEDANTIC;
  	sip_cfg.autocreatepeer = DEFAULT_AUTOCREATEPEER;
  	ast_copy_string(sip_cfg.autocreate_context, DEFAULT_AUTOCREATE_CONTEXT, sizeof(sip_cfg.autocreate_context));
@@ -19,7 +19,7 @@ Index: asterisk-11.11.0/channels/chan_sip.c
  	global_autoframing = 0;
  	sip_cfg.allowguest = DEFAULT_ALLOWGUEST;
  	global_callcounter = DEFAULT_CALLCOUNTER;
-@@ -31976,6 +31977,8 @@ static int reload_config(enum channelrel
+@@ -31825,6 +31826,8 @@ static int reload_config(enum channelrel
  			}
  		} else if (!strcasecmp(v->name, "autocreate_context")) {
  			ast_copy_string(sip_cfg.autocreate_context, v->value, sizeof(sip_cfg.autocreate_context));
@@ -28,10 +28,10 @@ Index: asterisk-11.11.0/channels/chan_sip.c
  		} else if (!strcasecmp(v->name, "match_auth_username")) {
  			global_match_auth_username = ast_true(v->value);
  		} else if (!strcasecmp(v->name, "srvlookup")) {
-Index: asterisk-11.11.0/channels/sip/include/sip.h
+Index: asterisk-11.12.0/channels/sip/include/sip.h
 ===================================================================
---- asterisk-11.11.0.orig/channels/sip/include/sip.h
-+++ asterisk-11.11.0/channels/sip/include/sip.h
+--- asterisk-11.12.0.orig/channels/sip/include/sip.h
++++ asterisk-11.12.0/channels/sip/include/sip.h
 @@ -214,6 +214,7 @@
  #define DEFAULT_PEDANTIC       TRUE     /*!< Follow SIP standards for dialog matching */
  #define DEFAULT_AUTOCREATEPEER AUTOPEERS_DISABLED    /*!< Don't create peers automagically */
