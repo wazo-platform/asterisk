@@ -1,0 +1,35 @@
+Index: asterisk-11.12.0/main/ccss.c
+===================================================================
+--- asterisk-11.12.0.orig/main/ccss.c
++++ asterisk-11.12.0/main/ccss.c
+@@ -2535,6 +2535,8 @@ struct cc_generic_agent_pvt {
+ static int cc_generic_agent_init(struct ast_cc_agent *agent, struct ast_channel *chan)
+ {
+ 	struct cc_generic_agent_pvt *generic_pvt = ast_calloc(1, sizeof(*generic_pvt));
++	const char *exten;
++	const char *context;
+ 
+ 	if (!generic_pvt) {
+ 		return -1;
+@@ -2547,8 +2549,19 @@ static int cc_generic_agent_init(struct
+ 	if (ast_channel_caller(chan)->id.name.valid && ast_channel_caller(chan)->id.name.str) {
+ 		ast_copy_string(generic_pvt->cid_name, ast_channel_caller(chan)->id.name.str, sizeof(generic_pvt->cid_name));
+ 	}
+-	ast_copy_string(generic_pvt->exten, S_OR(ast_channel_macroexten(chan), ast_channel_exten(chan)), sizeof(generic_pvt->exten));
+-	ast_copy_string(generic_pvt->context, S_OR(ast_channel_macrocontext(chan), ast_channel_context(chan)), sizeof(generic_pvt->context));
++
++	exten = pbx_builtin_getvar_helper(chan, "CC_EXTEN");
++	if (!exten || ast_strlen_zero(exten)) {
++	    exten = S_OR(ast_channel_macroexten(chan), ast_channel_exten(chan));
++	}
++
++	context = pbx_builtin_getvar_helper(chan, "CC_CONTEXT");
++	if (!context || ast_strlen_zero(context)) {
++	    context = S_OR(ast_channel_macrocontext(chan), ast_channel_context(chan));
++	}
++
++	ast_copy_string(generic_pvt->exten, exten, sizeof(generic_pvt->exten));
++	ast_copy_string(generic_pvt->context, context, sizeof(generic_pvt->context));
+ 	agent->private_data = generic_pvt;
+ 	ast_set_flag(agent, AST_CC_AGENT_SKIP_OFFER);
+ 	return 0;
