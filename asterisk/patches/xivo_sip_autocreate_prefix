@@ -1,7 +1,7 @@
-Index: asterisk-11.12.0/channels/chan_sip.c
+Index: asterisk-11.12.1/channels/chan_sip.c
 ===================================================================
---- asterisk-11.12.0.orig/channels/chan_sip.c
-+++ asterisk-11.12.0/channels/chan_sip.c
+--- asterisk-11.12.1.orig/channels/chan_sip.c
++++ asterisk-11.12.1/channels/chan_sip.c
 @@ -16934,7 +16934,7 @@ static enum check_auth_result register_v
  		}
  		ao2_unlock(peer);
@@ -28,10 +28,10 @@ Index: asterisk-11.12.0/channels/chan_sip.c
  		} else if (!strcasecmp(v->name, "match_auth_username")) {
  			global_match_auth_username = ast_true(v->value);
  		} else if (!strcasecmp(v->name, "srvlookup")) {
-Index: asterisk-11.12.0/channels/sip/include/sip.h
+Index: asterisk-11.12.1/channels/sip/include/sip.h
 ===================================================================
---- asterisk-11.12.0.orig/channels/sip/include/sip.h
-+++ asterisk-11.12.0/channels/sip/include/sip.h
+--- asterisk-11.12.1.orig/channels/sip/include/sip.h
++++ asterisk-11.12.1/channels/sip/include/sip.h
 @@ -214,6 +214,7 @@
  #define DEFAULT_PEDANTIC       TRUE     /*!< Follow SIP standards for dialog matching */
  #define DEFAULT_AUTOCREATEPEER AUTOPEERS_DISABLED    /*!< Don't create peers automagically */

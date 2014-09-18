@@ -1,7 +1,7 @@
-Index: asterisk-11.12.0/channels/chan_sip.c
+Index: asterisk-11.12.1/channels/chan_sip.c
 ===================================================================
---- asterisk-11.12.0.orig/channels/chan_sip.c
-+++ asterisk-11.12.0/channels/chan_sip.c
+--- asterisk-11.12.1.orig/channels/chan_sip.c
++++ asterisk-11.12.1/channels/chan_sip.c
 @@ -20576,6 +20576,7 @@ static char *sip_show_settings(struct as
  	ast_cli(a->fd, "  Textsupport:            %s\n", AST_CLI_YESNO(ast_test_flag(&global_flags[1], SIP_PAGE2_TEXTSUPPORT)));
  	ast_cli(a->fd, "  Ignore SDP sess. ver.:  %s\n", AST_CLI_YESNO(ast_test_flag(&global_flags[1], SIP_PAGE2_IGNORESDPVERSION)));
@@ -35,10 +35,10 @@ Index: asterisk-11.12.0/channels/chan_sip.c
  		} else if (!strcasecmp(v->name, "match_auth_username")) {
  			global_match_auth_username = ast_true(v->value);
  		} else if (!strcasecmp(v->name, "srvlookup")) {
-Index: asterisk-11.12.0/channels/sip/include/sip.h
+Index: asterisk-11.12.1/channels/sip/include/sip.h
 ===================================================================
---- asterisk-11.12.0.orig/channels/sip/include/sip.h
-+++ asterisk-11.12.0/channels/sip/include/sip.h
+--- asterisk-11.12.1.orig/channels/sip/include/sip.h
++++ asterisk-11.12.1/channels/sip/include/sip.h
 @@ -213,6 +213,7 @@
  #define DEFAULT_NOTIFYCID      DISABLED	/*!< Include CID with ringing notifications */
  #define DEFAULT_PEDANTIC       TRUE     /*!< Follow SIP standards for dialog matching */
