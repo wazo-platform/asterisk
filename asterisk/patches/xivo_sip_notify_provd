@@ -1,7 +1,7 @@
-Index: asterisk-11.12.1/channels/chan_sip.c
+Index: asterisk-11.13.0/channels/chan_sip.c
 ===================================================================
---- asterisk-11.12.1.orig/channels/chan_sip.c
-+++ asterisk-11.12.1/channels/chan_sip.c
+--- asterisk-11.13.0.orig/channels/chan_sip.c
++++ asterisk-11.13.0/channels/chan_sip.c
 @@ -566,6 +566,11 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
  			via multiple <literal>Variable: name=value</literal> sequences.</para>
  		</description>
@@ -84,7 +84,7 @@ Index: asterisk-11.12.1/channels/chan_sip.c
  		/* Maybe they're not registered, etc. */
  		dialog_unlink_all(p);
  		dialog_unref(p, "unref dialog inside for loop" );
-@@ -34635,6 +34674,7 @@ static int load_module(void)
+@@ -34638,6 +34677,7 @@ static int load_module(void)
  	ast_manager_register_xml("SIPqualifypeer", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_sip_qualify_peer);
  	ast_manager_register_xml("SIPshowregistry", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_show_registry);
  	ast_manager_register_xml("SIPnotify", EVENT_FLAG_SYSTEM, manager_sipnotify);
@@ -92,7 +92,7 @@ Index: asterisk-11.12.1/channels/chan_sip.c
  	ast_manager_register_xml("SIPpeerstatus", EVENT_FLAG_SYSTEM, manager_sip_peer_status);
  	sip_poke_all_peers();
  	sip_keepalive_all_peers();
-@@ -34754,6 +34794,7 @@ static int unload_module(void)
+@@ -34757,6 +34797,7 @@ static int unload_module(void)
  	ast_manager_unregister("SIPqualifypeer");
  	ast_manager_unregister("SIPshowregistry");
  	ast_manager_unregister("SIPnotify");
