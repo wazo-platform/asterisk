@@ -1,7 +1,7 @@
-Index: asterisk-11.13.0/channels/chan_sip.c
+Index: asterisk-11.13.1/channels/chan_sip.c
 ===================================================================
---- asterisk-11.13.0.orig/channels/chan_sip.c
-+++ asterisk-11.13.0/channels/chan_sip.c
+--- asterisk-11.13.1.orig/channels/chan_sip.c
++++ asterisk-11.13.1/channels/chan_sip.c
 @@ -30474,6 +30474,9 @@ static struct sip_peer *temp_peer(const
  
  	ast_copy_string(peer->name, name, sizeof(peer->name));
@@ -35,10 +35,10 @@ Index: asterisk-11.13.0/channels/chan_sip.c
  		} else if (!strcasecmp(v->name, "match_auth_username")) {
  			global_match_auth_username = ast_true(v->value);
  		} else if (!strcasecmp(v->name, "srvlookup")) {
-Index: asterisk-11.13.0/channels/sip/include/sip.h
+Index: asterisk-11.13.1/channels/sip/include/sip.h
 ===================================================================
---- asterisk-11.13.0.orig/channels/sip/include/sip.h
-+++ asterisk-11.13.0/channels/sip/include/sip.h
+--- asterisk-11.13.1.orig/channels/sip/include/sip.h
++++ asterisk-11.13.1/channels/sip/include/sip.h
 @@ -750,6 +750,7 @@ struct sip_settings {
  	enum autocreatepeer_mode autocreatepeer;  /*!< Auto creation of peers at registration? Default off. */
  	char autocreate_context[AST_MAX_CONTEXT];
