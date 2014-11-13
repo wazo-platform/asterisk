@@ -1,7 +1,7 @@
-Index: asterisk-11.13.1/channels/chan_sip.c
+Index: asterisk-11.14.0/channels/chan_sip.c
 ===================================================================
---- asterisk-11.13.1.orig/channels/chan_sip.c
-+++ asterisk-11.13.1/channels/chan_sip.c
+--- asterisk-11.14.0.orig/channels/chan_sip.c
++++ asterisk-11.14.0/channels/chan_sip.c
 @@ -566,6 +566,11 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
  			via multiple <literal>Variable: name=value</literal> sequences.</para>
  		</description>
@@ -14,7 +14,7 @@ Index: asterisk-11.13.1/channels/chan_sip.c
  	<manager name="SIPpeerstatus" language="en_US">
  		<synopsis>
  			Show the status of one or all of the sip peers.
-@@ -14808,20 +14813,54 @@ static int transmit_notify_with_sipfrag(
+@@ -14812,20 +14817,54 @@ static int transmit_notify_with_sipfrag(
  	return send_request(p, &req, XMIT_RELIABLE, p->ocseq);
  }
  
@@ -75,7 +75,7 @@ Index: asterisk-11.13.1/channels/chan_sip.c
  	}
  
  	if (!(p = sip_alloc(NULL, NULL, 0, SIP_NOTIFY, NULL, NULL))) {
-@@ -14829,7 +14868,7 @@ static int manager_sipnotify(struct mans
+@@ -14833,7 +14872,7 @@ static int manager_sipnotify(struct mans
  		return 0;
  	}
  
@@ -84,7 +84,7 @@ Index: asterisk-11.13.1/channels/chan_sip.c
  		/* Maybe they're not registered, etc. */
  		dialog_unlink_all(p);
  		dialog_unref(p, "unref dialog inside for loop" );
-@@ -34638,6 +34677,7 @@ static int load_module(void)
+@@ -34669,6 +34708,7 @@ static int load_module(void)
  	ast_manager_register_xml("SIPqualifypeer", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_sip_qualify_peer);
  	ast_manager_register_xml("SIPshowregistry", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_show_registry);
  	ast_manager_register_xml("SIPnotify", EVENT_FLAG_SYSTEM, manager_sipnotify);
@@ -92,7 +92,7 @@ Index: asterisk-11.13.1/channels/chan_sip.c
  	ast_manager_register_xml("SIPpeerstatus", EVENT_FLAG_SYSTEM, manager_sip_peer_status);
  	sip_poke_all_peers();
  	sip_keepalive_all_peers();
-@@ -34757,6 +34797,7 @@ static int unload_module(void)
+@@ -34788,6 +34828,7 @@ static int unload_module(void)
  	ast_manager_unregister("SIPqualifypeer");
  	ast_manager_unregister("SIPshowregistry");
  	ast_manager_unregister("SIPnotify");

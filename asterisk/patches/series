@@ -1,5 +1,4 @@
 ### upstream fixes
-deb_allow-tilde-destdir
 deb_astgenkey-security
 deb_make-clean-fixes
 ## proformatique patches
