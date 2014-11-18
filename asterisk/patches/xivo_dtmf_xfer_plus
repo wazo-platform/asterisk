@@ -1,0 +1,34 @@
+Index: asterisk-11.14.0/include/asterisk/file.h
+===================================================================
+--- asterisk-11.14.0.orig/include/asterisk/file.h
++++ asterisk-11.14.0/include/asterisk/file.h
+@@ -47,6 +47,7 @@ struct ast_format;
+ #define AST_DIGIT_NONE ""
+ #define AST_DIGIT_ANY "0123456789#*ABCD"
+ #define AST_DIGIT_ANYNUM "0123456789"
++#define AST_DIGIT_ANY_PLUS "0123456789#*ABCD+"
+ 
+ #define SEEK_FORCECUR	10
+ 
+Index: asterisk-11.14.0/main/features.c
+===================================================================
+--- asterisk-11.14.0.orig/main/features.c
++++ asterisk-11.14.0/main/features.c
+@@ -2527,7 +2527,7 @@ static int builtin_blindtransfer(struct
+ 	ast_indicate(transferee, AST_CONTROL_HOLD);
+ 
+ 	/* Transfer */
+-	res = ast_stream_and_wait(transferer, "pbx-transfer", AST_DIGIT_ANY);
++	res = ast_stream_and_wait(transferer, "pbx-transfer", AST_DIGIT_ANY_PLUS);
+ 	if (res < 0) {
+ 		finishup(transferee);
+ 		return -1; /* error ? */
+@@ -2707,7 +2707,7 @@ static int builtin_atxfer(struct ast_cha
+ 	ast_indicate(transferee, AST_CONTROL_HOLD);
+ 
+ 	/* Transfer */
+-	res = ast_stream_and_wait(transferer, "pbx-transfer", AST_DIGIT_ANY);
++	res = ast_stream_and_wait(transferer, "pbx-transfer", AST_DIGIT_ANY_PLUS);
+ 	if (res < 0) {
+ 		finishup(transferee);
+ 		return -1;
