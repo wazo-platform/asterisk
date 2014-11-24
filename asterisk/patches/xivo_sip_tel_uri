@@ -1,7 +1,7 @@
-Index: asterisk-11.14.0/channels/chan_sip.c
+Index: asterisk-11.14.1/channels/chan_sip.c
 ===================================================================
---- asterisk-11.14.0.orig/channels/chan_sip.c
-+++ asterisk-11.14.0/channels/chan_sip.c
+--- asterisk-11.14.1.orig/channels/chan_sip.c
++++ asterisk-11.14.1/channels/chan_sip.c
 @@ -17464,7 +17464,7 @@ static enum sip_get_dest_result get_dest
  
  	uri = ast_strdupa(get_in_brackets(tmp));
@@ -101,10 +101,10 @@ Index: asterisk-11.14.0/channels/chan_sip.c
  
  	if (global_match_auth_username) {
  		/*
-Index: asterisk-11.14.0/channels/sip/reqresp_parser.c
+Index: asterisk-11.14.1/channels/sip/reqresp_parser.c
 ===================================================================
---- asterisk-11.14.0.orig/channels/sip/reqresp_parser.c
-+++ asterisk-11.14.0/channels/sip/reqresp_parser.c
+--- asterisk-11.14.1.orig/channels/sip/reqresp_parser.c
++++ asterisk-11.14.1/channels/sip/reqresp_parser.c
 @@ -45,6 +45,7 @@ int parse_uri_full(char *uri, const char
  	char *endparams = NULL;
  	char *c = NULL;
