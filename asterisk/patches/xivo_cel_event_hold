@@ -84,14 +84,34 @@ Index: asterisk-11.14.1/main/channel.c
 ===================================================================
 --- asterisk-11.14.1.orig/main/channel.c
 +++ asterisk-11.14.1/main/channel.c
-@@ -4121,6 +4121,10 @@ static struct ast_frame *__ast_read(stru
+@@ -3875,6 +3875,7 @@ static struct ast_frame *__ast_read(stru
+ 	struct ast_frame *f = NULL;	/* the return value */
+ 	int prestate;
+ 	int cause = 0;
++	enum ast_cel_event_type event_type = 0;
+ 
+ 	/* this function is very long so make sure there is only one return
+ 	 * point at the end (there are only two exceptions to this).
+@@ -4121,6 +4122,10 @@ static struct ast_frame *__ast_read(stru
  				}
  				ast_frfree(f);
  				f = &ast_null_frame;
 +			} else if (f->subclass.integer == AST_CONTROL_HOLD) {
-+				ast_cel_report_event(chan, AST_CEL_HOLD, NULL, NULL, NULL);
++				event_type = AST_CEL_HOLD;
 +			} else if (f->subclass.integer == AST_CONTROL_UNHOLD) {
-+				ast_cel_report_event(chan, AST_CEL_UNHOLD, NULL, NULL, NULL);
++				event_type = AST_CEL_UNHOLD;
  			}
  			break;
  		case AST_FRAME_DTMF_END:
+@@ -4395,6 +4400,11 @@ done:
+ 		ast_channel_audiohooks_set(chan, NULL);
+ 	}
+ 	ast_channel_unlock(chan);
++
++	if (event_type) {
++		ast_cel_report_event(chan, event_type, NULL, NULL, NULL);
++	}
++
+ 	return f;
+ }
+ 
