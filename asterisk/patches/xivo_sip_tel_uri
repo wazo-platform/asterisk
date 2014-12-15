@@ -1,8 +1,8 @@
-Index: asterisk-11.14.2/channels/chan_sip.c
+Index: asterisk-11.15.0/channels/chan_sip.c
 ===================================================================
---- asterisk-11.14.2.orig/channels/chan_sip.c
-+++ asterisk-11.14.2/channels/chan_sip.c
-@@ -17468,7 +17468,7 @@ static enum sip_get_dest_result get_dest
+--- asterisk-11.15.0.orig/channels/chan_sip.c
++++ asterisk-11.15.0/channels/chan_sip.c
+@@ -17476,7 +17476,7 @@ static enum sip_get_dest_result get_dest
  
  	uri = ast_strdupa(get_in_brackets(tmp));
  
@@ -11,7 +11,7 @@ Index: asterisk-11.14.2/channels/chan_sip.c
  		ast_log(LOG_WARNING, "Not a SIP header (%s)?\n", uri);
  		return SIP_GET_DEST_INVALID_URI;
  	}
-@@ -17496,7 +17496,7 @@ static enum sip_get_dest_result get_dest
+@@ -17504,7 +17504,7 @@ static enum sip_get_dest_result get_dest
  	tmpf = ast_strdup(sip_get_header(req, "From"));
  	if (!ast_strlen_zero(tmpf)) {
  		from = get_in_brackets(tmpf);
@@ -20,7 +20,7 @@ Index: asterisk-11.14.2/channels/chan_sip.c
  			ast_log(LOG_WARNING, "Not a SIP header (%s)?\n", from);
  			return SIP_GET_DEST_INVALID_URI;
  		}
-@@ -18361,6 +18361,8 @@ static enum check_auth_result check_user
+@@ -18370,6 +18370,8 @@ static enum check_auth_result check_user
  			t+= 4;
  		else if (!strncasecmp(t, "sips:", 5))
  			t += 5;
@@ -29,7 +29,7 @@ Index: asterisk-11.14.2/channels/chan_sip.c
  		ast_string_field_set(p, exten, t);
  		t = strchr(p->exten, '@');
  		if (t)
-@@ -18375,38 +18377,47 @@ static enum check_auth_result check_user
+@@ -18384,38 +18386,47 @@ static enum check_auth_result check_user
  	/* save the URI part of the From header */
  	ast_string_field_set(p, from, of);
  
@@ -101,10 +101,10 @@ Index: asterisk-11.14.2/channels/chan_sip.c
  
  	if (global_match_auth_username) {
  		/*
-Index: asterisk-11.14.2/channels/sip/reqresp_parser.c
+Index: asterisk-11.15.0/channels/sip/reqresp_parser.c
 ===================================================================
---- asterisk-11.14.2.orig/channels/sip/reqresp_parser.c
-+++ asterisk-11.14.2/channels/sip/reqresp_parser.c
+--- asterisk-11.15.0.orig/channels/sip/reqresp_parser.c
++++ asterisk-11.15.0/channels/sip/reqresp_parser.c
 @@ -45,6 +45,7 @@ int parse_uri_full(char *uri, const char
  	char *endparams = NULL;
  	char *c = NULL;

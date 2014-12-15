@@ -1,7 +1,7 @@
-Index: asterisk-11.14.2/include/asterisk/file.h
+Index: asterisk-11.15.0/include/asterisk/file.h
 ===================================================================
---- asterisk-11.14.2.orig/include/asterisk/file.h
-+++ asterisk-11.14.2/include/asterisk/file.h
+--- asterisk-11.15.0.orig/include/asterisk/file.h
++++ asterisk-11.15.0/include/asterisk/file.h
 @@ -47,6 +47,7 @@ struct ast_format;
  #define AST_DIGIT_NONE ""
  #define AST_DIGIT_ANY "0123456789#*ABCD"
@@ -10,10 +10,10 @@ Index: asterisk-11.14.2/include/asterisk/file.h
  
  #define SEEK_FORCECUR	10
  
-Index: asterisk-11.14.2/main/features.c
+Index: asterisk-11.15.0/main/features.c
 ===================================================================
---- asterisk-11.14.2.orig/main/features.c
-+++ asterisk-11.14.2/main/features.c
+--- asterisk-11.15.0.orig/main/features.c
++++ asterisk-11.15.0/main/features.c
 @@ -2527,7 +2527,7 @@ static int builtin_blindtransfer(struct
  	ast_indicate(transferee, AST_CONTROL_HOLD);
  

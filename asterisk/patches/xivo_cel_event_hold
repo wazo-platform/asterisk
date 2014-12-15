@@ -1,7 +1,7 @@
-Index: asterisk-11.14.2/configs/cel.conf.sample
+Index: asterisk-11.15.0/configs/cel.conf.sample
 ===================================================================
---- asterisk-11.14.2.orig/configs/cel.conf.sample
-+++ asterisk-11.14.2/configs/cel.conf.sample
+--- asterisk-11.15.0.orig/configs/cel.conf.sample
++++ asterisk-11.15.0/configs/cel.conf.sample
 @@ -69,6 +69,8 @@ apps=dial,park
  ;  LINKEDID_END     -- The last channel with the given linkedid is retired
  ;  USER_DEFINED     -- Triggered from the dialplan, and has a name given by the
@@ -11,10 +11,10 @@ Index: asterisk-11.14.2/configs/cel.conf.sample
  ;
  ; Default value: none
  ;                (Track no events)
-Index: asterisk-11.14.2/include/asterisk/cel.h
+Index: asterisk-11.15.0/include/asterisk/cel.h
 ===================================================================
---- asterisk-11.14.2.orig/include/asterisk/cel.h
-+++ asterisk-11.14.2/include/asterisk/cel.h
+--- asterisk-11.15.0.orig/include/asterisk/cel.h
++++ asterisk-11.15.0/include/asterisk/cel.h
 @@ -103,6 +103,10 @@ enum ast_cel_event_type {
  	AST_CEL_PICKUP = 24,
  	/*! \brief this call was forwarded somewhere else  */
@@ -26,10 +26,10 @@ Index: asterisk-11.14.2/include/asterisk/cel.h
  };
  
  /*! 
-Index: asterisk-11.14.2/main/cel.c
+Index: asterisk-11.15.0/main/cel.c
 ===================================================================
---- asterisk-11.14.2.orig/main/cel.c
-+++ asterisk-11.14.2/main/cel.c
+--- asterisk-11.15.0.orig/main/cel.c
++++ asterisk-11.15.0/main/cel.c
 @@ -149,6 +149,8 @@ static const char * const cel_event_type
  	[AST_CEL_3WAY_END]         = "3WAY_END",
  	[AST_CEL_HOOKFLASH]        = "HOOKFLASH",
@@ -80,10 +80,10 @@ Index: asterisk-11.14.2/main/cel.c
  	}
  
  	if (!userdefevname) {
-Index: asterisk-11.14.2/main/channel.c
+Index: asterisk-11.15.0/main/channel.c
 ===================================================================
---- asterisk-11.14.2.orig/main/channel.c
-+++ asterisk-11.14.2/main/channel.c
+--- asterisk-11.15.0.orig/main/channel.c
++++ asterisk-11.15.0/main/channel.c
 @@ -3875,6 +3875,7 @@ static struct ast_frame *__ast_read(stru
  	struct ast_frame *f = NULL;	/* the return value */
  	int prestate;
