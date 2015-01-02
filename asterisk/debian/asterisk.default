@@ -3,7 +3,7 @@
 #
 # RUNASTERISK: If set to anything other that 'yes', the asterisk init.d script
 #              will not run. The default is 'yes'.
-RUNASTERISK=yes
+RUNASTERISK=no
 #
 #
 # AST_REALTIME: if set to anything other than "no", asterisk will run in
