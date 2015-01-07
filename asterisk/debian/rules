@@ -29,11 +29,11 @@ DEB_MAKE_INVOKE = $(DEB_MAKE_ENVVARS) $(MAKE) -C $(DEB_BUILDDIR)
 
 # Asterisk needs
 export PROC := $(shell dpkg-architecture -qDEB_BUILD_GNU_CPU)
-BUILDFLAGS += OPTIMIZE=-O2
 # show full gcc arguments instead of [CC] and [LD]
-BUILDFLAGS += NOISY_BUILD=yes
+DEB_MAKE_INVOKE += -C $(BUILD_TREE)
+DEB_MAKE_INVOKE += NOISY_BUILD=yes
 # Force music files selection:
-BUILDFLAGS += MENUSELECT_MOH= \
+DEB_MAKE_INVOKE += MENUSELECT_MOH= \
   ASTDATADIR=/usr/share/asterisk \
   ASTVARRUNDIR=/var/run/asterisk \
 
@@ -49,8 +49,6 @@ DEB_CONFIGURE_SCRIPT_ENV += $(FETCH_ENV)
 DEB_MAKE_ENVVARS = PATH=$$PATH:$(CURDIR)/debian/dummyprogs
 
 configure/asterisk::
-	(cd $(BUILD_TREE); \
-		$(DEB_CONFIGURE_SCRIPT_ENV) ./configure $(DEB_CONFIGURE_NORMAL_ARGS) $(DEB_CONFIGURE_EXTRA_FLAGS) $(DEB_CONFIGURE_USER_FLAGS) )
 	# generate proper menuselect.makeopts
 	(cd $(BUILD_TREE); \
 		$(FETCH_ENV) $(MAKE) $(BUILDFLAGS) menuselect.makeopts)
@@ -74,14 +72,11 @@ configure/asterisk::
 	touch $(BUILD_TREE)/configure-stamp
 
 build/asterisk:: 
-	$(DEB_MAKE_ENVVARS) $(MAKE) -C $(BUILD_TREE) $(BUILDFLAGS) || true
 	touch $(BUILD_TREE)/build-stamp
 
 common-install-arch common-install-indep:: common-install-impl
 common-install-impl::
 	$(DEB_MAKE_ENVVARS) $(MAKE) -C $(BUILD_TREE) DESTDIR=$(CURDIR)/debian/tmp/ install samples
-	mkdir $(CURDIR)/debian/tmp/usr/share/asterisk/
-	mv $(CURDIR)/debian/tmp/var/lib/asterisk/sounds $(CURDIR)/debian/tmp/usr/share/asterisk/
 
 install/asterisk::
 	$(DEB_MAKE_ENVVARS) $(MAKE) -C $(BUILD_TREE) DESTDIR=$(CURDIR)/debian/tmp/ install
