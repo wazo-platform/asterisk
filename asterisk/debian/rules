@@ -30,7 +30,6 @@ DEB_MAKE_INVOKE = $(DEB_MAKE_ENVVARS) $(MAKE) -C $(DEB_BUILDDIR)
 # Asterisk needs
 export PROC := $(shell dpkg-architecture -qDEB_BUILD_GNU_CPU)
 # show full gcc arguments instead of [CC] and [LD]
-DEB_MAKE_INVOKE += -C $(BUILD_TREE)
 DEB_MAKE_INVOKE += NOISY_BUILD=yes
 # Force music files selection:
 DEB_MAKE_INVOKE += MENUSELECT_MOH= \
