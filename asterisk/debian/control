@@ -57,9 +57,6 @@ Build-Depends:
  unixodbc-dev, 
  wget, 
  zlib1g-dev
-Build-Conflicts: zaptel-source
-XS-Vcs-Svn: svn://svn.debian.org/pkg-voip/
-XS-Vcs-Browser: http://svn.debian.org/wsvn/pkg-voip/
 
 Package: asterisk
 Architecture: any

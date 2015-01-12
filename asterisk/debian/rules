@@ -59,12 +59,6 @@ configure/asterisk::
 			$(MENUSELECT_EXTRA_ARGS) \
 			menuselect.makeopts \
 	)
-	# generate changelog
-	chmod a+x $(CURDIR)/debian/prepend_chlog.py
-	(cd $(BUILD_TREE); \
-		QUILT_PATCHES=$(CURDIR)/patches quilt --quiltrc /dev/null applied) \
-		| sed -e 's%^%$(CURDIR)/patches/%g' \
-		| $(CURDIR)/debian/prepend_chlog.py $(BUILD_TREE)/ChangeLog
 	# generate asterisk advertised version
 	echo "$(DEB_UPSTREAM_VERSION)" > $(BUILD_TREE)/.version
 	# DONE
@@ -86,7 +80,6 @@ binary-install/asterisk::
 	chmod +x $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/asterisk/bin/asterisk_fix
 
 binary-install/asterisk::
-	rm -f debian/$(cdbs_curpkg)/usr/lib/asterisk/modules/*_mysql*.so
 	rm -rf debian/$(cdbs_curpkg)/var/spool/asterisk/voicemail/default
 	rm -rf debian/$(cdbs_curpkg)/var/lib/asterisk/sounds/en
 	mkdir -p debian/$(cdbs_curpkg)/usr/share/asterisk
