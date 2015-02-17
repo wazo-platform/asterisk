@@ -5,6 +5,7 @@ MAINTAINER Sylvain Boily "sboily@avencall.com"
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV HOME /root
+ENV ASTERISK_VERSION 11.15.0
 
 # Add dependencies
 RUN apt-get -qq update
@@ -65,18 +66,15 @@ RUN apt-get -qq -y install \
 
 # Install Asterisk
 WORKDIR /usr/src
-ADD asterisk/tarballs/asterisk_11.15.0+dfsg.orig.tar.gz /usr/src/
-WORKDIR /usr/src/asterisk-11.15.0
-COPY asterisk/patches /usr/src/asterisk-11.15.0/patches/
-RUN ls -la
-RUN pwd
+ADD asterisk/tarballs/asterisk_$ASTERISK_VERSION+dfsg.orig.tar.gz /usr/src/
+WORKDIR /usr/src/asterisk-$ASTERISK_VERSION
+COPY asterisk/patches /usr/src/asterisk-$ASTERISK_VERSION/patches/
 RUN quilt push -a
 RUN ./configure --with-imap=system --without-h323 --without-misdn --enable-dev-mode
 RUN make
 RUN make install
 
 # Install XiVO confgend client
-WORKDIR /
 WORKDIR /usr/src
 RUN git clone https://github.com/xivo-pbx/xivo-confgend-client.git
 WORKDIR /usr/src/xivo-confgend-client/
