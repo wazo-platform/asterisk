@@ -5,7 +5,7 @@ MAINTAINER Sylvain Boily "sboily@avencall.com"
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV HOME /root
-ENV ASTERISK_VERSION 11.15.0
+ENV ASTERISK_VERSION 11.16.0
 
 # Add dependencies
 RUN apt-get -qq update
