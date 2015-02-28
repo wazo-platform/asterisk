@@ -62,6 +62,7 @@ RUN apt-get -qq -y install \
     quilt \
     sox \
     unixodbc-dev \
+    odbc-postgresql \
     zlib1g-dev
 
 # Install Asterisk
