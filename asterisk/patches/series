@@ -19,3 +19,4 @@ xivo_cel_event_hold
 xivo_ccss_exten_context_var
 xivo_dtmf_xfer_plus
 xivo_cel_odbc_bad_eventtime
+xivo_sip_missing_contact
