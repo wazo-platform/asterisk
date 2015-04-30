@@ -1,0 +1,64 @@
+Index: asterisk-11.17.0/cel/cel_odbc.c
+===================================================================
+--- asterisk-11.17.0.orig/cel/cel_odbc.c
++++ asterisk-11.17.0/cel/cel_odbc.c
+@@ -51,6 +51,7 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
+ #include "asterisk/module.h"
+ 
+ #define	CONFIG	"cel_odbc.conf"
++#define	USEC_PER_DECISEC	100000
+ static struct ast_event_sub *event_sub = NULL;
+ 
+ /*! \brief show_user_def is off by default */
+@@ -614,7 +615,7 @@ static void odbc_log(const struct ast_ev
+ 					if (ast_strlen_zero(colptr)) {
+ 						continue;
+ 					} else {
+-						int year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0, fraction = 0;
++						int year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0, us = 0;
+ 						if (strcasecmp(entry->name, "eventdate") == 0) {
+ 							struct ast_tm tm;
+ 							ast_localtime(&record.event_time, &tm, tableptr->usegmtime ? "UTC" : NULL);
+@@ -624,9 +625,20 @@ static void odbc_log(const struct ast_ev
+ 							hour = tm.tm_hour;
+ 							minute = tm.tm_min;
+ 							second = (tableptr->allowleapsec || tm.tm_sec < 60) ? tm.tm_sec : 59;
+-							fraction = tm.tm_usec;
++							us = tm.tm_usec;
+ 						} else {
+-							int count = sscanf(colptr, "%4d-%2d-%2d %2d:%2d:%2d.%6d", &year, &month, &day, &hour, &minute, &second, &fraction);
++							char fraction[7];
++							int count = sscanf(colptr, "%4d-%2d-%2d %2d:%2d:%2d.%6s", &year, &month, &day, &hour, &minute, &second, fraction);
++
++							if (count == 7) {
++								int weight = USEC_PER_DECISEC;
++								int i;
++
++								for (i = 0; isdigit(fraction[i]); i++) {
++									us = us + (fraction[i] - '0') * weight;
++									weight = weight / 10;
++								}
++							}
+ 
+ 							if ((count != 3 && count != 5 && count != 6 && count != 7) || year <= 0 ||
+ 								month <= 0 || month > 12 || day < 0 || day > 31 ||
+@@ -635,7 +647,7 @@ static void odbc_log(const struct ast_ev
+ 								(month == 2 && year % 100 == 0 && day > 28) ||
+ 								(month == 2 && year % 4 == 0 && day > 29) ||
+ 								(month == 2 && year % 4 != 0 && day > 28) ||
+-								hour > 23 || minute > 59 || second > (tableptr->allowleapsec ? 60 : 59) || hour < 0 || minute < 0 || second < 0 || fraction < 0) {
++								hour > 23 || minute > 59 || second > (tableptr->allowleapsec ? 60 : 59) || hour < 0 || minute < 0 || second < 0 || us < 0) {
+ 								ast_log(LOG_WARNING, "CEL variable %s is not a valid timestamp ('%s').\n", entry->name, colptr);
+ 								continue;
+ 							}
+@@ -646,8 +658,8 @@ static void odbc_log(const struct ast_ev
+ 						}
+ 
+ 						ast_str_append(&sql, 0, "%s%s", first ? "" : ",", entry->name);
+-						LENGTHEN_BUF2(27);
+-						ast_str_append(&sql2, 0, "%s{ts '%04d-%02d-%02d %02d:%02d:%02d.%d'}", first ? "" : ",", year, month, day, hour, minute, second, fraction);
++						LENGTHEN_BUF2(34);
++						ast_str_append(&sql2, 0, "%s{ts '%04d-%02d-%02d %02d:%02d:%02d.%06d'}", first ? "" : ",", year, month, day, hour, minute, second, us);
+ 					}
+ 					break;
+ 				case SQL_INTEGER:
