@@ -214,3 +214,12 @@ Index: asterisk-11.17.0/channels/sip/reqresp_parser.c
  				   &pass, &hostport,
  				   &params,
  				   &headers,
+@@ -826,7 +891,7 @@ int get_name_and_number(const char *hdr,
+ 	tmp_number = get_in_brackets(header);
+ 
+ 	/* parse out the number here */
+-	if (parse_uri(tmp_number, "sip:,sips:", &tmp_number, &dummy, &hostport, NULL) || ast_strlen_zero(tmp_number)) {
++	if (parse_uri(tmp_number, "sip:,sips:,tel:", &tmp_number, &dummy, &hostport, NULL) || ast_strlen_zero(tmp_number)) {
+ 		ast_log(LOG_ERROR, "can not parse name and number from sip header.\n");
+ 		return -1;
+ 	}
