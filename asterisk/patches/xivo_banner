@@ -2,11 +2,11 @@
  -- Faidon Liambotis <paravoid@debian.org>
  -- Nicolas HICHER <nhicher@proformatique.com>
 
-Index: asterisk-11.17.0/main/asterisk.c
+Index: asterisk-13.3.2/main/asterisk.c
 ===================================================================
---- asterisk-11.17.0.orig/main/asterisk.c
-+++ asterisk-11.17.0/main/asterisk.c
-@@ -177,6 +177,10 @@ int daemon(int, int);  /* defined in lib
+--- asterisk-13.3.2.orig/main/asterisk.c
++++ asterisk-13.3.2/main/asterisk.c
+@@ -307,6 +307,10 @@ int daemon(int, int);  /* defined in lib
                  "This is free software, with components licensed under the GNU General Public\n" \
                  "License version 2 and other licenses; you are welcome to redistribute it under\n" \
                  "certain conditions. Type 'core show license' for details.\n" \

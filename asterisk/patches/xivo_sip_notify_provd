@@ -1,8 +1,8 @@
-Index: asterisk-11.17.0/channels/chan_sip.c
+Index: asterisk-13.3.2/channels/chan_sip.c
 ===================================================================
---- asterisk-11.17.0.orig/channels/chan_sip.c
-+++ asterisk-11.17.0/channels/chan_sip.c
-@@ -566,6 +566,11 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
+--- asterisk-13.3.2.orig/channels/chan_sip.c
++++ asterisk-13.3.2/channels/chan_sip.c
+@@ -554,6 +554,11 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
  			via multiple <literal>Variable: name=value</literal> sequences.</para>
  		</description>
  	</manager>
@@ -14,7 +14,7 @@ Index: asterisk-11.17.0/channels/chan_sip.c
  	<manager name="SIPpeerstatus" language="en_US">
  		<synopsis>
  			Show the status of one or all of the sip peers.
-@@ -14911,20 +14916,54 @@ static int transmit_notify_with_sipfrag(
+@@ -15045,20 +15050,54 @@ static int transmit_notify_with_sipfrag(
  	return send_request(p, &req, XMIT_RELIABLE, p->ocseq);
  }
  
@@ -75,7 +75,7 @@ Index: asterisk-11.17.0/channels/chan_sip.c
  	}
  
  	if (!(p = sip_alloc(NULL, NULL, 0, SIP_NOTIFY, NULL, NULL))) {
-@@ -14932,7 +14971,7 @@ static int manager_sipnotify(struct mans
+@@ -15066,7 +15105,7 @@ static int manager_sipnotify(struct mans
  		return 0;
  	}
  
@@ -84,7 +84,7 @@ Index: asterisk-11.17.0/channels/chan_sip.c
  		/* Maybe they're not registered, etc. */
  		dialog_unlink_all(p);
  		dialog_unref(p, "unref dialog inside for loop" );
-@@ -34823,6 +34862,7 @@ static int load_module(void)
+@@ -34495,6 +34534,7 @@ static int load_module(void)
  	ast_manager_register_xml("SIPqualifypeer", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_sip_qualify_peer);
  	ast_manager_register_xml("SIPshowregistry", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_show_registry);
  	ast_manager_register_xml("SIPnotify", EVENT_FLAG_SYSTEM, manager_sipnotify);
@@ -92,11 +92,11 @@ Index: asterisk-11.17.0/channels/chan_sip.c
  	ast_manager_register_xml("SIPpeerstatus", EVENT_FLAG_SYSTEM, manager_sip_peer_status);
  	sip_poke_all_peers();
  	sip_keepalive_all_peers();
-@@ -34942,6 +34982,7 @@ static int unload_module(void)
+@@ -34610,6 +34650,7 @@ static int unload_module(void)
  	ast_manager_unregister("SIPqualifypeer");
  	ast_manager_unregister("SIPshowregistry");
  	ast_manager_unregister("SIPnotify");
 +	ast_manager_unregister("SIPnotifyprovd");
  	ast_manager_unregister("SIPpeerstatus");
- 	
+ 
  	/* Kill TCP/TLS server threads */
