@@ -1,16 +1,16 @@
-Index: asterisk-11.17.0/cel/cel_odbc.c
+Index: asterisk-13.3.2/cel/cel_odbc.c
 ===================================================================
---- asterisk-11.17.0.orig/cel/cel_odbc.c
-+++ asterisk-11.17.0/cel/cel_odbc.c
-@@ -51,6 +51,7 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
- #include "asterisk/module.h"
- 
+--- asterisk-13.3.2.orig/cel/cel_odbc.c
++++ asterisk-13.3.2/cel/cel_odbc.c
+@@ -53,6 +53,7 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
  #define	CONFIG	"cel_odbc.conf"
-+#define	USEC_PER_DECISEC	100000
- static struct ast_event_sub *event_sub = NULL;
+ 
+ #define ODBC_BACKEND_NAME "ODBC CEL backend"
++#define	USEC_PER_DECISEC 100000
  
  /*! \brief show_user_def is off by default */
-@@ -614,7 +615,7 @@ static void odbc_log(const struct ast_ev
+ #define CEL_SHOW_USERDEF_DEFAULT	0
+@@ -615,7 +616,7 @@ static void odbc_log(struct ast_event *e
  					if (ast_strlen_zero(colptr)) {
  						continue;
  					} else {
@@ -19,7 +19,7 @@ Index: asterisk-11.17.0/cel/cel_odbc.c
  						if (strcasecmp(entry->name, "eventdate") == 0) {
  							struct ast_tm tm;
  							ast_localtime(&record.event_time, &tm, tableptr->usegmtime ? "UTC" : NULL);
-@@ -624,9 +625,20 @@ static void odbc_log(const struct ast_ev
+@@ -625,9 +626,20 @@ static void odbc_log(struct ast_event *e
  							hour = tm.tm_hour;
  							minute = tm.tm_min;
  							second = (tableptr->allowleapsec || tm.tm_sec < 60) ? tm.tm_sec : 59;
@@ -42,7 +42,7 @@ Index: asterisk-11.17.0/cel/cel_odbc.c
  
  							if ((count != 3 && count != 5 && count != 6 && count != 7) || year <= 0 ||
  								month <= 0 || month > 12 || day < 0 || day > 31 ||
-@@ -635,7 +647,7 @@ static void odbc_log(const struct ast_ev
+@@ -636,7 +648,7 @@ static void odbc_log(struct ast_event *e
  								(month == 2 && year % 100 == 0 && day > 28) ||
  								(month == 2 && year % 4 == 0 && day > 29) ||
  								(month == 2 && year % 4 != 0 && day > 28) ||
@@ -51,7 +51,7 @@ Index: asterisk-11.17.0/cel/cel_odbc.c
  								ast_log(LOG_WARNING, "CEL variable %s is not a valid timestamp ('%s').\n", entry->name, colptr);
  								continue;
  							}
-@@ -646,8 +658,8 @@ static void odbc_log(const struct ast_ev
+@@ -647,8 +659,8 @@ static void odbc_log(struct ast_event *e
  						}
  
  						ast_str_append(&sql, 0, "%s%s", first ? "" : ",", entry->name);
