@@ -7,7 +7,7 @@ Index: asterisk-13.3.2/apps/app_queue.c
  static void send_agent_complete(const char *queuename, struct ast_channel_snapshot *caller,
  	struct ast_channel_snapshot *peer, const struct member *member, time_t holdstart,
 -	time_t callstart, enum agent_complete_reason rsn)
-+	time_t callstart, int wrapuptime, enum agent_complete_reason rsn)
++	time_t callstart, const char *caller_uniqueid, int wrapuptime, enum agent_complete_reason rsn)
  {
  	const char *reason = NULL;	/* silence dumb compilers */
  	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
@@ -29,7 +29,7 @@ Index: asterisk-13.3.2/apps/app_queue.c
  			queue_agent_complete_type(), blob);
 +
 +	if (wrapuptime > 0) {
-+		ast_queue_log(queuename, caller->uniqueid, member->membername, "WRAPUPSTART", "%d", wrapuptime);
++		ast_queue_log(queuename, caller_uniqueid, member->membername, "WRAPUPSTART", "%d", wrapuptime);
 +	}
  }
  
@@ -39,7 +39,7 @@ Index: asterisk-13.3.2/apps/app_queue.c
  
  	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
 -			queue_data->holdstart, queue_data->starttime, TRANSFER);
-+			queue_data->holdstart, queue_data->starttime, queue_data->queue->wrapuptime, TRANSFER);
++			queue_data->holdstart, queue_data->starttime, queue_data->caller_uniqueid, queue_data->queue->wrapuptime, TRANSFER);
  	update_queue(queue_data->queue, queue_data->member, queue_data->callcompletedinsl,
  			time(NULL) - queue_data->starttime);
  	remove_stasis_subscriptions(queue_data);
@@ -48,7 +48,7 @@ Index: asterisk-13.3.2/apps/app_queue.c
  
  	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
 -			queue_data->holdstart, queue_data->starttime, TRANSFER);
-+			queue_data->holdstart, queue_data->starttime, queue_data->queue->wrapuptime, TRANSFER);
++			queue_data->holdstart, queue_data->starttime, queue_data->caller_uniqueid, queue_data->queue->wrapuptime, TRANSFER);
  	update_queue(queue_data->queue, queue_data->member, queue_data->callcompletedinsl,
  			time(NULL) - queue_data->starttime);
  	remove_stasis_subscriptions(queue_data);
@@ -57,7 +57,7 @@ Index: asterisk-13.3.2/apps/app_queue.c
  
  	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
 -			queue_data->holdstart, queue_data->starttime, reason);
-+			queue_data->holdstart, queue_data->starttime, queue_data->queue->wrapuptime, reason);
++			queue_data->holdstart, queue_data->starttime, queue_data->caller_uniqueid, queue_data->queue->wrapuptime, reason);
  	update_queue(queue_data->queue, queue_data->member, queue_data->callcompletedinsl,
  			time(NULL) - queue_data->starttime);
  	remove_stasis_subscriptions(queue_data);
