@@ -11,7 +11,6 @@ Build-Depends:
  cdbs (>= 0.4.23-1.1), 
  dahdi-linux-dev (>= 2.1.0), 
  debhelper (>= 5),
- doxygen, 
  freetds-dev,
  graphviz,
  gsfonts, 
