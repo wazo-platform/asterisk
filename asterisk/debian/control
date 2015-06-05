@@ -27,6 +27,7 @@ Build-Depends:
  liblua5.1-dev, 
  libneon27-dev, 
  libnewt-dev, 
+ libogg-dev,
  libopenais-dev,
  libopenr2-dev,
  libpopt-dev, 
