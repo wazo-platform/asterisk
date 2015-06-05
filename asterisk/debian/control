@@ -23,6 +23,7 @@ Build-Depends:
  libgsm1-dev, 
  libical-dev, 
  libiksemel-dev, 
+ libjansson-dev,
  liblua5.1-dev, 
  libneon27-dev, 
  libnewt-dev, 
@@ -44,8 +45,10 @@ Build-Depends:
  libss7-dev,
  libssl-dev, 
  libtonezone-dev (>= 1:2.0.0), 
+ liburiparser-dev,
  libvorbis-dev, 
  libxml2-dev,
+ libxslt1-dev,
  lsb-base (>= 3.2-14),
  postgresql-server-dev-all, 
  python, 
@@ -53,8 +56,8 @@ Build-Depends:
  sed,
  sox, 
  udev,
- uuid-dev,
  unixodbc-dev, 
+ uuid-dev,
  wget, 
  zlib1g-dev
 
