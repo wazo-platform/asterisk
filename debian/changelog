@@ -1,3 +1,9 @@
+asterisk (8:11.18.0+xivo.15.11~20150608.133528.5a9f30183-1) xivo-dev; urgency=medium
+
+  * update asterisk version and packaging
+
+ -- Sylvain Boily <sboily@avencall.com>  Tue, 09 Jun 2015 13:35:34 -0400
+
 asterisk (8:11.6.0+pf.xivo.13.23~20131112.202019.ac3e4d8-2) squeeze-xivo-skaro-dev; urgency=low
 
   * update comments in the rules file
