@@ -1,14 +1,13 @@
 #!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
 
-ASTVER=$(shell echo *.tar.gz | sed -r 's/.*_(.*)\+dfsg.*$$/\1/')
-DEB_TAR_SRCDIR := asterisk-$(ASTVER)
-DEB_TARBALL := asterisk_$(ASTVER)+dfsg.orig.tar.gz
+PKG  = $(word 2,$(shell dpkg-parsechangelog | grep Source))
+VER ?= $(shell dpkg-parsechangelog | grep Version: | awk -F': ' '{print $$NF}' | sed -ne 's/^\(\([0-9]\+\):\)\?\(.*\)-.*/\3/p')
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/rules/tarball.mk
 include /usr/share/cdbs/1/rules/patchsys-quilt.mk
-DEB_PATCHDIRS = $(CURDIR)/patches
+DEB_PATCHDIRS = $(CURDIR)/debian/patches
 include /usr/share/cdbs/1/class/autotools.mk
 #
 BUILD_TREE=$(CURDIR)/build-tree/$(DEB_TAR_SRCDIR)
@@ -99,3 +98,9 @@ install/asterisk-doc::
 
 clean::
 	rm -f *.cdbs-config_list
+
+.PHONY: get-orig-source
+
+get-orig-source:
+	@echo "# Downloading..."
+	wget -nv -T10 -t3 http://downloads.asterisk.org/pub/telephony/asterisk/asterisk-11.18.0.tar.gz -O ../$(PKG)_$(VER).orig.tar.gz
