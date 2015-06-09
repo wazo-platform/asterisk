@@ -1,4 +1,4 @@
-tar-ignore = ".git/*"
-tar-ignore = "test"
-tar-ignore = "contribs"
-tar-ignore = "Dockerfile"
+tar-ignore = "asterisk/.git/*"
+tar-ignore = "asterisk/test"
+tar-ignore = "asterisk/contribs"
+tar-ignore = "asterisk/Dockerfile"
