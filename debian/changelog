@@ -1,3 +1,9 @@
+asterisk (8:11.17.1+xivo.15.11~20150608.145923.95f0bc00-wheezy-1) xivo-dev; urgency=medium
+
+  * update version
+
+ -- Sylvain Boily <sboily@avencall.com>  Tue, 09 Jun 2015 16:10:19 -0400
+
 asterisk (8:11.17.1+xivo.15.11~20150608.143835.5da538b8-1) xivo-dev; urgency=medium
 
   * update asterisk version and packaging
