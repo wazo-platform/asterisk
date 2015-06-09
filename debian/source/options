@@ -1,4 +1,1 @@
-tar-ignore = "asterisk/.git/*"
-tar-ignore = "asterisk/test"
-tar-ignore = "asterisk/contribs"
-tar-ignore = "asterisk/Dockerfile"
+extend-diff-ignore = "(^|/)(Dockerfile)$"
