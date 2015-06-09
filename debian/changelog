@@ -1,4 +1,4 @@
-asterisk (8:11.17.0+xivo.15.11~20150608.133528.5a9f30183-1) xivo-dev; urgency=medium
+asterisk (8:11.17.1+xivo.15.11~20150608.143835.5da538b8-1) xivo-dev; urgency=medium
 
   * update asterisk version and packaging
 
