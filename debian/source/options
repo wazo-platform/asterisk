@@ -1,0 +1,4 @@
+tar-ignore = ".git/*"
+tar-ignore = "test"
+tar-ignore = "contribs"
+tar-ignore = "Dockerfile"
