@@ -74,7 +74,7 @@ Index: asterisk-13.4.0/main/channel.c
  	ast_channel_unlock(chan);
 +
 +	if (event_type) {
-+		ast_cel_publish_event(chan, event_type, NULL);
++		ast_cel_publish_event(chan, event_type, ast_json_null());
 +	}
 +
  	return f;
