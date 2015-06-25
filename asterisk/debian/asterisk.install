@@ -6,6 +6,7 @@ debian/tmp/var/lib/asterisk/images var/lib/asterisk
 debian/tmp/var/lib/asterisk/keys var/lib/asterisk
 debian/tmp/var/lib/asterisk/moh var/lib/asterisk
 debian/tmp/var/lib/asterisk/phoneprov var/lib/asterisk
+debian/tmp/var/lib/asterisk/rest-api usr/share/asterisk
 debian/tmp/var/lib/asterisk/sounds var/lib/asterisk
 debian/tmp/var/lib/asterisk/static-http var/lib/asterisk
 debian/tmp/var/log/asterisk var/log/
