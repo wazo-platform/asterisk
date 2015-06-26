@@ -20,3 +20,4 @@ xivo_dtmf_xfer_plus
 xivo_cel_odbc_bad_eventtime
 xivo_sip_missing_contact
 xivo_agent_complete_ast11_compat
+xivo_queue_caller_leave_ast11_compat
