@@ -42,7 +42,6 @@ Build-Depends:
  libsqlite-dev, 
  libsqlite3-dev,
  libsrtp0-dev, 
- libss7-dev,
  libssl-dev, 
  libtonezone-dev (>= 1:2.0.0), 
  liburiparser-dev,
