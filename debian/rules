@@ -1,25 +1,17 @@
 #!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
 
-ASTVER=$(shell echo *.tar.gz | sed -r 's/.*_(.*)\+dfsg.*$$/\1/')
-DEB_TAR_SRCDIR := asterisk-$(ASTVER)
-DEB_TARBALL := asterisk_$(ASTVER)+dfsg.orig.tar.gz
+PKG  = $(word 2,$(shell dpkg-parsechangelog | grep Source))
+VER ?= $(shell dpkg-parsechangelog | grep Version: | awk -F': ' '{print $$NF}' | sed -ne 's/^\(\([0-9]\+\):\)\?\(.*\)-.*/\3/p')
+ASTERISK_URL_DOWNLOAD = "http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-13.4.0.tar.gz"
 
 include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/rules/tarball.mk
-include /usr/share/cdbs/1/rules/patchsys-quilt.mk
-DEB_PATCHDIRS = $(CURDIR)/patches
 include /usr/share/cdbs/1/class/autotools.mk
-#
-BUILD_TREE=$(CURDIR)/build-tree/$(DEB_TAR_SRCDIR)
-# TODO: find a solution to avoid error message:
-# dpkg-shlibdeps: error: no dependency information found for debian/tmp/usr/lib/libasteriskssl.so.1
-# (used by debian/asterisk/usr/sbin/asterisk).
 
 DEB_SHLIBDEPS_INCLUDE := $(CURDIR)/debian/tmp/usr/lib
 DEB_DH_SHLIBDEPS_ARGS_ALL += -u--ignore-missing-info
-
 DEB_MAKE_INVOKE = $(DEB_MAKE_ENVVARS) $(MAKE) -C $(DEB_BUILDDIR)
+BUILD_TREE = .
 
 # uncomment the next 2 lines to create a "debug" version of asterisk
 #MENUSELECT_EXTRA_ARGS := --enable DONT_OPTIMIZE
@@ -99,3 +91,9 @@ install/asterisk-doc::
 
 clean::
 	rm -f *.cdbs-config_list
+
+.PHONY: get-orig-source
+
+get-orig-source:
+	@echo "# Downloading..."
+	wget -nv -T10 -t3 $(ASTERISK_URL_DOWNLOAD) -O ../$(PKG)_$(VER).orig.tar.gz
