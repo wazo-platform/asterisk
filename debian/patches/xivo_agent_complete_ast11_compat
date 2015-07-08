@@ -1,0 +1,39 @@
+Index: asterisk-13.4.0/apps/app_queue.c
+===================================================================
+--- asterisk-13.4.0.orig/apps/app_queue.c
++++ asterisk-13.4.0/apps/app_queue.c
+@@ -2090,6 +2090,18 @@ static struct ast_manager_event_blob *qu
+ 			ast_log(LOG_NOTICE, "No caller event string, bailing\n");
+ 			return NULL;
+ 		}
++	} else {
++		struct ast_json *json_obj = ast_multi_channel_blob_get_json(obj);
++		const char *uniqueid;
++
++		json_obj = ast_json_object_get(json_obj, "Ast11Uniqueid");
++		uniqueid = ast_json_string_get(json_obj);
++		if (uniqueid) {
++			caller_event_string = ast_str_create(128);
++			if (caller_event_string) {
++				ast_str_set(&caller_event_string, 0, "Uniqueid: %s\r\n", uniqueid);
++			}
++		}
+ 	}
+ 
+ 	agent = ast_multi_channel_blob_get_channel(obj, "agent");
+@@ -6519,13 +6531,14 @@ static void send_agent_complete(const ch
+ 		break;
+ 	}
+ 
+-	blob = ast_json_pack("{s: s, s: s, s: s, s: i, s: i, s: i, s: s}",
++	blob = ast_json_pack("{s: s, s: s, s: s, s: i, s: i, s: i, s: s, s: s}",
+ 			     "Queue", queuename,
+ 			     "Interface", member->interface,
+ 			     "MemberName", member->membername,
+ 			     "HoldTime", (long)(callstart - holdstart),
+ 			     "TalkTime", (long)(time(NULL) - callstart),
+ 			     "WrapupTime", wrapuptime,
++			     "Ast11Uniqueid", caller_uniqueid,
+ 			     "Reason", reason);
+ 
+ 	queue_publish_multi_channel_snapshot_blob(ast_queue_topic(queuename), caller, peer,

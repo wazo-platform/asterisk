@@ -1,25 +1,25 @@
 Adding agent in conversation counter in QueueSummary AMI event (based on AST_DEVICE_INUSE flag)
-Index: asterisk-11.17.0/apps/app_queue.c
+Index: asterisk-13.4.0/apps/app_queue.c
 ===================================================================
---- asterisk-11.17.0.orig/apps/app_queue.c
-+++ asterisk-11.17.0/apps/app_queue.c
-@@ -8631,6 +8631,7 @@ static int manager_queues_summary(struct
+--- asterisk-13.4.0.orig/apps/app_queue.c
++++ asterisk-13.4.0/apps/app_queue.c
+@@ -9272,6 +9272,7 @@ static int manager_queues_summary(struct
  {
  	time_t now;
  	int qmemcount = 0;
-+	int qmembusy= 0;
++	int qmembusy = 0;
  	int qmemavail = 0;
  	int qchancount = 0;
  	int qlongestholdtime = 0;
-@@ -8656,6 +8657,7 @@ static int manager_queues_summary(struct
+@@ -9299,6 +9300,7 @@ static int manager_queues_summary(struct
  		if (ast_strlen_zero(queuefilter) || !strcmp(q->name, queuefilter)) {
  			/* Reset the necessary local variables if no queuefilter is set*/
  			qmemcount = 0;
-+			qmembusy= 0;
++			qmembusy = 0;
  			qmemavail = 0;
  			qchancount = 0;
  			qlongestholdtime = 0;
-@@ -8669,6 +8671,9 @@ static int manager_queues_summary(struct
+@@ -9312,6 +9314,9 @@ static int manager_queues_summary(struct
  						++qmemavail;
  					}
  				}
@@ -29,7 +29,7 @@ Index: asterisk-11.17.0/apps/app_queue.c
  				ao2_ref(mem, -1);
  			}
  			ao2_iterator_destroy(&mem_iter);
-@@ -8682,13 +8687,14 @@ static int manager_queues_summary(struct
+@@ -9325,13 +9330,14 @@ static int manager_queues_summary(struct
  				"Queue: %s\r\n"
  				"LoggedIn: %d\r\n"
  				"Available: %d\r\n"
@@ -42,6 +42,6 @@ Index: asterisk-11.17.0/apps/app_queue.c
  				"\r\n",
 -				q->name, qmemcount, qmemavail, qchancount, q->holdtime, q->talktime, qlongestholdtime, idText);
 +				q->name, qmemcount, qmemavail, qmembusy, qchancount, q->holdtime, q->talktime, qlongestholdtime, idText);
+ 			++qsummaries;
  		}
  		ao2_unlock(q);
- 		queue_t_unref(q, "Done with iterator");

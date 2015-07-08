@@ -1,7 +1,7 @@
-Index: asterisk-11.17.0/include/asterisk/file.h
+Index: asterisk-13.4.0/include/asterisk/file.h
 ===================================================================
---- asterisk-11.17.0.orig/include/asterisk/file.h
-+++ asterisk-11.17.0/include/asterisk/file.h
+--- asterisk-13.4.0.orig/include/asterisk/file.h
++++ asterisk-13.4.0/include/asterisk/file.h
 @@ -47,6 +47,7 @@ struct ast_format;
  #define AST_DIGIT_NONE ""
  #define AST_DIGIT_ANY "0123456789#*ABCD"
@@ -10,25 +10,16 @@ Index: asterisk-11.17.0/include/asterisk/file.h
  
  #define SEEK_FORCECUR	10
  
-Index: asterisk-11.17.0/main/features.c
+Index: asterisk-13.4.0/main/bridge_basic.c
 ===================================================================
---- asterisk-11.17.0.orig/main/features.c
-+++ asterisk-11.17.0/main/features.c
-@@ -2527,7 +2527,7 @@ static int builtin_blindtransfer(struct
- 	ast_indicate(transferee, AST_CONTROL_HOLD);
+--- asterisk-13.4.0.orig/main/bridge_basic.c
++++ asterisk-13.4.0/main/bridge_basic.c
+@@ -3117,7 +3117,7 @@ static int grab_transfer(struct ast_chan
+ 	ast_channel_unlock(chan);
  
- 	/* Transfer */
--	res = ast_stream_and_wait(transferer, "pbx-transfer", AST_DIGIT_ANY);
-+	res = ast_stream_and_wait(transferer, "pbx-transfer", AST_DIGIT_ANY_PLUS);
+ 	/* Play the simple "transfer" prompt out and wait */
+-	res = ast_stream_and_wait(chan, "pbx-transfer", AST_DIGIT_ANY);
++	res = ast_stream_and_wait(chan, "pbx-transfer", AST_DIGIT_ANY_PLUS);
+ 	ast_stopstream(chan);
  	if (res < 0) {
- 		finishup(transferee);
- 		return -1; /* error ? */
-@@ -2707,7 +2707,7 @@ static int builtin_atxfer(struct ast_cha
- 	ast_indicate(transferee, AST_CONTROL_HOLD);
- 
- 	/* Transfer */
--	res = ast_stream_and_wait(transferer, "pbx-transfer", AST_DIGIT_ANY);
-+	res = ast_stream_and_wait(transferer, "pbx-transfer", AST_DIGIT_ANY_PLUS);
- 	if (res < 0) {
- 		finishup(transferee);
- 		return -1;
+ 		/* Hangup or error */

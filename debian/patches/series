@@ -11,7 +11,6 @@ xivo_sip_notify_provd
 xivo_skill_queues
 xivo_agent_complete_wrapup
 xivo_sip_tel_uri
-xivo_workaround_remote_bridge_crash
 xivo_channel_check_lock
 xivo_senddigit_begin
 xivo_event_sip_ringing
@@ -20,3 +19,5 @@ xivo_ccss_exten_context_var
 xivo_dtmf_xfer_plus
 xivo_cel_odbc_bad_eventtime
 xivo_sip_missing_contact
+xivo_agent_complete_ast11_compat
+xivo_queue_caller_leave_ast11_compat
