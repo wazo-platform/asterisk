@@ -1,3 +1,9 @@
+asterisk (8:13.4.0-1~xivo2) xivo-dev; urgency=low
+
+  * force rebuild
+
+ -- Sebastien Duthil <sduthil@avencall.com>  Thu, 09 Jul 2015 10:15:01 -0400
+
 asterisk (8:13.4.0-1~xivo1) xivo-dev; urgency=low
 
   * update version
