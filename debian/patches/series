@@ -22,3 +22,4 @@ xivo_sip_missing_contact
 xivo_agent_complete_ast11_compat
 xivo_queue_caller_leave_ast11_compat
 xivo_queue_fix_segfault_on_transfer
+ast_sip_fix_sip_reload_codecs
