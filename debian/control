@@ -12,7 +12,6 @@ Build-Depends:
  dahdi-linux-dev (>= 2.1.0), 
  debhelper (>= 5),
  freetds-dev,
- graphviz,
  gsfonts, 
  libasound2-dev, 
  libbluetooth-dev,
