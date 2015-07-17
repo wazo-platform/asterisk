@@ -29,6 +29,7 @@ Build-Depends:
  libogg-dev,
  libopenais-dev,
  libopenr2-dev,
+ libpjproject-dev,
  libpopt-dev, 
  libpq-dev, 
  libpri-dev (>= 1.4.7), 
