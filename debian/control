@@ -10,7 +10,7 @@ Build-Depends:
  bison, 
  cdbs (>= 0.4.23-1.1), 
  dahdi-linux-dev (>= 2.1.0), 
- debhelper (>= 5),
+ debhelper (>= 9),
  freetds-dev,
  gsfonts, 
  libasound2-dev, 
@@ -52,7 +52,6 @@ Build-Depends:
  postgresql-server-dev-all, 
  python, 
  quilt, 
- sed,
  sox, 
  udev,
  unixodbc-dev, 
@@ -66,7 +65,7 @@ Section: comm
 Replaces: asterisk11
 Conflicts: asterisk11
 Provides: asterisk11
-Depends: ${shlibs:Depends}, mpg123
+Depends: ${misc:Depends}, ${shlibs:Depends}, mpg123
 Description: Open Source Private Branch Exchange (PBX) - XiVO version
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
@@ -101,7 +100,7 @@ Priority: extra
 Replaces: asterisk11-dbg
 Conflicts: asterisk11-dbg
 Provides: asterisk11-dbg
-Depends: asterisk (= ${binary:Version})
+Depends: ${misc:Depends}, asterisk (= ${binary:Version})
 Description: Open Source Private Branch Exchange (PBX) - XiVO version
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
@@ -133,6 +132,7 @@ Package: asterisk-dev
 Architecture: all
 Recommends: asterisk
 Section: devel
+Depends: ${misc:Depends}
 Description: development files for asterisk
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
@@ -165,6 +165,7 @@ Package: asterisk-doc
 Architecture: all
 Recommends: asterisk
 Section: doc
+Depends: ${misc:Depends}
 Description: Source code documentation for Asterisk
  Asterisk is an Open Source PBX and telephony toolkit.
  .
@@ -197,6 +198,7 @@ Package: asterisk-sounds-main
 Architecture: all
 Enhances: asterisk
 Section: comm
+Depends: ${misc:Depends}
 Description: sound files for asterisk
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
