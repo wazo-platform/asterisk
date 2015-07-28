@@ -1,3 +1,9 @@
+asterisk (8:13.5.0~rc1-1~xivo1) xivo-dev; urgency=low
+
+  * update to 13.5.0-rc1
+
+ -- Etienne Lessard <elessard@avencall.com>  Tue, 28 Jul 2015 09:58:26 -0400
+
 asterisk (8:13.4.0-1~xivo6) xivo-dev; urgency=low
 
   * force rebuild

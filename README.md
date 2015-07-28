@@ -6,6 +6,7 @@ To update the version of Asterisk:
 
 * Update the version number in debian/rules
 * Update the version number in debian/changelog by adding a new section
+* Update the version number in Dockerfile
 * Update all the patches
   * Download the upstream tarball, extract it and cd into the directory
   * Create a symbolic link to debian/patches, e.g. `ln -s ../debian/patches patches`
