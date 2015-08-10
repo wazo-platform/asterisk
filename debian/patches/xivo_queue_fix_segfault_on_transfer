@@ -1,7 +1,7 @@
-Index: asterisk-13.5.0-rc1/apps/app_queue.c
+Index: asterisk-13.5.0/apps/app_queue.c
 ===================================================================
---- asterisk-13.5.0-rc1.orig/apps/app_queue.c
-+++ asterisk-13.5.0-rc1/apps/app_queue.c
+--- asterisk-13.5.0.orig/apps/app_queue.c
++++ asterisk-13.5.0/apps/app_queue.c
 @@ -6735,7 +6735,7 @@ static struct queue_stasis_data *queue_s
   * \param caller The channel snapshot for the caller channel in the queue.
   * \param atxfer_msg The stasis attended transfer message data.

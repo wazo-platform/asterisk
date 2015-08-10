@@ -1,3 +1,9 @@
+asterisk (8:13.5.0-1~xivo1) xivo-dev; urgency=medium
+
+  * update to 13.5.0
+
+ -- Francois Blackburn <fblackburn@avencall.com>  Mon, 10 Aug 2015 08:04:12 -0400
+
 asterisk (8:13.5.0~rc1-1~xivo1) xivo-dev; urgency=low
 
   * update to 13.5.0-rc1

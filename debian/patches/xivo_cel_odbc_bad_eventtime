@@ -1,7 +1,7 @@
-Index: asterisk-13.5.0-rc1/cel/cel_odbc.c
+Index: asterisk-13.5.0/cel/cel_odbc.c
 ===================================================================
---- asterisk-13.5.0-rc1.orig/cel/cel_odbc.c
-+++ asterisk-13.5.0-rc1/cel/cel_odbc.c
+--- asterisk-13.5.0.orig/cel/cel_odbc.c
++++ asterisk-13.5.0/cel/cel_odbc.c
 @@ -53,6 +53,7 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
  #define	CONFIG	"cel_odbc.conf"
  
