@@ -1,3 +1,15 @@
+asterisk (8:13.6.0-1~xivo1) xivo-dev; urgency=medium
+
+  * update to 13.6.0
+
+ -- Sylvain Boily <sboily@avencall.com>  Fri, 09 Oct 2015 22:53:06 -0400
+
+asterisk (8:13.6.0~rc3-1~xivo1) xivo-dev; urgency=low
+
+  * update to 13.6.0-rc3
+
+ -- Etienne Lessard <elessard@avencall.com>  Thu, 08 Oct 2015 12:27:01 -0400
+
 asterisk (8:13.5.0-1~xivo2) xivo-dev; urgency=medium
 
   * update to 13.5.0
