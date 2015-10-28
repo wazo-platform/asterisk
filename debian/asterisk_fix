@@ -77,7 +77,7 @@ asterisk_dirs="/etc/asterisk /var/lib/asterisk /var/spool/asterisk/monitor"
 chown -R asterisk:asterisk $asterisk_dirs
 for dir in $asterisk_dirs; do
     find $dir -type d -exec chmod 2775 {} \;
-    find $dir -type f -exec chmod 660 {} \;
+    find $dir -name 'agi-bin' -prune -o -type f -exec chmod 660 {} \;
 done
 
 ####################################
