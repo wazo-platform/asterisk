@@ -1,3 +1,9 @@
+asterisk (8:13.6.0-1~xivo4) xivo-dev; urgency=medium
+
+  * Revert ari mailboxes
+
+ -- Sylvain Boily <sboily@avencall.com>  Tue, 03 Nov 2015 23:19:03 -0500
+
 asterisk (8:13.6.0-1~xivo2) xivo-dev; urgency=medium
 
   * update to 13.6.0
