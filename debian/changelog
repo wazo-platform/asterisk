@@ -1,9 +1,3 @@
-asterisk (8:13.6.0-1~xivo3) xivo-dev; urgency=medium
-
-  * enabled ari mailboxes
-
- -- Sylvain Boily <sboily@avencall.com>  Tue, 03 Nov 2015 22:10:35 -0500
-
 asterisk (8:13.6.0-1~xivo2) xivo-dev; urgency=medium
 
   * update to 13.6.0

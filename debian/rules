@@ -48,9 +48,6 @@ configure/asterisk::
 			--disable-category MENUSELECT_ADDONS \
 			--disable-category MENUSELECT_MOH \
 			--enable app_meetme \
-                        --enable res_mwi_external \
-                        --enable res_stasis_mailbox \
-                        --enable res_ari_mailboxes \
 			$(MENUSELECT_EXTRA_ARGS) \
 			menuselect.makeopts \
 	)
