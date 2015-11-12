@@ -1,0 +1,104 @@
+Index: asterisk-13.6.0/channels/chan_iax2.c
+===================================================================
+--- asterisk-13.6.0.orig/channels/chan_iax2.c
++++ asterisk-13.6.0/channels/chan_iax2.c
+@@ -7114,7 +7114,7 @@ static char *handle_cli_iax2_unregister(
+ 
+ 	p = find_peer(a->argv[2], 1);
+ 	if (p) {
+-		if (p->expire > 0) {
++		if (p->expire > -1) {
+ 			struct iax2_peer *peer;
+ 
+ 			peer = ao2_find(peers, a->argv[2], OBJ_KEY);
+@@ -7147,7 +7147,7 @@ static char *complete_iax2_unregister(co
+ 		struct ao2_iterator i = ao2_iterator_init(peers, 0);
+ 		while ((p = ao2_iterator_next(&i))) {
+ 			if (!strncasecmp(p->name, word, wordlen) &&
+-				++which > state && p->expire > 0) {
++				++which > state && p->expire > -1) {
+ 				res = ast_strdup(p->name);
+ 				peer_unref(p);
+ 				break;
+Index: asterisk-13.6.0/channels/chan_sip.c
+===================================================================
+--- asterisk-13.6.0.orig/channels/chan_sip.c
++++ asterisk-13.6.0/channels/chan_sip.c
+@@ -20867,7 +20867,7 @@ static char *sip_unregister(struct ast_c
+ 		return CLI_SHOWUSAGE;
+ 
+ 	if ((peer = sip_find_peer(a->argv[2], NULL, load_realtime, FINDPEERS, TRUE, 0))) {
+-		if (peer->expire > 0) {
++		if (peer->expire > -1) {
+ 			AST_SCHED_DEL_UNREF(sched, peer->expire,
+ 				sip_unref_peer(peer, "remove register expire ref"));
+ 			expire_register(sip_ref_peer(peer, "ref for expire_register"));
+@@ -21447,7 +21447,7 @@ static char *complete_sip_registered_pee
+        while ((peer = ao2_t_iterator_next(&i, "iterate thru peers table"))) {
+ 	       if (!strncasecmp(word, peer->name, wordlen) &&
+ 		   (!flags2 || ast_test_flag(&peer->flags[1], flags2)) &&
+-		   ++which > state && peer->expire > 0)
++		   ++which > state && peer->expire > -1)
+ 		       result = ast_strdup(peer->name);
+ 	       if (result) {
+ 		       sip_unref_peer(peer, "toss iterator peer ptr before break");
+@@ -30307,13 +30307,11 @@ static struct ast_variable *add_var(cons
+ /*! \brief Set peer defaults before configuring specific configurations */
+ static void set_peer_defaults(struct sip_peer *peer)
+ {
+-	if (peer->expire == 0) {
++	if (peer->expire < 0) {
+ 		/* Don't reset expire or port time during reload
+ 		   if we have an active registration
+ 		*/
+-		peer->expire = -1;
+-		peer->pokeexpire = -1;
+-		peer->keepalivesend = -1;
++		peer_sched_cleanup(peer);
+ 		set_socket_transport(&peer->socket, AST_TRANSPORT_UDP);
+ 	}
+ 	peer->type = SIP_TYPE_PEER;
+@@ -30398,6 +30396,10 @@ static struct sip_peer *temp_peer(const
+ 	}
+ 
+ 	ast_atomic_fetchadd_int(&apeerobjs, 1);
++	peer->expire = -1;
++	peer->pokeexpire = -1;
++	peer->keepalivesend = -1;
++
+ 	set_peer_defaults(peer);
+ 
+ 	ast_copy_string(peer->name, name, sizeof(peer->name));
+@@ -30522,6 +30524,10 @@ static struct sip_peer *build_peer(const
+ 			ast_debug(3, "-REALTIME- peer built. Name: %s. Peer objects: %d\n", name, rpeerobjs);
+ 		} else
+ 			ast_atomic_fetchadd_int(&speerobjs, 1);
++
++		peer->expire = -1;
++		peer->pokeexpire = -1;
++		peer->keepalivesend = -1;
+ 	}
+ 
+ 	/* Note that our peer HAS had its reference count increased */
+Index: asterisk-13.6.0/res/res_rtp_asterisk.c
+===================================================================
+--- asterisk-13.6.0.orig/res/res_rtp_asterisk.c
++++ asterisk-13.6.0/res/res_rtp_asterisk.c
+@@ -4780,7 +4780,7 @@ static void ast_rtp_prop_set(struct ast_
+ 			return;
+ 		} else {
+ 			if (rtp->rtcp) {
+-				if (rtp->rtcp->schedid > 0) {
++				if (rtp->rtcp->schedid > -1) {
+ 					if (!ast_sched_del(rtp->sched, rtp->rtcp->schedid)) {
+ 						/* Successfully cancelled scheduler entry. */
+ 						ao2_ref(instance, -1);
+@@ -4997,7 +4997,7 @@ static void ast_rtp_stop(struct ast_rtp_
+ 	}
+ #endif
+ 
+-	if (rtp->rtcp && rtp->rtcp->schedid > 0) {
++	if (rtp->rtcp && rtp->rtcp->schedid > -1) {
+ 		if (!ast_sched_del(rtp->sched, rtp->rtcp->schedid)) {
+ 			/* successfully cancelled scheduler entry. */
+ 			ao2_ref(instance, -1);
