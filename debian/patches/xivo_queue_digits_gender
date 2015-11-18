@@ -1,0 +1,22 @@
+Index: asterisk-13.6.0/apps/app_queue.c
+===================================================================
+--- asterisk-13.6.0.orig/apps/app_queue.c
++++ asterisk-13.6.0/apps/app_queue.c
+@@ -4860,7 +4860,7 @@ static int say_position(struct queue_ent
+ 		}
+ 
+ 		if (avgholdmins >= 1) {
+-			res = ast_say_number(qe->chan, avgholdmins, AST_DIGIT_ANY, ast_channel_language(qe->chan), NULL);
++			res = ast_say_number(qe->chan, avgholdmins, AST_DIGIT_ANY, ast_channel_language(qe->chan), "f");
+ 			if (res) {
+ 				goto playout;
+ 			}
+@@ -7669,7 +7669,7 @@ static int try_calling(struct queue_ent
+ 						holdtime = labs((now - qe->start) / 60);
+ 						holdtimesecs = labs((now - qe->start) % 60);
+ 						if (holdtime > 0) {
+-							ast_say_number(peer, holdtime, AST_DIGIT_ANY, ast_channel_language(peer), NULL);
++							ast_say_number(peer, holdtime, AST_DIGIT_ANY, ast_channel_language(peer), "f");
+ 							if (play_file(peer, qe->parent->sound_minutes) < 0) {
+ 								ast_log(LOG_ERROR, "play_file failed for '%s' on %s\n", qe->parent->sound_minutes, ast_channel_name(peer));
+ 							}

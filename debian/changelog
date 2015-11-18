@@ -1,3 +1,9 @@
+asterisk (8:13.6.0-1~xivo7) xivo-dev; urgency=medium
+
+  * Add patch for digits gender
+
+ -- Francois Blackburn <fblackburn@avencall.com>  Wed, 18 Nov 2015 10:01:08 -0500
+
 asterisk (8:13.6.0-1~xivo6) xivo-dev; urgency=medium
 
   * Force rebuild
