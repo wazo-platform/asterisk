@@ -1,3 +1,9 @@
+asterisk (8:13.6.0-2~xivo8) xivo-dev; urgency=low
+
+  * upgrade to jessie
+
+ -- Etienne Lessard <elessard@avencall.com>  Tue, 08 Dec 2015 10:33:44 -0500
+
 asterisk (8:13.6.0-1~xivo7) xivo-dev; urgency=medium
 
   * Add patch for digits gender
