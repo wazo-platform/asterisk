@@ -1,6 +1,6 @@
 ## Image to build from sources
 
-FROM debian:wheezy
+FROM debian:jessie
 MAINTAINER Sylvain Boily "sboily@avencall.com"
 
 ENV DEBIAN_FRONTEND noninteractive
