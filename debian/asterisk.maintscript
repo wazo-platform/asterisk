@@ -1,4 +1,0 @@
-# see: dh_installdeb(1)
-
-rm_conffile /etc/default/asterisk 8:13.6.0-2~xivo8
-rm_conffile /etc/init.d/asterisk 8:13.6.0-2~xivo8
