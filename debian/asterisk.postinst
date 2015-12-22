@@ -90,6 +90,18 @@ case "$1" in
 	done
 
 	set -e
+
+	# systemd migration
+	if [ -f /etc/default/asterisk ]; then
+		if grep -q CONFD /etc/default/asterisk; then
+			mkdir -p /etc/systemd/system/asterisk.service.d
+			cat >/etc/systemd/system/asterisk.service.d/remote-confd-voicemail.conf <<EOF
+[Service]
+$(sed -nr 's/^export (CONFD.+)$/Environment=\1/p' /etc/default/asterisk)
+EOF
+			systemctl daemon-reload || true
+		fi
+	fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

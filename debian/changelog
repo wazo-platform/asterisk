@@ -1,3 +1,9 @@
+asterisk (8:13.6.0-2~xivo9) xivo-dev; urgency=low
+
+  * Switch from sysV to systemd.
+
+ -- Etienne Lessard <elessard@avencall.com>  Tue, 22 Dec 2015 11:53:48 -0500
+
 asterisk (8:13.6.0-2~xivo8) xivo-dev; urgency=low
 
   * upgrade to jessie
