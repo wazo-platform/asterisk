@@ -1,6 +1,6 @@
 [Unit]
 Description=Asterisk PBX
-ConditionPathExists=!/tmp/xivo-disabled
+ConditionPathExists=!/var/lib/xivo/disabled
 After=network.target postgresql.service xivo-agid.service xivo-confgend.service
 
 [Service]
