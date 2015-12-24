@@ -1,18 +1,17 @@
 [Unit]
 Description=Asterisk PBX
 ConditionPathExists=!/var/lib/xivo/disabled
-After=network.target postgresql.service xivo-agid.service xivo-confgend.service
+After=network-online.target postgresql.service xivo-agid.service xivo-confgend.service
+Wants=network-online.target postgresql.service xivo-agid.service xivo-confgend.service
 
 [Service]
 Type=forking
-ExecStartPre=/usr/bin/install -d -o asterisk -g asterisk /var/run/asterisk
-ExecStart=/usr/sbin/asterisk -p -g -U asterisk
+ExecStart=/usr/sbin/asterisk -g -U asterisk
 # Add a sleep (need to change for something else) since trying to do an "asterisk -rx"
 # just after starting asterisk might gives an error, since the unix socket might not
 # have been created yet by the main process.
 ExecStartPost=/bin/sleep 2
 ExecStartPost=/usr/sbin/asterisk -rx 'core waitfullybooted'
-ExecStop=/usr/sbin/asterisk -rx 'core stop now'
 ExecReload=/usr/sbin/asterisk -rx 'core reload'
 PIDFile=/var/run/asterisk/asterisk.pid
 UMask=0007
