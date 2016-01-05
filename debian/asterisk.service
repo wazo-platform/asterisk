@@ -2,6 +2,7 @@
 Description=Asterisk PBX
 ConditionPathExists=!/var/lib/xivo/disabled
 After=network-online.target postgresql.service xivo-agid.service xivo-confgend.service
+Before=monit.service
 Wants=network-online.target postgresql.service xivo-agid.service xivo-confgend.service
 
 [Service]

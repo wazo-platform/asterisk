@@ -1,4 +1,4 @@
-asterisk (8:13.6.0-2~xivo9) xivo-dev; urgency=low
+asterisk (8:13.6.0-2~xivo10) xivo-dev; urgency=low
 
   * Switch from sysV to systemd.
 
