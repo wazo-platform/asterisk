@@ -16,7 +16,7 @@ ExecStartPost=/usr/sbin/asterisk -rx 'core waitfullybooted'
 ExecReload=/usr/sbin/asterisk -rx 'core reload'
 PIDFile=/var/run/asterisk/asterisk.pid
 UMask=0007
-WorkingDirectory=/var/lib/asterisk
+WorkingDirectory=/var/spool/asterisk
 
 LimitNOFILE=8192
 
