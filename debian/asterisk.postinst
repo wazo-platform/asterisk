@@ -92,7 +92,7 @@ case "$1" in
 	set -e
 
 	# systemd migration
-	drop_in='/etc/systemd/system/asterisk.service.d/remote-confd-voicemail.conf'
+	drop_in='/etc/systemd/system/asterisk.service.d/auto-sysv-migration.conf'
 	if [ -f /etc/default/asterisk -a ! -f "${drop_in}" ]; then
 		(
 			. /etc/default/asterisk
