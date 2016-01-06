@@ -94,6 +94,7 @@ case "$1" in
 	# systemd migration
 	drop_in='/etc/systemd/system/asterisk.service.d/auto-sysv-migration.conf'
 	if [ -f /etc/default/asterisk -a ! -f "${drop_in}" ]; then
+		# be on the safe side and source /etc/default/asterisk in a subshell
 		(
 			. /etc/default/asterisk
 			if [ -n "${CONFD_HOST}" -o -n "${CONFD_PORT}" -o -n "${CONFD_HTTPS}" -o -n "${CONFD_USERNAME}" -o -n "${CONFD_PASSWORD}" ]; then
