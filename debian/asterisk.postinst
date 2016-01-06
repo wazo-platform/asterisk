@@ -92,15 +92,32 @@ case "$1" in
 	set -e
 
 	# systemd migration
-	if [ -f /etc/default/asterisk ]; then
-		if grep -q CONFD /etc/default/asterisk; then
-			mkdir -p /etc/systemd/system/asterisk.service.d
-			cat >/etc/systemd/system/asterisk.service.d/remote-confd-voicemail.conf <<EOF
-[Service]
-$(sed -nr 's/^export (CONFD.+)$/Environment=\1/p' /etc/default/asterisk)
-EOF
-			systemctl daemon-reload || true
-		fi
+	drop_in='/etc/systemd/system/asterisk.service.d/remote-confd-voicemail.conf'
+	if [ -f /etc/default/asterisk -a ! -f "${drop_in}" ]; then
+		(
+			. /etc/default/asterisk
+			if [ -n "${CONFD_HOST}" -o -n "${CONFD_PORT}" -o -n "${CONFD_HTTPS}" -o -n "${CONFD_USERNAME}" -o -n "${CONFD_PASSWORD}" ]; then
+				mkdir -p $(dirname "${drop_in}")
+				echo '[Service]' > "${drop_in}"
+				if [ -n "${CONFD_HOST}" ]; then
+					echo "Environment=CONFD_HOST=${CONFD_HOST}" >> "${drop_in}"
+				fi
+				if [ -n "${CONFD_PORT}" ]; then
+					echo "Environment=CONFD_PORT=${CONFD_PORT}" >> "${drop_in}"
+				fi
+				if [ -n "${CONFD_HTTPS}" ]; then
+					echo "Environment=CONFD_HTTPS=${CONFD_HTTPS}" >> "${drop_in}"
+				fi
+				if [ -n "${CONFD_USERNAME}" ]; then
+					echo "Environment=CONFD_USERNAME=${CONFD_USERNAME}" >> "${drop_in}"
+				fi
+				if [ -n "${CONFD_PASSWORD}" ]; then
+					echo "Environment=CONFD_PASSWORD=${CONFD_PASSWORD}" >> "${drop_in}"
+				fi
+
+				systemctl daemon-reload || true
+			fi
+		)
 	fi
     ;;
 
