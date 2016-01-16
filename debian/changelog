@@ -1,3 +1,9 @@
+asterisk (8:13.7.0-1~xivo1) xivo-dev; urgency=medium
+
+  * update to 13.7.0
+
+ -- Sylvain Boily <sboily@avencall.com>  Fri, 15 Jan 2016 19:04:44 -0500
+
 asterisk (8:13.6.0-2~xivo12) xivo-dev; urgency=low
 
   * Switch from sysV to systemd.
