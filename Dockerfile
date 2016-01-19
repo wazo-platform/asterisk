@@ -47,7 +47,6 @@ RUN apt-get -qq -y install \
     libpopt-dev \
     libpq-dev \
     libpri-dev \
-    libradiusclient-ng-dev \
     libreadline-dev \
     libresample1-dev \
     libsnmp-dev \
@@ -75,6 +74,14 @@ WORKDIR /usr/src/asterisk-$ASTERISK_VERSION
 COPY debian/patches /usr/src/asterisk-$ASTERISK_VERSION/patches/
 RUN quilt push -a
 RUN ./configure --without-h323 --without-misdn
+RUN menuselect/menuselect \
+        --disable-category MENUSELECT_ADDONS \
+        --disable-category MENUSELECT_MOH \
+        --enable app_meetme \
+        --enable res_mwi_external \
+        --enable res_stasis_mailbox \
+        --enable res_ari_mailboxes \
+        menuselect.makeopts
 RUN make
 RUN make install
 
