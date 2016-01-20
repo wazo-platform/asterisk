@@ -1,3 +1,9 @@
+asterisk (8:13.7.0-1~xivo4) xivo-dev; urgency=medium
+
+  * Force asterisk rebuild
+
+ -- Sylvain Boily <sboily@avencall.com>  Wed, 20 Jan 2016 17:42:30 -0500
+
 asterisk (8:13.7.0-1~xivo3) xivo-dev; urgency=medium
 
   * revert 434db4dd427543102443cb555416e35295016bb fix on asterisk 13.8 not 13.7
