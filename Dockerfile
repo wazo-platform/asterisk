@@ -115,4 +115,4 @@ EXPOSE 5060/udp
 EXPOSE 5038
 EXPOSE 2000
 
-CMD asterisk -dvf
+CMD ["asterisk", "-dvf"]
