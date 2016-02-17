@@ -47,6 +47,7 @@ Build-Depends:
  libxml2-dev,
  libxslt1-dev,
  lsb-base (>= 3.2-14),
+ portaudio19-dev,
  postgresql-server-dev-all,
  python,
  quilt,
