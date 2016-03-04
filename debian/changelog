@@ -1,3 +1,9 @@
+asterisk (8:13.7.2-1~xivo4) xivo-dev; urgency=medium
+
+  * Add a patch for ticket #6114
+
+ -- Pascal Cadotte Michaud <pcadottemichaud@avencall.com>  Fri, 04 Mar 2016 13:27:18 -0500
+
 asterisk (8:13.7.2-1~xivo3) xivo-dev; urgency=medium
 
   * Add a fix for the regression introduced in 13.7.2-1~xivo2
