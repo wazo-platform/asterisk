@@ -1,0 +1,44 @@
+Index: asterisk-13.7.2/apps/app_voicemail.c
+===================================================================
+--- asterisk-13.7.2.orig/apps/app_voicemail.c
++++ asterisk-13.7.2/apps/app_voicemail.c
+@@ -1726,11 +1726,9 @@ static struct ast_vm_user *find_user(str
+ 		/* Make a copy, so that on a reload, we have no race */
+ 		if ((vmu = (ivm ? ivm : ast_malloc(sizeof(*vmu))))) {
+ 			*vmu = *cur;
+-			if (!ivm) {
+-				vmu->email = ast_strdup(cur->email);
+-				vmu->emailbody = ast_strdup(cur->emailbody);
+-				vmu->emailsubject = ast_strdup(cur->emailsubject);
+-			}
++			vmu->email = ast_strdup(cur->email);
++			vmu->emailbody = ast_strdup(cur->emailbody);
++			vmu->emailsubject = ast_strdup(cur->emailsubject);
+ 			ast_set2_flag(vmu, !ivm, VM_ALLOCED);
+ 			AST_LIST_NEXT(vmu, list) = NULL;
+ 		}
+@@ -2008,17 +2006,16 @@ static int get_folder_by_name(const char
+ 
+ static void free_user(struct ast_vm_user *vmu)
+ {
+-	if (ast_test_flag(vmu, VM_ALLOCED)) {
++	ast_free(vmu->email);
++	vmu->email = NULL;
+ 
+-		ast_free(vmu->email);
+-		vmu->email = NULL;
++	ast_free(vmu->emailbody);
++	vmu->emailbody = NULL;
+ 
+-		ast_free(vmu->emailbody);
+-		vmu->emailbody = NULL;
+-
+-		ast_free(vmu->emailsubject);
+-		vmu->emailsubject = NULL;
++	ast_free(vmu->emailsubject);
++	vmu->emailsubject = NULL;
+ 
++	if (ast_test_flag(vmu, VM_ALLOCED)) {
+ 		ast_free(vmu);
+ 	}
+ }
