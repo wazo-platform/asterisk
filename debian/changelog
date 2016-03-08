@@ -1,3 +1,9 @@
+asterisk (8:13.7.2-1~xivo5) xivo-dev; urgency=medium
+
+  * Wait for /var/run/asterisk/asterisk.ctl to show up at start.
+
+ -- Etienne Lessard <elessard@proformatique.com>  Tue, 08 Mar 2016 15:53:35 -0500
+
 asterisk (8:13.7.2-1~xivo4) xivo-dev; urgency=medium
 
   * Add a patch for ticket #6114
