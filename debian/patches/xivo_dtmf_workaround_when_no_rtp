@@ -2,25 +2,32 @@ Index: asterisk-13.7.2/main/features.c
 ===================================================================
 --- asterisk-13.7.2.orig/main/features.c
 +++ asterisk-13.7.2/main/features.c
-@@ -646,6 +646,11 @@ int ast_bridge_call_with_flags(struct as
+@@ -646,6 +646,14 @@ int ast_bridge_call_with_flags(struct as
  
  	ast_bridge_basic_set_flags(bridge, flags);
  
++	ast_channel_lock_both(chan, peer);
 +	if (!ast_channel_tech(chan)->send_digit_begin && !ast_channel_tech(peer)->send_digit_begin) {
 +		ast_set_flag(ast_channel_flags(chan), AST_FLAG_END_DTMF_ONLY);
 +		ast_set_flag(ast_channel_flags(peer), AST_FLAG_END_DTMF_ONLY);
 +	}
++	ast_channel_unlock(chan);
++	ast_channel_unlock(peer);
 +
  	/* Put peer into the bridge */
  	if (ast_bridge_impart(bridge, peer, NULL, peer_features,
  		AST_BRIDGE_IMPART_CHAN_INDEPENDENT | AST_BRIDGE_IMPART_INHIBIT_JOIN_COLP)) {
-@@ -659,6 +664,9 @@ int ast_bridge_call_with_flags(struct as
- 	ast_bridge_join(bridge, chan, NULL, &chan_features, NULL,
- 		AST_BRIDGE_JOIN_PASS_REFERENCE | AST_BRIDGE_JOIN_INHIBIT_JOIN_COLP);
- 
-+	ast_clear_flag(ast_channel_flags(chan), AST_FLAG_END_DTMF_ONLY);
-+	ast_clear_flag(ast_channel_flags(peer), AST_FLAG_END_DTMF_ONLY);
+@@ -670,6 +678,13 @@ int ast_bridge_call_with_flags(struct as
+ 	if (ast_channel_softhangup_internal_flag(chan) & AST_SOFTHANGUP_ASYNCGOTO) {
+ 		res = 0;
+ 	}
 +
- 	/*
- 	 * If the bridge was broken for a hangup that isn't real, then
- 	 * don't run the h extension, because the channel isn't really
++	/* The "peer" channel might be destroyed at this point since the reference
++	 * to this channel was stolen by ast_bridge_impart. So don't clear flag on
++	 * the "peer" channel, but only on the "chan" channel. Anyway, the peer
++	 * channel is hung up at this stage.
++	 */
++	ast_clear_flag(ast_channel_flags(chan), AST_FLAG_END_DTMF_ONLY);
+ 	ast_channel_unlock(chan);
+ 
+ 	ast_bridge_features_cleanup(&chan_features);
