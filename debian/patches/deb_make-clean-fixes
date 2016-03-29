@@ -3,11 +3,11 @@ Author: Faidon Liambotis <paravoid@debian.org>
 Forwarded: not-needed
 Last-Update: 2009-12-19
 
-Index: asterisk-13.7.2/Makefile
+Index: asterisk-13.8.0/Makefile
 ===================================================================
---- asterisk-13.7.2.orig/Makefile
-+++ asterisk-13.7.2/Makefile
-@@ -440,7 +440,6 @@ dist-clean: distclean
+--- asterisk-13.8.0.orig/Makefile
++++ asterisk-13.8.0/Makefile
+@@ -445,7 +445,6 @@ dist-clean: distclean
  
  distclean: $(SUBDIRS_DIST_CLEAN) _clean
  	@$(MAKE) -C menuselect dist-clean
@@ -15,7 +15,7 @@ Index: asterisk-13.7.2/Makefile
  	rm -f menuselect.makeopts makeopts menuselect-tree menuselect.makedeps
  	rm -f makeopts.embed_rules
  	rm -f config.log config.status config.cache
-@@ -451,6 +450,10 @@ distclean: $(SUBDIRS_DIST_CLEAN) _clean
+@@ -456,6 +455,10 @@ distclean: $(SUBDIRS_DIST_CLEAN) _clean
  	rm -f doc/asterisk-ng-doxygen
  	rm -f build_tools/menuselect-deps
  
