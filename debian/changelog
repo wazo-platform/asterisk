@@ -1,3 +1,9 @@
+asterisk (8:13.8.0-1~xivo1) xivo-dev; urgency=medium
+
+  * Update to asterisk 13.8.0
+
+ -- Sylvain Boily <sboily@proformatique.com>  Tue, 29 Mar 2016 18:37:14 -0400
+
 asterisk (8:13.7.2-1~xivo7) xivo-dev; urgency=medium
 
   * Fix bug in xivo_dtmf_workaround_when_no_rtp patch
