@@ -26,3 +26,4 @@ xivo_queue_digits_gender
 xivo_dtmf_workaround_when_no_rtp
 xivo_voicemail_email_on_reload
 backport_fix_ldconfig
+patch_ASTERISK-25888

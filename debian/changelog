@@ -1,3 +1,9 @@
+asterisk (8:13.8.0-1~xivo4) xivo-dev; urgency=medium
+
+  * backport proposed / potential fix for ASTERISK-25888
+
+ -- Etienne Lessard <elessard@proformatique.com>  Tue, 05 Apr 2016 14:10:40 -0400
+
 asterisk (8:13.8.0-1~xivo3) xivo-dev; urgency=medium
 
   * backport fix for LDCONFIG
