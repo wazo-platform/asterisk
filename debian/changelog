@@ -1,3 +1,9 @@
+asterisk (8:13.8.0-1~xivo3) xivo-dev; urgency=medium
+
+  * backport fix for LDCONFIG
+
+ -- Pascal Cadotte Michaud <pcadotte@proformatique.com>  Tue, 05 Apr 2016 11:52:50 -0400
+
 asterisk (8:13.8.0-1~xivo2) xivo-dev; urgency=medium
 
   * force rebuild
