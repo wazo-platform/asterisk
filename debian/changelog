@@ -1,3 +1,9 @@
+asterisk (8:13.8.0-1~xivo2) xivo-dev; urgency=medium
+
+  * force rebuild
+
+ -- Pascal Cadotte Michaud <pcadotte@proformatique.com>  Tue, 05 Apr 2016 09:48:16 -0400
+
 asterisk (8:13.8.0-1~xivo1) xivo-dev; urgency=medium
 
   * Update to asterisk 13.8.0
