@@ -1,7 +1,7 @@
-Index: asterisk-13.8.0/channels/chan_sip.c
+Index: asterisk-13.9.0/channels/chan_sip.c
 ===================================================================
---- asterisk-13.8.0.orig/channels/chan_sip.c
-+++ asterisk-13.8.0/channels/chan_sip.c
+--- asterisk-13.9.0.orig/channels/chan_sip.c
++++ asterisk-13.9.0/channels/chan_sip.c
 @@ -553,6 +553,11 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
  			via multiple <literal>Variable: name=value</literal> sequences.</para>
  		</description>
@@ -92,7 +92,7 @@ Index: asterisk-13.8.0/channels/chan_sip.c
  	ast_manager_register_xml("SIPpeerstatus", EVENT_FLAG_SYSTEM, manager_sip_peer_status);
  	sip_poke_all_peers();
  	sip_keepalive_all_peers();
-@@ -35269,6 +35309,7 @@ static int unload_module(void)
+@@ -35271,6 +35311,7 @@ static int unload_module(void)
  	ast_manager_unregister("SIPqualifypeer");
  	ast_manager_unregister("SIPshowregistry");
  	ast_manager_unregister("SIPnotify");

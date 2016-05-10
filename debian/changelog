@@ -1,3 +1,9 @@
+asterisk (8:13.9.0-1~xivo1) xivo-dev; urgency=medium
+
+  * update to 13.9.0
+
+ -- Etienne Lessard <elessard@proformatique.com>  Tue, 10 May 2016 15:23:21 -0400
+
 asterisk (8:13.8.0-1~xivo4) xivo-dev; urgency=medium
 
   * backport proposed / potential fix for ASTERISK-25888
