@@ -1,7 +1,7 @@
-Index: asterisk-13.9.0/apps/app_voicemail.c
+Index: asterisk-13.9.1/apps/app_voicemail.c
 ===================================================================
---- asterisk-13.9.0.orig/apps/app_voicemail.c
-+++ asterisk-13.9.0/apps/app_voicemail.c
+--- asterisk-13.9.1.orig/apps/app_voicemail.c
++++ asterisk-13.9.1/apps/app_voicemail.c
 @@ -1727,11 +1727,9 @@ static struct ast_vm_user *find_user(str
  		/* Make a copy, so that on a reload, we have no race */
  		if ((vmu = (ivm ? ivm : ast_malloc(sizeof(*vmu))))) {
