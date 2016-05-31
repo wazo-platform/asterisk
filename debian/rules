@@ -13,6 +13,8 @@ DEB_DH_SHLIBDEPS_ARGS_ALL += -u--ignore-missing-info
 DEB_MAKE_INVOKE = $(DEB_MAKE_ENVVARS) $(MAKE) -C $(DEB_BUILDDIR)
 BUILD_TREE = .
 
+# uncomment the next line to create a "MALLOC_DEBUG" version of asterisk
+#MENUSELECT_EXTRA_ARGS := --enable MALLOC_DEBUG
 # uncomment the next 2 lines to create a "debug" version of asterisk
 #MENUSELECT_EXTRA_ARGS := --enable DONT_OPTIMIZE
 #MENUSELECT_EXTRA_ARGS += --enable DEBUG_THREADS
