@@ -25,3 +25,4 @@ xivo_queue_update_queue_before_agent_complete
 xivo_queue_digits_gender
 xivo_dtmf_workaround_when_no_rtp
 xivo_voicemail_email_on_reload
+xivo_logger_fix_memleak
