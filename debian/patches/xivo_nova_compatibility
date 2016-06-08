@@ -172,7 +172,7 @@ Index: asterisk-13.9.1/main/nova.c
 ===================================================================
 --- /dev/null
 +++ asterisk-13.9.1/main/nova.c
-@@ -0,0 +1,321 @@
+@@ -0,0 +1,349 @@
 +/*
 + * Copyright 2016 Avencall
 + * SPDX-License-Identifier: GPL-3.0+
@@ -189,13 +189,22 @@ Index: asterisk-13.9.1/main/nova.c
 +#include "asterisk/stasis_channels.h"
 +#include "asterisk/strings.h"
 +
++#define MAX_NOVA_NAME 40
++
 +static AO2_GLOBAL_OBJ_STATIC(nova_channel_infos);
++
++enum nova_channel_type {
++	NOVA_CHANNEL_TYPE_UNKNOWN,
++	NOVA_CHANNEL_TYPE_INTERNAL,
++	NOVA_CHANNEL_TYPE_INCALL,
++	NOVA_CHANNEL_TYPE_OUTCALL,
++};
 +
 +struct nova_channel_info {
 +	char uniqueid[AST_MAX_UNIQUEID];
-+	char dialed_exten[AST_MAX_EXTENSION];
-+	char nova_name[40];
-+	int is_xivo_outcall;
++	char nova_name[MAX_NOVA_NAME];
++	enum nova_channel_type type;
++	int xivo_outcall_event;
 +};
 +
 +static int nova_channel_infos_hash(const void *obj, const int flags)
@@ -264,6 +273,7 @@ Index: asterisk-13.9.1/main/nova.c
 +	}
 +
 +	ast_copy_string(info->uniqueid, uniqueid, sizeof(info->uniqueid));
++	info->type = NOVA_CHANNEL_TYPE_UNKNOWN;
 +
 +	return info;
 +}
@@ -275,6 +285,8 @@ Index: asterisk-13.9.1/main/nova.c
 +
 +static struct ast_json *get_nova_name_from_uniqueid(struct ao2_container *infos, const char *uniqueid)
 +{
++	char buf[MAX_NOVA_NAME + 2];
++	const char *prefix;
 +	struct nova_channel_info *info;
 +	struct ast_json *json;
 +
@@ -284,7 +296,23 @@ Index: asterisk-13.9.1/main/nova.c
 +	}
 +
 +	ao2_lock(info);
-+	json = ast_json_string_create(info->nova_name);
++	switch (info->type) {
++	case NOVA_CHANNEL_TYPE_INTERNAL:
++		prefix = "int";
++		break;
++	case NOVA_CHANNEL_TYPE_INCALL:
++		prefix = "inc";
++		break;
++	case NOVA_CHANNEL_TYPE_OUTCALL:
++		prefix = "out";
++		break;
++	default:
++		prefix = "unk";
++		break;
++	}
++
++	snprintf(buf, sizeof(buf), "%s:%s", prefix, info->nova_name);
++	json = ast_json_string_create(buf);
 +	ao2_unlock(info);
 +	ao2_ref(info, -1);
 +
@@ -317,19 +345,19 @@ Index: asterisk-13.9.1/main/nova.c
 +
 +	if (!ast_strlen_zero(snapshot->accountcode)) {
 +		ast_copy_string(info->nova_name, snapshot->accountcode, sizeof(info->nova_name));
++		info->type = NOVA_CHANNEL_TYPE_INTERNAL;
 +	} else if (strcmp(snapshot->uniqueid, snapshot->linkedid) != 0) {
 +		parent = get_channel_info(infos, snapshot->linkedid);
 +		if (parent) {
 +			ao2_lock(parent);
-+			if (parent->is_xivo_outcall) {
-+				ast_copy_string(info->nova_name, parent->dialed_exten, sizeof(info->nova_name));
++			if (parent->xivo_outcall_event) {
++				info->type = NOVA_CHANNEL_TYPE_OUTCALL;
 +			}
 +			ao2_unlock(parent);
 +			ao2_ref(parent, -1);
 +		}
 +	}
 +
-+	ast_copy_string(info->dialed_exten, snapshot->exten, sizeof(info->dialed_exten));
 +	ao2_link(infos, info);
 +
 +end:
@@ -365,9 +393,8 @@ Index: asterisk-13.9.1/main/nova.c
 +	}
 +
 +	ao2_lock(info);
-+	/* fix up for xivo client originate shenanigans */
-+	if (strcmp(info->dialed_exten, "s") == 0) {
-+		ast_copy_string(info->dialed_exten, snapshot->caller_name, sizeof(info->dialed_exten));
++	if (info->type == NOVA_CHANNEL_TYPE_OUTCALL) {
++		ast_copy_string(info->nova_name, snapshot->caller_number, sizeof(info->nova_name));
 +	}
 +	ao2_unlock(info);
 +
@@ -391,7 +418,7 @@ Index: asterisk-13.9.1/main/nova.c
 +	}
 +
 +	ao2_lock(info);
-+	info->is_xivo_outcall = 1;
++	info->xivo_outcall_event = 1;
 +	ao2_unlock(info);
 +
 +end:
@@ -415,6 +442,7 @@ Index: asterisk-13.9.1/main/nova.c
 +
 +	ao2_lock(info);
 +	ast_copy_string(info->nova_name, snapshot->caller_number, sizeof(info->nova_name));
++	info->type = NOVA_CHANNEL_TYPE_INCALL;
 +	ao2_unlock(info);
 +
 +end:
