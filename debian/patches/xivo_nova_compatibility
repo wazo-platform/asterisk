@@ -1,0 +1,524 @@
+Index: asterisk-13.9.1/include/asterisk/cel.h
+===================================================================
+--- asterisk-13.9.1.orig/include/asterisk/cel.h
++++ asterisk-13.9.1/include/asterisk/cel.h
+@@ -234,6 +234,7 @@ struct ast_cel_general_config {
+ 		AST_STRING_FIELD(date_format); /*!< The desired date format for logging */
+ 	);
+ 	int enable;			/*!< Whether CEL is enabled */
++	int nova_compatibility;
+ 	int64_t events;			/*!< The events to be logged */
+ 	/*! The apps for which to log app start and end events. This is
+ 	 * ast_str_container_alloc()ed and filled with ao2-allocated
+Index: asterisk-13.9.1/include/asterisk/nova.h
+===================================================================
+--- /dev/null
++++ asterisk-13.9.1/include/asterisk/nova.h
+@@ -0,0 +1,28 @@
++/*
++ * Copyright 2016 Avencall
++ * SPDX-License-Identifier: GPL-3.0+
++ */
++
++#ifndef _ASTERISK_NOVA_H_
++#define _ASTERISK_NOVA_H_
++
++void ast_nova_compatibility_cleanup(void);
++
++void ast_nova_compatibility_set_enabled(int enabled);
++
++void ast_nova_compatibility_add_channel(struct ast_channel_snapshot *snapshot);
++
++void ast_nova_compatibility_remove_channel(struct ast_channel_snapshot *snapshot);
++
++void ast_nova_compatibility_on_channel_answer(struct ast_channel_snapshot *snapshot);
++
++void ast_nova_compatibility_on_channel_xivo_outcall(struct ast_channel_snapshot *snapshot);
++
++void ast_nova_compatibility_on_channel_xivo_incall(struct ast_channel_snapshot *snapshot);
++
++void ast_nova_compatibility_augment_bridge_enter_event(struct ast_json *extra, struct ast_bridge_snapshot *snapshot);
++
++void ast_nova_compatibility_augment_attended_transfer_event(struct ast_json *extra,
++	struct ast_channel_snapshot *channel2, struct ast_channel_snapshot *transferee, struct ast_channel_snapshot *transfer_target);
++
++#endif /* _ASTERISK_NOVA_H_ */
+Index: asterisk-13.9.1/main/cel.c
+===================================================================
+--- asterisk-13.9.1.orig/main/cel.c
++++ asterisk-13.9.1/main/cel.c
+@@ -59,6 +59,7 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
+ #include "asterisk/parking.h"
+ #include "asterisk/pickup.h"
+ #include "asterisk/core_local.h"
++#include "asterisk/nova.h"
+ 
+ /*** DOCUMENTATION
+ 	<configInfo name="cel" language="en_US">
+@@ -456,6 +457,16 @@ unsigned int ast_cel_check_enabled(void)
+ 	return enabled;
+ }
+ 
++static int nova_compatibility_check_enabled(void)
++{
++	struct cel_config *cfg = ao2_global_obj_ref(cel_configs);
++	int enabled;
++
++	enabled = (!cfg || !cfg->general) ? 0 : cfg->general->nova_compatibility;
++	ao2_cleanup(cfg);
++	return enabled;
++}
++
+ static char *handle_cli_status(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+ {
+ 	unsigned int i;
+@@ -995,6 +1006,7 @@ static void cel_channel_state_change(
+ 	int is_hungup, was_hungup;
+ 
+ 	if (!new_snapshot) {
++		ast_nova_compatibility_remove_channel(old_snapshot);
+ 		cel_report_event(old_snapshot, AST_CEL_CHANNEL_END, NULL, NULL, NULL);
+ 		if (ast_cel_track_event(AST_CEL_LINKEDID_END)) {
+ 			check_retire_linkedid(old_snapshot);
+@@ -1003,6 +1015,7 @@ static void cel_channel_state_change(
+ 	}
+ 
+ 	if (!old_snapshot) {
++		ast_nova_compatibility_add_channel(new_snapshot);
+ 		cel_report_event(new_snapshot, AST_CEL_CHANNEL_START, NULL, NULL, NULL);
+ 		return;
+ 	}
+@@ -1029,6 +1042,7 @@ static void cel_channel_state_change(
+ 	}
+ 
+ 	if (old_snapshot->state != new_snapshot->state && new_snapshot->state == AST_STATE_UP) {
++		ast_nova_compatibility_on_channel_answer(new_snapshot);
+ 		cel_report_event(new_snapshot, AST_CEL_ANSWER, NULL, NULL, NULL);
+ 		return;
+ 	}
+@@ -1172,6 +1186,8 @@ static void cel_bridge_enter_cb(
+ 		return;
+ 	}
+ 
++	ast_nova_compatibility_augment_bridge_enter_event(extra, snapshot);
++
+ 	peer_str = cel_generate_peer_str(snapshot, chan_snapshot);
+ 	if (!peer_str) {
+ 		return;
+@@ -1344,6 +1360,12 @@ static void cel_generic_cb(
+ 			const char *event = ast_json_string_get(ast_json_object_get(event_details, "event"));
+ 			struct ast_json *extra = ast_json_object_get(event_details, "extra");
+ 			cel_report_event(obj->snapshot, event_type, event, extra, NULL);
++
++			if (strcmp(event, "XIVO_OUTCALL") == 0) {
++				ast_nova_compatibility_on_channel_xivo_outcall(obj->snapshot);
++			} else if (strcmp(event, "XIVO_INCALL") == 0) {
++				ast_nova_compatibility_on_channel_xivo_incall(obj->snapshot);
++			}
+ 			break;
+ 		}
+ 	case AST_CEL_HOLD:
+@@ -1403,6 +1425,7 @@ static void cel_attended_transfer_cb(
+ 		channel2 = xfer->to_transfer_target.channel_snapshot;
+ 	}
+ 
++
+ 	switch (xfer->dest_type) {
+ 	case AST_ATTENDED_TRANSFER_DEST_FAIL:
+ 		return;
+@@ -1439,6 +1462,7 @@ static void cel_attended_transfer_cb(
+ 		}
+ 		break;
+ 	}
++	ast_nova_compatibility_augment_attended_transfer_event(extra, channel2, xfer->transferee, xfer->target);
+ 	cel_report_event(channel1, AST_CEL_ATTENDEDTRANSFER, NULL, extra, NULL);
+ 	ast_json_unref(extra);
+ }
+@@ -1522,6 +1546,7 @@ static void cel_engine_cleanup(void)
+ 	ao2_global_obj_release(cel_dialstatus_store);
+ 	ao2_global_obj_release(cel_linkedids);
+ 	ao2_global_obj_release(cel_backends);
++	ast_nova_compatibility_cleanup();
+ }
+ 
+ /*!
+@@ -1744,6 +1769,7 @@ int ast_cel_engine_init(void)
+ 	}
+ 
+ 	aco_option_register(&cel_cfg_info, "enable", ACO_EXACT, general_options, "no", OPT_BOOL_T, 1, FLDSET(struct ast_cel_general_config, enable));
++	aco_option_register(&cel_cfg_info, "nova_compatibility", ACO_EXACT, general_options, "no", OPT_BOOL_T, 1, FLDSET(struct ast_cel_general_config, nova_compatibility));
+ 	aco_option_register(&cel_cfg_info, "dateformat", ACO_EXACT, general_options, "", OPT_STRINGFIELD_T, 0, STRFLDSET(struct ast_cel_general_config, date_format));
+ 	aco_option_register_custom(&cel_cfg_info, "apps", ACO_EXACT, general_options, "", apps_handler, 0);
+ 	aco_option_register_custom(&cel_cfg_info, "events", ACO_EXACT, general_options, "", events_handler, 0);
+@@ -1774,6 +1800,8 @@ int ast_cel_engine_init(void)
+ 		return -1;
+ 	}
+ 
++	ast_nova_compatibility_set_enabled(nova_compatibility_check_enabled());
++
+ 	ast_register_cleanup(cel_engine_cleanup);
+ 	return 0;
+ }
+@@ -1799,6 +1827,8 @@ int ast_cel_engine_reload(void)
+ 
+ 	ast_verb(3, "CEL logging %sabled.\n", is_enabled ? "en" : "dis");
+ 
++	ast_nova_compatibility_set_enabled(nova_compatibility_check_enabled());
++
+ 	return 0;
+ }
+ 
+Index: asterisk-13.9.1/main/nova.c
+===================================================================
+--- /dev/null
++++ asterisk-13.9.1/main/nova.c
+@@ -0,0 +1,349 @@
++/*
++ * Copyright 2016 Avencall
++ * SPDX-License-Identifier: GPL-3.0+
++ */
++
++#include "asterisk.h"
++
++#include "asterisk/astobj2.h"
++#include "asterisk/channel.h"
++#include "asterisk/json.h"
++#include "asterisk/lock.h"
++#include "asterisk/nova.h"
++#include "asterisk/stasis_bridges.h"
++#include "asterisk/stasis_channels.h"
++#include "asterisk/strings.h"
++
++#define MAX_NOVA_NAME 40
++
++static AO2_GLOBAL_OBJ_STATIC(nova_channel_infos);
++
++enum nova_channel_type {
++	NOVA_CHANNEL_TYPE_UNKNOWN,
++	NOVA_CHANNEL_TYPE_INTERNAL,
++	NOVA_CHANNEL_TYPE_INCALL,
++	NOVA_CHANNEL_TYPE_OUTCALL,
++};
++
++struct nova_channel_info {
++	char uniqueid[AST_MAX_UNIQUEID];
++	char nova_name[MAX_NOVA_NAME];
++	enum nova_channel_type type;
++	int xivo_outcall_event;
++};
++
++static int nova_channel_infos_hash(const void *obj, const int flags)
++{
++	const struct nova_channel_info *info;
++	const char *key;
++
++	switch (flags & OBJ_SEARCH_MASK) {
++	case OBJ_SEARCH_KEY:
++		key = obj;
++		break;
++	case OBJ_SEARCH_OBJECT:
++		info = obj;
++		key = info->uniqueid;
++		break;
++	default:
++		/* Hash can only work on something with a full key. */
++		ast_assert(0);
++		return 0;
++	}
++	return ast_str_hash(key);
++}
++
++static int nova_channel_infos_cmp(void *obj, void *arg, int flags)
++{
++	const struct nova_channel_info *object_left = obj;
++	const struct nova_channel_info *object_right = arg;
++	const char *right_key = arg;
++	int cmp;
++
++	switch (flags & OBJ_SEARCH_MASK) {
++	case OBJ_SEARCH_OBJECT:
++		right_key = object_right->uniqueid;
++		/* Fall through */
++	case OBJ_SEARCH_KEY:
++		cmp = strcmp(object_left->uniqueid, right_key);
++		break;
++	case OBJ_SEARCH_PARTIAL_KEY:
++		cmp = strncmp(object_left->uniqueid, right_key, strlen(right_key));
++		break;
++	default:
++		/*
++		 * What arg points to is specific to this traversal callback
++		 * and has no special meaning to astobj2.
++		 */
++		cmp = 0;
++		break;
++	}
++	if (cmp) {
++		return 0;
++	}
++	/*
++	 * At this point the traversal callback is identical to a sorted
++	 * container.
++	 */
++	return CMP_MATCH;
++}
++
++static struct nova_channel_info *nova_channel_info_alloc(const char *uniqueid)
++{
++	struct nova_channel_info *info;
++
++	info = ao2_alloc(sizeof(*info), NULL);
++	if (!info) {
++		return NULL;
++	}
++
++	ast_copy_string(info->uniqueid, uniqueid, sizeof(info->uniqueid));
++	info->type = NOVA_CHANNEL_TYPE_UNKNOWN;
++
++	return info;
++}
++
++static struct nova_channel_info *get_channel_info(struct ao2_container *infos, const char *uniqueid)
++{
++	return ao2_find(infos, uniqueid, OBJ_SEARCH_KEY);
++}
++
++static struct ast_json *get_nova_name_from_uniqueid(struct ao2_container *infos, const char *uniqueid)
++{
++	char buf[MAX_NOVA_NAME + 2];
++	const char *prefix;
++	struct nova_channel_info *info;
++	struct ast_json *json;
++
++	info = get_channel_info(infos, uniqueid);
++	if (!info) {
++		return ast_json_null();
++	}
++
++	ao2_lock(info);
++	switch (info->type) {
++	case NOVA_CHANNEL_TYPE_INTERNAL:
++		prefix = "int";
++		break;
++	case NOVA_CHANNEL_TYPE_INCALL:
++		prefix = "inc";
++		break;
++	case NOVA_CHANNEL_TYPE_OUTCALL:
++		prefix = "out";
++		break;
++	default:
++		prefix = "unk";
++		break;
++	}
++
++	snprintf(buf, sizeof(buf), "%s:%s", prefix, info->nova_name);
++	json = ast_json_string_create(buf);
++	ao2_unlock(info);
++	ao2_ref(info, -1);
++
++	return json;
++}
++
++static struct ast_json *get_nova_name_from_snapshot(struct ao2_container *infos, struct ast_channel_snapshot *snapshot)
++{
++	if (!snapshot) {
++		return ast_json_null();
++	}
++
++	return get_nova_name_from_uniqueid(infos, snapshot->uniqueid);
++}
++
++void ast_nova_compatibility_add_channel(struct ast_channel_snapshot *snapshot)
++{
++	struct ao2_container *infos = ao2_global_obj_ref(nova_channel_infos);
++	struct nova_channel_info *info = NULL;
++	struct nova_channel_info *parent;
++
++	if (!infos) {
++		return;
++	}
++
++	info = nova_channel_info_alloc(snapshot->uniqueid);
++	if (!info) {
++		goto end;
++	}
++
++	if (!ast_strlen_zero(snapshot->accountcode)) {
++		ast_copy_string(info->nova_name, snapshot->accountcode, sizeof(info->nova_name));
++		info->type = NOVA_CHANNEL_TYPE_INTERNAL;
++	} else if (strcmp(snapshot->uniqueid, snapshot->linkedid) != 0) {
++		parent = get_channel_info(infos, snapshot->linkedid);
++		if (parent) {
++			ao2_lock(parent);
++			if (parent->xivo_outcall_event) {
++				info->type = NOVA_CHANNEL_TYPE_OUTCALL;
++			}
++			ao2_unlock(parent);
++			ao2_ref(parent, -1);
++		}
++	}
++
++	ao2_link(infos, info);
++
++end:
++	ao2_ref(infos, -1);
++	ao2_cleanup(info);
++}
++
++void ast_nova_compatibility_remove_channel(struct ast_channel_snapshot *snapshot)
++{
++	struct ao2_container *infos = ao2_global_obj_ref(nova_channel_infos);
++
++	if (!infos) {
++		return;
++	}
++
++	ao2_find(infos, snapshot->uniqueid, OBJ_SEARCH_KEY | OBJ_NODATA | OBJ_UNLINK);
++
++	ao2_ref(infos, -1);
++}
++
++void ast_nova_compatibility_on_channel_answer(struct ast_channel_snapshot *snapshot)
++{
++	struct ao2_container *infos = ao2_global_obj_ref(nova_channel_infos);
++	struct nova_channel_info *info = NULL;
++
++	if (!infos) {
++		return;
++	}
++
++	info = get_channel_info(infos, snapshot->uniqueid);
++	if (!info) {
++		goto end;
++	}
++
++	ao2_lock(info);
++	if (info->type == NOVA_CHANNEL_TYPE_OUTCALL) {
++		ast_copy_string(info->nova_name, snapshot->caller_number, sizeof(info->nova_name));
++	}
++	ao2_unlock(info);
++
++end:
++	ao2_ref(infos, -1);
++	ao2_cleanup(info);
++}
++
++void ast_nova_compatibility_on_channel_xivo_outcall(struct ast_channel_snapshot *snapshot)
++{
++	struct ao2_container *infos = ao2_global_obj_ref(nova_channel_infos);
++	struct nova_channel_info *info = NULL;
++
++	if (!infos) {
++		return;
++	}
++
++	info = get_channel_info(infos, snapshot->uniqueid);
++	if (!info) {
++		goto end;
++	}
++
++	ao2_lock(info);
++	info->xivo_outcall_event = 1;
++	ao2_unlock(info);
++
++end:
++	ao2_ref(infos, -1);
++	ao2_cleanup(info);
++}
++
++void ast_nova_compatibility_on_channel_xivo_incall(struct ast_channel_snapshot *snapshot)
++{
++	struct ao2_container *infos = ao2_global_obj_ref(nova_channel_infos);
++	struct nova_channel_info *info = NULL;
++
++	if (!infos) {
++		return;
++	}
++
++	info = get_channel_info(infos, snapshot->uniqueid);
++	if (!info) {
++		goto end;
++	}
++
++	ao2_lock(info);
++	ast_copy_string(info->nova_name, snapshot->caller_number, sizeof(info->nova_name));
++	info->type = NOVA_CHANNEL_TYPE_INCALL;
++	ao2_unlock(info);
++
++end:
++	ao2_ref(infos, -1);
++	ao2_cleanup(info);
++}
++
++void ast_nova_compatibility_augment_bridge_enter_event(struct ast_json *extra, struct ast_bridge_snapshot *snapshot)
++{
++	struct ao2_iterator iter;
++	struct ao2_container *infos = ao2_global_obj_ref(nova_channel_infos);
++	struct ast_json *array;
++	char *uniqueid;
++
++	if (!infos) {
++		return;
++	}
++
++	array = ast_json_array_create();
++	if (!array) {
++		goto end;
++	}
++
++	iter = ao2_iterator_init(snapshot->channels, 0);
++	for (; (uniqueid = ao2_iterator_next(&iter)); ao2_ref(uniqueid, -1)) {
++		ast_json_array_append(array, get_nova_name_from_uniqueid(infos, uniqueid));
++	}
++	ao2_iterator_destroy(&iter);
++
++	ast_json_object_set(extra, "nova_channel_names", array);
++
++end:
++	ao2_ref(infos, -1);
++}
++
++void ast_nova_compatibility_augment_attended_transfer_event(struct ast_json *extra,
++	struct ast_channel_snapshot *channel2, struct ast_channel_snapshot *transferee, struct ast_channel_snapshot *transfer_target)
++{
++	struct ao2_container *infos = ao2_global_obj_ref(nova_channel_infos);
++
++	if (!infos) {
++		return;
++	}
++
++	ast_json_object_set(extra, "nova_channel2_name", get_nova_name_from_snapshot(infos, channel2));
++	ast_json_object_set(extra, "nova_transferee_name", get_nova_name_from_snapshot(infos, transferee));
++	ast_json_object_set(extra, "nova_transfer_target_name", get_nova_name_from_snapshot(infos, transfer_target));
++
++	ao2_ref(infos, -1);
++}
++
++void ast_nova_compatibility_cleanup(void)
++{
++	ao2_global_obj_release(nova_channel_infos);
++}
++
++void ast_nova_compatibility_set_enabled(int enabled)
++{
++	struct ao2_container *infos = NULL;
++
++	if (!enabled) {
++		ao2_global_obj_release(nova_channel_infos);
++	} else {
++		infos = ao2_global_obj_ref(nova_channel_infos);
++		if (!infos) {
++			infos = ao2_container_alloc(251, nova_channel_infos_hash, nova_channel_infos_cmp);
++			if (!infos) {
++				ast_log(LOG_ERROR, "could not allocate container for CEL NOVA compatibility\n");
++				return;
++			}
++
++			ao2_global_obj_replace_unref(nova_channel_infos, infos);
++		}
++
++		ao2_ref(infos, -1);
++	}
++
++	ast_verb(3, "CEL NOVA compatibility %sabled.\n", infos ? "en" : "dis");
++}
