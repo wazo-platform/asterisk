@@ -1,4 +1,4 @@
-asterisk (8:13.9.1-1~xivo3) xivo-dev; urgency=medium
+asterisk (8:13.9.1-1~xivo4) xivo-dev; urgency=medium
 
   * Add CEL NOVA compatibility code.
 
