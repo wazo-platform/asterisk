@@ -1,3 +1,9 @@
+asterisk (8:13.10.0-1~xivo1) xivo-dev; urgency=medium
+
+  * update to 13.10.0
+
+ -- Etienne Lessard <elessard@proformatique.com>  Thu, 23 Jun 2016 12:22:45 -0400
+
 asterisk (8:13.9.1-1~xivo11) xivo-dev; urgency=medium
 
   * add the version to libss7-dev dependency
