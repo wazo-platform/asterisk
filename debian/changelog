@@ -1,3 +1,9 @@
+asterisk (8:13.9.1-1~xivo5) xivo-dev; urgency=medium
+
+  * update nova patch
+
+ -- Etienne Lessard <elessard@proformatique.com>  Wed, 06 Jul 2016 11:35:58 -0400
+
 asterisk (8:13.9.1-1~xivo4) xivo-dev; urgency=medium
 
   * Add CEL NOVA compatibility code.
