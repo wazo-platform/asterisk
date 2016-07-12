@@ -1,3 +1,9 @@
+asterisk (8:13.9.1-1~xivo6) xivo-dev; urgency=medium
+
+  * fix leak in nova patch
+
+ -- Etienne Lessard <elessard@proformatique.com>  Tue, 12 Jul 2016 07:25:44 -0400
+
 asterisk (8:13.9.1-1~xivo5) xivo-dev; urgency=medium
 
   * update nova patch

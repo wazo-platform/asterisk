@@ -226,7 +226,7 @@ Index: asterisk-13.9.1/main/nova.c
 ===================================================================
 --- /dev/null
 +++ asterisk-13.9.1/main/nova.c
-@@ -0,0 +1,535 @@
+@@ -0,0 +1,540 @@
 +/*
 + * Copyright 2016 Avencall
 + * SPDX-License-Identifier: GPL-3.0+
@@ -489,13 +489,16 @@ Index: asterisk-13.9.1/main/nova.c
 +void ast_nova_compatibility_remove_channel(struct ast_channel_snapshot *snapshot)
 +{
 +	struct ao2_container *infos = ao2_global_obj_ref(nova_channel_infos);
-+	struct nova_channel_info *info;
++	struct nova_channel_info *info = NULL;
 +
 +	if (!infos) {
 +		return;
 +	}
 +
 +	info = ao2_find(infos, snapshot->uniqueid, OBJ_SEARCH_KEY | OBJ_UNLINK);
++	if (!info) {
++		goto end;
++	}
 +
 +	/* destroy nova channel info */
 +	ao2_lock(info);
@@ -510,7 +513,9 @@ Index: asterisk-13.9.1/main/nova.c
 +	}
 +	ao2_unlock(info);
 +
++end:
 +	ao2_ref(infos, -1);
++	ao2_cleanup(info);
 +}
 +
 +void ast_nova_compatibility_on_channel_answer(struct ast_channel_snapshot *snapshot)
