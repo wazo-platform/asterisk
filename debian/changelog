@@ -1,3 +1,9 @@
+asterisk (8:13.9.1-1~xivo7) xivo-dev; urgency=medium
+
+  * replace ast_channels_lock and co. with ast_channels_get_mutex
+
+ -- Etienne Lessard <elessard@proformatique.com>  Thu, 07 Jul 2016 14:57:33 -0400
+
 asterisk (8:13.9.1-1~xivo6) xivo-dev; urgency=medium
 
   * fix leak in nova patch
