@@ -1,3 +1,15 @@
+asterisk (8:13.9.1-1~xivo9) xivo-dev; urgency=medium
+
+  * add the version to libss7-dev dependency
+
+ -- Pascal Cadotte Michaud <pcadotte@proformatique.com>  Wed, 13 Jul 2016 11:30:17 -0400
+
+asterisk (8:13.9.1-1~xivo8) xivo-dev; urgency=medium
+
+  * add libss7 depends
+
+ -- Sylvain Boily <sboily@proformatique.com>  Tue, 12 Jul 2016 22:05:28 -0400
+
 asterisk (8:13.9.1-1~xivo7) xivo-dev; urgency=medium
 
   * replace ast_channels_lock and co. with ast_channels_get_mutex
