@@ -1,10 +1,16 @@
+asterisk (8:13.10.0-1~xivo1) xivo-dev; urgency=medium
+
+  * update to 13.10.0
+
+ -- Etienne Lessard <elessard@proformatique.com>  Thu, 21 Jul 2016 14:54:10 -0400
+
 asterisk (8:13.10.0~rc3-1~xivo1) xivo-dev; urgency=medium
 
   * update to 13.10.0-rc3
 
  -- Etienne Lessard <elessard@proformatique.com>  Fri, 15 Jul 2016 08:13:03 -0400
 
-asterisk (8:13.10.0-1~xivo1) xivo-dev; urgency=medium
+asterisk (8:13.10.0~rc1-1~xivo1) xivo-dev; urgency=medium
 
   * update to 13.10.0-rc1
 
