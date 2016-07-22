@@ -1,3 +1,9 @@
+asterisk (8:13.10.0-1~xivo3) xivo-dev; urgency=medium
+
+  * add patch xivo_fix_segfault_manager_showdialplan (fix AST-26226)
+
+ -- Etienne Lessard <elessard@proformatique.com>  Fri, 22 Jul 2016 11:10:14 -0400
+
 asterisk (8:13.10.0-1~xivo2) xivo-dev; urgency=medium
 
   * update to 13.10.0
