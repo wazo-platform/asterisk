@@ -1,3 +1,9 @@
+asterisk (8:13.10.0-1~xivo4) xivo-dev; urgency=medium
+
+  * remove Wants in systemd unit file
+
+ -- Etienne Lessard <elessard@proformatique.com>  Tue, 02 Aug 2016 10:55:52 -0400
+
 asterisk (8:13.10.0-1~xivo3) xivo-dev; urgency=medium
 
   * add patch xivo_fix_segfault_manager_showdialplan (fix AST-26226)
