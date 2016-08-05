@@ -1,8 +1,8 @@
-Index: asterisk-13.10.0/apps/app_queue.c
+Index: asterisk-13.11.0-rc1/apps/app_queue.c
 ===================================================================
---- asterisk-13.10.0.orig/apps/app_queue.c
-+++ asterisk-13.10.0/apps/app_queue.c
-@@ -7011,10 +7011,10 @@ static void handle_blind_transfer(void *
+--- asterisk-13.11.0-rc1.orig/apps/app_queue.c
++++ asterisk-13.11.0-rc1/apps/app_queue.c
+@@ -7018,10 +7018,10 @@ static void handle_blind_transfer(void *
  			(long) (queue_data->starttime - queue_data->holdstart),
  			(long) (time(NULL) - queue_data->starttime), queue_data->caller_pos);
  
@@ -15,7 +15,7 @@ Index: asterisk-13.10.0/apps/app_queue.c
  	remove_stasis_subscriptions(queue_data);
  }
  
-@@ -7070,10 +7070,10 @@ static void handle_attended_transfer(voi
+@@ -7077,10 +7077,10 @@ static void handle_attended_transfer(voi
  
  	log_attended_transfer(queue_data, caller_snapshot, atxfer_msg);
  
@@ -28,7 +28,7 @@ Index: asterisk-13.10.0/apps/app_queue.c
  	remove_stasis_subscriptions(queue_data);
  }
  
-@@ -7270,10 +7270,10 @@ static void handle_hangup(void *userdata
+@@ -7277,10 +7277,10 @@ static void handle_hangup(void *userdata
  		(long) (queue_data->starttime - queue_data->holdstart),
  		(long) (time(NULL) - queue_data->starttime), queue_data->caller_pos);
  
