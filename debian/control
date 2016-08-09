@@ -63,7 +63,7 @@ Section: comm
 Replaces: asterisk11
 Conflicts: asterisk11
 Provides: asterisk11
-Depends: ${misc:Depends}, ${shlibs:Depends}, mpg123
+Depends: ${misc:Depends}, ${shlibs:Depends}, adduser, mpg123
 Breaks: xivo-res-freeze-check (<< 16.09~)
 Description: Open Source Private Branch Exchange (PBX) - XiVO version
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
