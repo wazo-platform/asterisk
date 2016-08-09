@@ -1,7 +1,7 @@
 Source: asterisk
 Priority: optional
 Section: comm
-Maintainer: XiVO Dev Team <dev@avencall.com>
+Maintainer: XiVO Dev Team <dev+pkg@proformatique.com>
 Uploaders: XiVO Builder Team <release@xivo.io>
 Build-Depends:
  autoconf,
