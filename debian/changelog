@@ -1,3 +1,9 @@
+asterisk (8:13.10.0-1~xivo6) xivo-dev; urgency=medium
+
+  * force rebuild
+
+ -- Etienne Lessard <elessard@proformatique.com>  Fri, 12 Aug 2016 11:12:53 -0400
+
 asterisk (8:13.10.0-1~xivo5) xivo-dev; urgency=medium
 
   * update adduser usage in postinst
