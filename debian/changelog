@@ -1,3 +1,9 @@
+asterisk (8:13.10.0-1~xivo8) xivo-dev; urgency=medium
+
+  * add patch xivo_dtls_negotiation_delay
+
+ -- Etienne Lessard <elessard@proformatique.com>  Mon, 18 Aug 2016 08:23:44 -0400
+
 asterisk (8:13.10.0-1~xivo7) xivo-dev; urgency=medium
 
   * add xivo_revert_queue_members_can_receive_multiple_calls
