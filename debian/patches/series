@@ -26,3 +26,4 @@ xivo_queue_digits_gender
 xivo_dtmf_workaround_when_no_rtp
 xivo_nova_compatibility
 xivo_fix_segfault_manager_showdialplan
+xivo_revert_queue_members_can_receive_multiple_calls
