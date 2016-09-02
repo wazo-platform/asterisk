@@ -1,7 +1,7 @@
-Index: asterisk-13.10.0/include/asterisk/cel.h
+Index: asterisk-13.11.0/include/asterisk/cel.h
 ===================================================================
---- asterisk-13.10.0.orig/include/asterisk/cel.h
-+++ asterisk-13.10.0/include/asterisk/cel.h
+--- asterisk-13.11.0.orig/include/asterisk/cel.h
++++ asterisk-13.11.0/include/asterisk/cel.h
 @@ -75,6 +75,10 @@ enum ast_cel_event_type {
  	AST_CEL_FORWARD = 16,
  	/*! \brief A local channel optimization occurred */
@@ -13,10 +13,10 @@ Index: asterisk-13.10.0/include/asterisk/cel.h
  };
  
  /*!
-Index: asterisk-13.10.0/main/cel.c
+Index: asterisk-13.11.0/main/cel.c
 ===================================================================
---- asterisk-13.10.0.orig/main/cel.c
-+++ asterisk-13.10.0/main/cel.c
+--- asterisk-13.11.0.orig/main/cel.c
++++ asterisk-13.11.0/main/cel.c
 @@ -310,6 +310,8 @@ static const char * const cel_event_type
  	[AST_CEL_FORWARD]          = "FORWARD",
  	[AST_CEL_LINKEDID_END]     = "LINKEDID_END",
@@ -37,10 +37,10 @@ Index: asterisk-13.10.0/main/cel.c
  	default:
  		ast_log(LOG_ERROR, "Unhandled %s event blob\n", ast_cel_get_type_name(event_type));
  		break;
-Index: asterisk-13.10.0/main/channel.c
+Index: asterisk-13.11.0/main/channel.c
 ===================================================================
---- asterisk-13.10.0.orig/main/channel.c
-+++ asterisk-13.10.0/main/channel.c
+--- asterisk-13.11.0.orig/main/channel.c
++++ asterisk-13.11.0/main/channel.c
 @@ -75,6 +75,7 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
  #include "asterisk/test.h"
  #include "asterisk/stasis_channels.h"
@@ -49,7 +49,7 @@ Index: asterisk-13.10.0/main/channel.c
  
  /*** DOCUMENTATION
   ***/
-@@ -3705,6 +3706,7 @@ static struct ast_frame *__ast_read(stru
+@@ -3726,6 +3727,7 @@ static struct ast_frame *__ast_read(stru
  	struct ast_frame *f = NULL;	/* the return value */
  	int prestate;
  	int cause = 0;
@@ -57,7 +57,7 @@ Index: asterisk-13.10.0/main/channel.c
  
  	/* this function is very long so make sure there is only one return
  	 * point at the end (there are only two exceptions to this).
-@@ -3937,6 +3939,10 @@ static struct ast_frame *__ast_read(stru
+@@ -3964,6 +3966,10 @@ static struct ast_frame *__ast_read(stru
  				}
  				ast_frfree(f);
  				f = &ast_null_frame;
@@ -68,7 +68,7 @@ Index: asterisk-13.10.0/main/channel.c
  			}
  			break;
  		case AST_FRAME_DTMF_END:
-@@ -4270,6 +4276,11 @@ done:
+@@ -4297,6 +4303,11 @@ done:
  		ast_channel_audiohooks_set(chan, NULL);
  	}
  	ast_channel_unlock(chan);
@@ -80,10 +80,10 @@ Index: asterisk-13.10.0/main/channel.c
  	return f;
  }
  
-Index: asterisk-13.10.0/configs/samples/cel.conf.sample
+Index: asterisk-13.11.0/configs/samples/cel.conf.sample
 ===================================================================
---- asterisk-13.10.0.orig/configs/samples/cel.conf.sample
-+++ asterisk-13.10.0/configs/samples/cel.conf.sample
+--- asterisk-13.11.0.orig/configs/samples/cel.conf.sample
++++ asterisk-13.11.0/configs/samples/cel.conf.sample
 @@ -59,6 +59,8 @@ apps=dial,park
  ;  USER_DEFINED     -- Triggered from the dialplan, and has a name given by the
  ;                      user

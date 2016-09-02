@@ -1,8 +1,8 @@
-Index: asterisk-13.10.0/main/pbx.c
+Index: asterisk-13.11.0/main/pbx.c
 ===================================================================
---- asterisk-13.10.0.orig/main/pbx.c
-+++ asterisk-13.10.0/main/pbx.c
-@@ -5672,7 +5672,8 @@ static void manager_dpsendack(struct man
+--- asterisk-13.11.0.orig/main/pbx.c
++++ asterisk-13.11.0/main/pbx.c
+@@ -5678,7 +5678,8 @@ static void manager_dpsendack(struct man
  static int manager_show_dialplan_helper(struct mansession *s, const struct message *m,
  					const char *actionidtext, const char *context,
  					const char *exten, struct dialplan_counters *dpc,
@@ -12,7 +12,7 @@ Index: asterisk-13.10.0/main/pbx.c
  {
  	struct ast_context *c;
  	int res = 0, old_total_exten = dpc->total_exten;
-@@ -5754,7 +5755,24 @@ static int manager_show_dialplan_helper(
+@@ -5760,7 +5761,24 @@ static int manager_show_dialplan_helper(
  		while ( (i = ast_walk_context_includes(c, i)) ) {
  			if (exten) {
  				/* Check all includes for the requested extension */
@@ -38,7 +38,7 @@ Index: asterisk-13.10.0/main/pbx.c
  			} else {
  				if (!dpc->total_items++)
  					manager_dpsendack(s, m);
-@@ -5809,6 +5827,7 @@ static int manager_show_dialplan(struct
+@@ -5815,6 +5833,7 @@ static int manager_show_dialplan(struct
  {
  	const char *exten, *context;
  	const char *id = astman_get_header(m, "ActionID");
@@ -46,7 +46,7 @@ Index: asterisk-13.10.0/main/pbx.c
  	char idtext[256];
  
  	/* Variables used for different counters */
-@@ -5824,7 +5843,7 @@ static int manager_show_dialplan(struct
+@@ -5830,7 +5849,7 @@ static int manager_show_dialplan(struct
  	exten = astman_get_header(m, "Extension");
  	context = astman_get_header(m, "Context");
  
