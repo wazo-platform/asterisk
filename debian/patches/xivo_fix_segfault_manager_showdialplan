@@ -1,7 +1,7 @@
-Index: asterisk-13.11.0-rc1/main/pbx.c
+Index: asterisk-13.11.0/main/pbx.c
 ===================================================================
---- asterisk-13.11.0-rc1.orig/main/pbx.c
-+++ asterisk-13.11.0-rc1/main/pbx.c
+--- asterisk-13.11.0.orig/main/pbx.c
++++ asterisk-13.11.0/main/pbx.c
 @@ -5678,7 +5678,8 @@ static void manager_dpsendack(struct man
  static int manager_show_dialplan_helper(struct mansession *s, const struct message *m,
  					const char *actionidtext, const char *context,
