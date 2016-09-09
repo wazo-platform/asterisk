@@ -1,3 +1,9 @@
+asterisk (8:13.11.2-1~xivo1) xivo-dev; urgency=medium
+
+  * update to 13.11.2
+
+ -- Etienne Lessard <elessard@proformatique.com>  Fri, 09 Sep 2016 14:12:35 -0400
+
 asterisk (8:13.11.1-1~xivo1) xivo-dev; urgency=medium
 
   * update to 13.11.1
