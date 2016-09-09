@@ -1,8 +1,8 @@
-Index: asterisk-13.11.0/main/stasis_channels.c
+Index: asterisk-13.11.2/main/stasis_channels.c
 ===================================================================
---- asterisk-13.11.0.orig/main/stasis_channels.c
-+++ asterisk-13.11.0/main/stasis_channels.c
-@@ -1198,6 +1198,47 @@ static struct ast_json *unhold_to_json(struct stasis_message *message,
+--- asterisk-13.11.2.orig/main/stasis_channels.c
++++ asterisk-13.11.2/main/stasis_channels.c
+@@ -1198,6 +1198,47 @@ static struct ast_json *unhold_to_json(s
  		"channel", json_channel);
  }
  
@@ -22,7 +22,7 @@ Index: asterisk-13.11.0/main/stasis_channels.c
 +	}
 +
 +	return ast_json_pack("{s: s, s: o, s: s, s: o}",
-+		"type", "MohStart",
++		"type", "ChannelMohStart",
 +		"timestamp", ast_json_timeval(*tv, NULL),
 +		"moh_class", S_OR(musicclass, "N/A"),
 +		"channel", json_channel);
@@ -42,7 +42,7 @@ Index: asterisk-13.11.0/main/stasis_channels.c
 +	}
 +
 +	return ast_json_pack("{s: s, s: o, s: o}",
-+		"type", "MohStop",
++		"type", "ChannelMohStop",
 +		"timestamp", ast_json_timeval(*tv, NULL),
 +		"channel", json_channel);
 +}
@@ -50,7 +50,7 @@ Index: asterisk-13.11.0/main/stasis_channels.c
  /*!
   * @{ \brief Define channel message types.
   */
-@@ -1226,8 +1267,12 @@ STASIS_MESSAGE_TYPE_DEFN(ast_channel_chanspy_start_type);
+@@ -1226,8 +1267,12 @@ STASIS_MESSAGE_TYPE_DEFN(ast_channel_cha
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_chanspy_stop_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_fax_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_hangup_handler_type);
@@ -65,8 +65,10 @@ Index: asterisk-13.11.0/main/stasis_channels.c
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_monitor_start_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_monitor_stop_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_agent_login_type,
---- asterisk-13.11.0.orig/rest-api/api-docs/events.json
-+++ asterisk-13.11.0/rest-api/api-docs/events.json
+Index: asterisk-13.11.2/rest-api/api-docs/events.json
+===================================================================
+--- asterisk-13.11.2.orig/rest-api/api-docs/events.json
++++ asterisk-13.11.2/rest-api/api-docs/events.json
 @@ -178,7 +178,9 @@
  				"StasisStart",
  				"TextMessageReceived",
