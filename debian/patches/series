@@ -27,3 +27,4 @@ xivo_dtmf_workaround_when_no_rtp
 xivo_nova_compatibility
 xivo_fix_segfault_manager_showdialplan
 xivo_dtls_negotiation_delay
+xivo_queue_ringinuse_dynamic_members

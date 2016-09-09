@@ -1,0 +1,50 @@
+Index: asterisk-13.11.2/apps/app_queue.c
+===================================================================
+--- asterisk-13.11.2.orig/apps/app_queue.c
++++ asterisk-13.11.2/apps/app_queue.c
+@@ -8228,7 +8228,6 @@ static int add_to_queue(const char *queu
+ 	ao2_lock(q);
+ 	if ((old_member = interface_exists(q, interface)) == NULL) {
+ 		if ((new_member = create_queue_member(interface, membername, penalty, paused, state_interface, q->ringinuse, skills))) {
+-			new_member->ringinuse = q->ringinuse;
+ 			new_member->dynamic = 1;
+ 			member_add_to_queue(q, new_member);
+ 			update_queue_ent_skills_next_check(q);
+@@ -10178,6 +10177,7 @@ static void reload_single_queue(struct a
+ {
+ 	int new;
+ 	struct call_queue *q = NULL;
++	struct member *member;
+ 	/*We're defining a queue*/
+ 	struct call_queue tmpq = {
+ 		.name = queuename,
+@@ -10187,6 +10187,8 @@ static void reload_single_queue(struct a
+ 	const int member_reload = ast_test_flag(mask, QUEUE_RELOAD_MEMBER);
+ 	int prev_weight = 0;
+ 	struct ast_variable *var;
++	struct ao2_iterator mem_iter;
++
+ 	if (!(q = ao2_t_find(queues, &tmpq, OBJ_POINTER, "Find queue for reload"))) {
+ 		if (queue_reload) {
+ 			/* Make one then */
+@@ -10255,6 +10257,20 @@ static void reload_single_queue(struct a
+ 		}
+ 	}
+ 
++	/* Update ringinuse for dynamic members */
++	if (member_reload) {
++		ao2_lock(q->members);
++		mem_iter = ao2_iterator_init(q->members, AO2_ITERATOR_DONTLOCK);
++		while ((member = ao2_iterator_next(&mem_iter))) {
++			if (member->dynamic) {
++				member->ringinuse = q->ringinuse;
++			}
++			ao2_ref(member, -1);
++		}
++		ao2_iterator_destroy(&mem_iter);
++		ao2_unlock(q->members);
++	}
++
+ 	/* At this point, we've determined if the queue has a weight, so update use_weight
+ 	 * as appropriate
+ 	 */
