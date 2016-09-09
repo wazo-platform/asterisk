@@ -1,7 +1,7 @@
-Index: asterisk-13.11.0/include/asterisk/cel.h
+Index: asterisk-13.11.1/include/asterisk/cel.h
 ===================================================================
---- asterisk-13.11.0.orig/include/asterisk/cel.h
-+++ asterisk-13.11.0/include/asterisk/cel.h
+--- asterisk-13.11.1.orig/include/asterisk/cel.h
++++ asterisk-13.11.1/include/asterisk/cel.h
 @@ -75,6 +75,10 @@ enum ast_cel_event_type {
  	AST_CEL_FORWARD = 16,
  	/*! \brief A local channel optimization occurred */
@@ -13,10 +13,10 @@ Index: asterisk-13.11.0/include/asterisk/cel.h
  };
  
  /*!
-Index: asterisk-13.11.0/main/cel.c
+Index: asterisk-13.11.1/main/cel.c
 ===================================================================
---- asterisk-13.11.0.orig/main/cel.c
-+++ asterisk-13.11.0/main/cel.c
+--- asterisk-13.11.1.orig/main/cel.c
++++ asterisk-13.11.1/main/cel.c
 @@ -310,6 +310,8 @@ static const char * const cel_event_type
  	[AST_CEL_FORWARD]          = "FORWARD",
  	[AST_CEL_LINKEDID_END]     = "LINKEDID_END",
@@ -37,10 +37,10 @@ Index: asterisk-13.11.0/main/cel.c
  	default:
  		ast_log(LOG_ERROR, "Unhandled %s event blob\n", ast_cel_get_type_name(event_type));
  		break;
-Index: asterisk-13.11.0/main/channel.c
+Index: asterisk-13.11.1/main/channel.c
 ===================================================================
---- asterisk-13.11.0.orig/main/channel.c
-+++ asterisk-13.11.0/main/channel.c
+--- asterisk-13.11.1.orig/main/channel.c
++++ asterisk-13.11.1/main/channel.c
 @@ -75,6 +75,7 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
  #include "asterisk/test.h"
  #include "asterisk/stasis_channels.h"
@@ -80,10 +80,10 @@ Index: asterisk-13.11.0/main/channel.c
  	return f;
  }
  
-Index: asterisk-13.11.0/configs/samples/cel.conf.sample
+Index: asterisk-13.11.1/configs/samples/cel.conf.sample
 ===================================================================
---- asterisk-13.11.0.orig/configs/samples/cel.conf.sample
-+++ asterisk-13.11.0/configs/samples/cel.conf.sample
+--- asterisk-13.11.1.orig/configs/samples/cel.conf.sample
++++ asterisk-13.11.1/configs/samples/cel.conf.sample
 @@ -59,6 +59,8 @@ apps=dial,park
  ;  USER_DEFINED     -- Triggered from the dialplan, and has a name given by the
  ;                      user

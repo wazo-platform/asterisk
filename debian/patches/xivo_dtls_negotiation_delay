@@ -1,7 +1,7 @@
-Index: asterisk-13.11.0/res/res_rtp_asterisk.c
+Index: asterisk-13.11.1/res/res_rtp_asterisk.c
 ===================================================================
---- asterisk-13.11.0.orig/res/res_rtp_asterisk.c
-+++ asterisk-13.11.0/res/res_rtp_asterisk.c
+--- asterisk-13.11.1.orig/res/res_rtp_asterisk.c
++++ asterisk-13.11.1/res/res_rtp_asterisk.c
 @@ -454,6 +454,7 @@ static int ast_rtp_sendcng(struct ast_rt
  #ifdef HAVE_OPENSSL_SRTP
  static int ast_rtp_activate(struct ast_rtp_instance *instance);
