@@ -49,6 +49,7 @@ configure/asterisk::
 		menuselect/menuselect \
 			--disable-category MENUSELECT_ADDONS \
 			--disable-category MENUSELECT_MOH \
+			--disable BUILD_NATIVE \
 			--enable app_meetme \
 			--enable res_mwi_external \
 			--enable res_stasis_mailbox \
