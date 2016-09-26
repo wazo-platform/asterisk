@@ -1,3 +1,9 @@
+asterisk (8:13.11.2-1~xivo4) xivo-dev; urgency=medium
+
+  * disable BUILD_NATIVE option
+
+ -- Etienne Lessard <elessard@proformatique.com>  Mon, 26 Sep 2016 14:21:21 -0400
+
 asterisk (8:13.11.2-1~xivo3) xivo-dev; urgency=medium
 
   * bump version
