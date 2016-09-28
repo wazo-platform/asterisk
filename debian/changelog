@@ -1,3 +1,9 @@
+asterisk (8:13.11.2-1~xivo5) xivo-dev; urgency=medium
+
+  * force rebuild
+
+ -- Pascal Cadotte Michaud <pcadotte@proformatique.com>  Wed, 28 Sep 2016 10:36:24 -0400
+
 asterisk (8:13.11.2-1~xivo4) xivo-dev; urgency=medium
 
   * disable BUILD_NATIVE option
