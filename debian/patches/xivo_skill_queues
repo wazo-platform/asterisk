@@ -165,7 +165,7 @@ Index: asterisk-14.0.2/apps/app_queue.c
  static struct ast_json *queue_member_blob_create(struct call_queue *q, struct member *mem)
  {
 -	return ast_json_pack("{s: s, s: s, s: s, s: s, s: s, s: i, s: i, s: i, s: i, s: i, s: i, s: i, s: s, s: i}",
-+	return ast_json_pack("{s: s, s: s, s: s, s: s, s: s, s: i, s: i, s: i, s: i, s: i, s: i, s: i, s: i, s: s, s: i, s: s}",
++	return ast_json_pack("{s: s, s: s, s: s, s: s, s: s, s: i, s: i, s: i, s: i, s: i, s: i, s: i, s: s, s: i, s: s}",
  		"Queue", q->name,
  		"MemberName", mem->membername,
  		"Interface", mem->interface,
