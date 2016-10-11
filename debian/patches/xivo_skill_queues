@@ -1562,7 +1562,7 @@ Index: asterisk-14.0.2/apps/app_queue.c
   * \endcode
   */
  static void dump_queue_members(struct call_queue *pm_queue)
-@@ -7037,14 +8105,15 @@ static void dump_queue_members(struct ca
+@@ -7037,13 +8105,14 @@ static void dump_queue_members(struct ca
  			continue;
  		}
  
@@ -1574,12 +1574,10 @@ Index: asterisk-14.0.2/apps/app_queue.c
  			cur_member->paused,
  			cur_member->membername,
  			cur_member->state_interface,
--			cur_member->reason_paused);
-+			cur_member->reason_paused,
-+			cur_member->skills);
++			cur_member->skills,
+ 			cur_member->reason_paused);
  
  		ao2_ref(cur_member, -1);
- 	}
 @@ -7074,6 +8143,7 @@ static int remove_from_queue(const char
  		.name = queuename,
  	};
@@ -1667,14 +1665,14 @@ Index: asterisk-14.0.2/apps/app_queue.c
  	char *state_interface;
  	char *penalty_tok;
  	int penalty = 0;
-@@ -7546,6 +8626,7 @@ static void reload_queue_members(void)
+@@ -7545,6 +8625,7 @@ static void reload_queue_members(void)
+ 			paused_tok = strsep(&member, ";");
  			membername = strsep(&member, ";");
  			state_interface = strsep(&member, ";");
- 			reason_paused = strsep(&member, ";");
 +			skills = strsep(&member, ";");
+ 			reason_paused = strsep(&member, ";");
  
  			if (!penalty_tok) {
- 				ast_log(LOG_WARNING, "Error parsing persistent member string for '%s' (penalty)\n", queue_name);
 @@ -7570,7 +8651,7 @@ static void reload_queue_members(void)
  			ast_debug(1, "Reload Members: Queue: %s  Member: %s  Name: %s  Penalty: %d  Paused: %d ReasonPause: %s\n",
  			              queue_name, interface, membername, penalty, paused, reason_paused);
