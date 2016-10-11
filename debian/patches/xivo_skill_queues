@@ -22,7 +22,7 @@ Index: asterisk-14.0.2/apps/app_queue.c
  
  struct queue_ent {
  	struct call_queue *parent;             /*!< What queue is our parent */
-+	struct virtual_queue *vqueue;       /*!< Virtual queue in case there is skills routing */
++	struct virtual_queue *vqueue;          /*!< Virtual queue in case there is skills routing */
  	char moh[MAX_MUSICCLASS];              /*!< Name of musiconhold to be used */
  	char announce[PATH_MAX];               /*!< Announcement to play for member when call is answered */
  	char context[AST_MAX_CONTEXT];         /*!< Context when user exits queue */
@@ -270,7 +270,7 @@ Index: asterisk-14.0.2/apps/app_queue.c
  	const char *state_interface = S_OR(ast_variable_retrieve(member_config, interface, "state_interface"), interface);
  	const char *penalty_str = ast_variable_retrieve(member_config, interface, "penalty");
  	const char *paused_str = ast_variable_retrieve(member_config, interface, "paused");
-+    const char *skills_str = ast_variable_retrieve(member_config, interface, "skills");
++	const char *skills_str = ast_variable_retrieve(member_config, interface, "skills");
  
  	if (ast_strlen_zero(rt_uniqueid)) {
  		ast_log(LOG_WARNING, "Realtime field uniqueid is empty for member %s\n", S_OR(membername, "NULL"));
