@@ -43,6 +43,7 @@ Build-Depends:
  libss7-dev (>= 2.0),
  libssl-dev,
  libtonezone-dev (>= 1:2.0.0),
+ libunbound-dev,
  liburiparser-dev,
  libvorbis-dev,
  libxml2-dev,
