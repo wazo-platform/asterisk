@@ -1,8 +1,8 @@
-Index: asterisk-13.11.2/cel/cel_odbc.c
+Index: asterisk-14.0.2/cel/cel_odbc.c
 ===================================================================
---- asterisk-13.11.2.orig/cel/cel_odbc.c
-+++ asterisk-13.11.2/cel/cel_odbc.c
-@@ -53,6 +53,7 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revisi
+--- asterisk-14.0.2.orig/cel/cel_odbc.c
++++ asterisk-14.0.2/cel/cel_odbc.c
+@@ -53,6 +53,7 @@ ASTERISK_REGISTER_FILE()
  #define	CONFIG	"cel_odbc.conf"
  
  #define ODBC_BACKEND_NAME "ODBC CEL backend"
@@ -10,7 +10,7 @@ Index: asterisk-13.11.2/cel/cel_odbc.c
  
  /*! \brief show_user_def is off by default */
  #define CEL_SHOW_USERDEF_DEFAULT	0
-@@ -615,7 +616,7 @@ static void odbc_log(struct ast_event *e
+@@ -608,7 +609,7 @@ static void odbc_log(struct ast_event *e
  					if (ast_strlen_zero(colptr)) {
  						continue;
  					} else {
@@ -19,7 +19,7 @@ Index: asterisk-13.11.2/cel/cel_odbc.c
  						if (strcasecmp(entry->name, "eventdate") == 0) {
  							struct ast_tm tm;
  							ast_localtime(&record.event_time, &tm, tableptr->usegmtime ? "UTC" : NULL);
-@@ -625,9 +626,20 @@ static void odbc_log(struct ast_event *e
+@@ -618,9 +619,20 @@ static void odbc_log(struct ast_event *e
  							hour = tm.tm_hour;
  							minute = tm.tm_min;
  							second = (tableptr->allowleapsec || tm.tm_sec < 60) ? tm.tm_sec : 59;
@@ -42,7 +42,7 @@ Index: asterisk-13.11.2/cel/cel_odbc.c
  
  							if ((count != 3 && count != 5 && count != 6 && count != 7) || year <= 0 ||
  								month <= 0 || month > 12 || day < 0 || day > 31 ||
-@@ -636,7 +648,7 @@ static void odbc_log(struct ast_event *e
+@@ -629,7 +641,7 @@ static void odbc_log(struct ast_event *e
  								(month == 2 && year % 100 == 0 && day > 28) ||
  								(month == 2 && year % 4 == 0 && day > 29) ||
  								(month == 2 && year % 4 != 0 && day > 28) ||
@@ -51,14 +51,14 @@ Index: asterisk-13.11.2/cel/cel_odbc.c
  								ast_log(LOG_WARNING, "CEL variable %s is not a valid timestamp ('%s').\n", entry->name, colptr);
  								continue;
  							}
-@@ -647,8 +659,8 @@ static void odbc_log(struct ast_event *e
+@@ -640,8 +652,8 @@ static void odbc_log(struct ast_event *e
  						}
  
- 						ast_str_append(&sql, 0, "%s%s", first ? "" : ",", entry->name);
+ 						ast_str_append(&sql, 0, "%s%s", separator, entry->name);
 -						LENGTHEN_BUF2(27);
--						ast_str_append(&sql2, 0, "%s{ts '%04d-%02d-%02d %02d:%02d:%02d.%d'}", first ? "" : ",", year, month, day, hour, minute, second, fraction);
+-						ast_str_append(&sql2, 0, "%s{ts '%04d-%02d-%02d %02d:%02d:%02d.%d'}", separator, year, month, day, hour, minute, second, fraction);
 +						LENGTHEN_BUF2(34);
-+						ast_str_append(&sql2, 0, "%s{ts '%04d-%02d-%02d %02d:%02d:%02d.%06d'}", first ? "" : ",", year, month, day, hour, minute, second, us);
++						ast_str_append(&sql2, 0, "%s{ts '%04d-%02d-%02d %02d:%02d:%02d.%06d'}", separator, year, month, day, hour, minute, second, us);
  					}
  					break;
  				case SQL_INTEGER:

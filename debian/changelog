@@ -1,3 +1,9 @@
+asterisk (8:14.0.2-1~xivo8) xivo-dev; urgency=medium
+
+  * update to 14.0.2
+
+ -- Etienne Lessard <elessard@proformatique.com>  Tue, 04 Oct 2016 13:49:52 -0400
+
 asterisk (8:13.11.2-1~xivo7) xivo-dev; urgency=medium
 
   * add patch xivo_ari_set_channel_var_bypass

@@ -43,6 +43,7 @@ Build-Depends:
  libss7-dev (>= 2.0),
  libssl-dev,
  libtonezone-dev (>= 1:2.0.0),
+ libunbound-dev,
  liburiparser-dev,
  libvorbis-dev,
  libxml2-dev,
@@ -56,6 +57,7 @@ Build-Depends:
  uuid-dev,
  wget,
  zlib1g-dev
+Standards-Version: 3.9.6
 
 Package: asterisk
 Architecture: any
@@ -64,7 +66,9 @@ Replaces: asterisk11
 Conflicts: asterisk11
 Provides: asterisk11
 Depends: ${misc:Depends}, ${shlibs:Depends}, adduser, mpg123
-Breaks: xivo-res-freeze-check (<< 16.09~)
+Breaks:
+ xivo-libsccp (<< 16.13~),
+ xivo-res-freeze-check (<< 16.13~)
 Description: Open Source Private Branch Exchange (PBX) - XiVO version
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
