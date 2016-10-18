@@ -1,8 +1,8 @@
-Index: asterisk-14.0.2/include/asterisk/channel.h
+Index: asterisk-14.1.0-rc1/include/asterisk/channel.h
 ===================================================================
---- asterisk-14.0.2.orig/include/asterisk/channel.h
-+++ asterisk-14.0.2/include/asterisk/channel.h
-@@ -4293,6 +4293,18 @@ int ast_channel_dialed_causes_add(const
+--- asterisk-14.1.0-rc1.orig/include/asterisk/channel.h
++++ asterisk-14.1.0-rc1/include/asterisk/channel.h
+@@ -4297,6 +4297,18 @@ int ast_channel_dialed_causes_add(const
   */
  void ast_channel_dialed_causes_clear(const struct ast_channel *chan);
  
@@ -21,11 +21,11 @@ Index: asterisk-14.0.2/include/asterisk/channel.h
  struct ast_flags *ast_channel_flags(struct ast_channel *chan);
  
  /*!
-Index: asterisk-14.0.2/main/channel.c
+Index: asterisk-14.1.0-rc1/main/channel.c
 ===================================================================
---- asterisk-14.0.2.orig/main/channel.c
-+++ asterisk-14.0.2/main/channel.c
-@@ -10805,3 +10805,8 @@ int ast_channel_feature_hooks_replace(st
+--- asterisk-14.1.0-rc1.orig/main/channel.c
++++ asterisk-14.1.0-rc1/main/channel.c
+@@ -10842,3 +10842,8 @@ int ast_channel_feature_hooks_replace(st
  {
  	return channel_feature_hooks_set_full(chan, features, 1);
  }

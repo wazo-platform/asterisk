@@ -29,5 +29,3 @@ xivo_dtls_negotiation_delay
 xivo_queue_ringinuse_dynamic_members
 xivo_ari_events_moh
 xivo_ari_set_channel_var_bypass
-xivo_asterisk_26299
-xivo_fix_segfault_manager_showdialplan

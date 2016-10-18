@@ -1,3 +1,9 @@
+asterisk (8:14.1.0~rc1-1~xivo1) xivo-dev; urgency=medium
+
+  * update to 14.1.0-rc1
+
+ -- Etienne Lessard <elessard@proformatique.com>  Tue, 18 Oct 2016 07:53:16 -0400
+
 asterisk (8:14.0.2-1~xivo9) xivo-dev; urgency=medium
 
   * merge asterisk 14 into production
