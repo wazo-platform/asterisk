@@ -1,7 +1,7 @@
-Index: asterisk-14.0.2/cel/cel_odbc.c
+Index: asterisk-14.1.0/cel/cel_odbc.c
 ===================================================================
---- asterisk-14.0.2.orig/cel/cel_odbc.c
-+++ asterisk-14.0.2/cel/cel_odbc.c
+--- asterisk-14.1.0.orig/cel/cel_odbc.c
++++ asterisk-14.1.0/cel/cel_odbc.c
 @@ -53,6 +53,7 @@ ASTERISK_REGISTER_FILE()
  #define	CONFIG	"cel_odbc.conf"
  
@@ -10,7 +10,7 @@ Index: asterisk-14.0.2/cel/cel_odbc.c
  
  /*! \brief show_user_def is off by default */
  #define CEL_SHOW_USERDEF_DEFAULT	0
-@@ -608,7 +609,7 @@ static void odbc_log(struct ast_event *e
+@@ -609,7 +610,7 @@ static void odbc_log(struct ast_event *e
  					if (ast_strlen_zero(colptr)) {
  						continue;
  					} else {
@@ -19,7 +19,7 @@ Index: asterisk-14.0.2/cel/cel_odbc.c
  						if (strcasecmp(entry->name, "eventdate") == 0) {
  							struct ast_tm tm;
  							ast_localtime(&record.event_time, &tm, tableptr->usegmtime ? "UTC" : NULL);
-@@ -618,9 +619,20 @@ static void odbc_log(struct ast_event *e
+@@ -619,9 +620,20 @@ static void odbc_log(struct ast_event *e
  							hour = tm.tm_hour;
  							minute = tm.tm_min;
  							second = (tableptr->allowleapsec || tm.tm_sec < 60) ? tm.tm_sec : 59;
@@ -42,7 +42,7 @@ Index: asterisk-14.0.2/cel/cel_odbc.c
  
  							if ((count != 3 && count != 5 && count != 6 && count != 7) || year <= 0 ||
  								month <= 0 || month > 12 || day < 0 || day > 31 ||
-@@ -629,7 +641,7 @@ static void odbc_log(struct ast_event *e
+@@ -630,7 +642,7 @@ static void odbc_log(struct ast_event *e
  								(month == 2 && year % 100 == 0 && day > 28) ||
  								(month == 2 && year % 4 == 0 && day > 29) ||
  								(month == 2 && year % 4 != 0 && day > 28) ||
@@ -51,7 +51,7 @@ Index: asterisk-14.0.2/cel/cel_odbc.c
  								ast_log(LOG_WARNING, "CEL variable %s is not a valid timestamp ('%s').\n", entry->name, colptr);
  								continue;
  							}
-@@ -640,8 +652,8 @@ static void odbc_log(struct ast_event *e
+@@ -641,8 +653,8 @@ static void odbc_log(struct ast_event *e
  						}
  
  						ast_str_append(&sql, 0, "%s%s", separator, entry->name);
