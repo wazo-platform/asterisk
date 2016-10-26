@@ -1,3 +1,9 @@
+asterisk (8:14.1.0-1~xivo2) xivo-dev; urgency=medium
+
+  * use systemd notify
+
+ -- Etienne Lessard <elessard@proformatique.com>  Wed, 26 Oct 2016 11:49:03 -0400
+
 asterisk (8:14.1.0-1~xivo1) xivo-dev; urgency=medium
 
   * update to 14.1.0

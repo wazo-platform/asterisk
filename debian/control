@@ -42,6 +42,7 @@ Build-Depends:
  libsrtp0-dev,
  libss7-dev (>= 2.0),
  libssl-dev,
+ libsystemd-dev,
  libtonezone-dev (>= 1:2.0.0),
  libunbound-dev,
  liburiparser-dev,
