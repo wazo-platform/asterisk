@@ -1,0 +1,570 @@
+diff --git a/res/ari.make b/res/ari.make
+index dd32997..9ef1b1f 100644
+--- a/res/ari.make
++++ b/res/ari.make
+@@ -28,3 +28,4 @@ $(call MOD_ADD_C,res_ari_device_states,ari/resource_device_states.c)
+ $(call MOD_ADD_C,res_ari_mailboxes,ari/resource_mailboxes.c)
+ $(call MOD_ADD_C,res_ari_events,ari/resource_events.c)
+ $(call MOD_ADD_C,res_ari_applications,ari/resource_applications.c)
++$(call MOD_ADD_C,res_ari_xivo,ari/resource_xivo.c)
+diff --git a/res/ari/resource_xivo.c b/res/ari/resource_xivo.c
+new file mode 100644
+index 0000000..66686ad
+--- /dev/null
++++ b/res/ari/resource_xivo.c
+@@ -0,0 +1,94 @@
++/*
++ * Asterisk -- An open source telephony toolkit.
++ *
++ * Copyright (C) 2016 Proformatique Inc.
++ *
++ * See http://www.asterisk.org for more information about
++ * the Asterisk project. Please do not directly contact
++ * any of the maintainers of this project for assistance;
++ * the project provides a web site, mailing lists and IRC
++ * channels for your use.
++ *
++ * This program is free software, distributed under the terms of
++ * the GNU General Public License Version 2. See the LICENSE file
++ * at the top of the source tree.
++ */
++
++/*! \file
++ *
++ * \brief /api-docs/xivo.{format} implementation- XiVO resources
++ */
++
++#include "asterisk.h"
++
++ASTERISK_REGISTER_FILE()
++
++#include "asterisk/app.h"
++#include "resource_xivo.h"
++
++void ast_ari_xivo_delete_voicemail_message(struct ast_variable *headers,
++	struct ast_ari_xivo_delete_voicemail_message_args *args,
++	struct ast_ari_response *response)
++{
++	const char *mailbox;
++	const char *context;
++	const char *folder;
++	const char *message_id;
++
++	mailbox = ast_json_string_get(ast_json_object_get(args->body, "mailbox"));
++	context = ast_json_string_get(ast_json_object_get(args->body, "context"));
++	folder = ast_json_string_get(ast_json_object_get(args->body, "folder"));
++	message_id = ast_json_string_get(ast_json_object_get(args->body, "message_id"));
++	if (!mailbox || !context || !folder || !message_id) {
++		ast_ari_response_error(response, 400, "Bad request", "Missing or invalid fields in body");
++		return;
++	}
++
++	if (strcmp(folder, "Deleted") == 0) {
++		/* ast_vm_msg_remove doesn't handle this case properly */
++		ast_ari_response_error(response, 400, "Bad request",
++			"Deleting a message from the Deleted folder is not supported");
++		return;
++	}
++
++	if (ast_vm_msg_remove(mailbox, context, 1, folder, &message_id) == -1) {
++		ast_ari_response_error(response, 500, "Internal Server Error", "Error deleting message");
++		return;
++	}
++
++	ast_ari_response_no_content(response);
++}
++
++void ast_ari_xivo_move_voicemail_message(struct ast_variable *headers,
++	struct ast_ari_xivo_move_voicemail_message_args *args,
++	struct ast_ari_response *response)
++{
++	const char *mailbox;
++	const char *context;
++	const char *src_folder;
++	const char *dest_folder;
++	const char *message_id;
++
++	mailbox = ast_json_string_get(ast_json_object_get(args->body, "mailbox"));
++	context = ast_json_string_get(ast_json_object_get(args->body, "context"));
++	src_folder = ast_json_string_get(ast_json_object_get(args->body, "src_folder"));
++	dest_folder = ast_json_string_get(ast_json_object_get(args->body, "dest_folder"));
++	message_id = ast_json_string_get(ast_json_object_get(args->body, "message_id"));
++	if (!mailbox || !context || !src_folder || !dest_folder || !message_id) {
++		ast_ari_response_error(response, 400, "Bad request", "Missing or invalid fields in body");
++		return;
++	}
++
++	if (strcmp(src_folder, dest_folder) == 0) {
++		/* ast_vm_msg_move doesn't handle it this case properly */
++		ast_ari_response_no_content(response);
++		return;
++	}
++
++	if (ast_vm_msg_move(mailbox, context, 1, src_folder, &message_id, dest_folder) == -1) {
++		ast_ari_response_error(response, 500, "Internal Server Error", "Error moving message");
++		return;
++	}
++
++	ast_ari_response_no_content(response);
++}
+diff --git a/res/ari/resource_xivo.h b/res/ari/resource_xivo.h
+new file mode 100644
+index 0000000..eab3b52
+--- /dev/null
++++ b/res/ari/resource_xivo.h
+@@ -0,0 +1,89 @@
++/*
++ * Asterisk -- An open source telephony toolkit.
++ *
++ * Copyright (C) 2016 Proformatique Inc.
++ *
++ * Etienne Lessard
++ *
++ * See http://www.asterisk.org for more information about
++ * the Asterisk project. Please do not directly contact
++ * any of the maintainers of this project for assistance;
++ * the project provides a web site, mailing lists and IRC
++ * channels for your use.
++ *
++ * This program is free software, distributed under the terms of
++ * the GNU General Public License Version 2. See the LICENSE file
++ * at the top of the source tree.
++ */
++
++/*! \file
++ *
++ * \brief Generated file - declares stubs to be implemented in
++ * res/ari/resource_xivo.c
++ *
++ * XiVO resources
++ *
++ * \author Etienne Lessard
++ */
++
++/*
++ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
++ * !!!!!                               DO NOT EDIT                        !!!!!
++ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
++ * This file is generated by a mustache template. Please see the original
++ * template in rest-api-templates/ari_resource.h.mustache
++ */
++
++#ifndef _ASTERISK_RESOURCE_XIVO_H
++#define _ASTERISK_RESOURCE_XIVO_H
++
++#include "asterisk/ari.h"
++
++/*! Argument struct for ast_ari_xivo_delete_voicemail_message() */
++struct ast_ari_xivo_delete_voicemail_message_args {
++	struct ast_json *body;
++};
++/*!
++ * \brief Body parsing function for /xivo/internal/voicemails/delete_msg.
++ * \param body The JSON body from which to parse parameters.
++ * \param[out] args The args structure to parse into.
++ * \retval zero on success
++ * \retval non-zero on failure
++ */
++int ast_ari_xivo_delete_voicemail_message_parse_body(
++	struct ast_json *body,
++	struct ast_ari_xivo_delete_voicemail_message_args *args);
++
++/*!
++ * \brief Delete a voicemail's message.
++ *
++ * \param headers HTTP headers
++ * \param args Swagger parameters
++ * \param[out] response HTTP response
++ */
++void ast_ari_xivo_delete_voicemail_message(struct ast_variable *headers, struct ast_ari_xivo_delete_voicemail_message_args *args, struct ast_ari_response *response);
++/*! Argument struct for ast_ari_xivo_move_voicemail_message() */
++struct ast_ari_xivo_move_voicemail_message_args {
++	struct ast_json *body;
++};
++/*!
++ * \brief Body parsing function for /xivo/internal/voicemails/move_msg.
++ * \param body The JSON body from which to parse parameters.
++ * \param[out] args The args structure to parse into.
++ * \retval zero on success
++ * \retval non-zero on failure
++ */
++int ast_ari_xivo_move_voicemail_message_parse_body(
++	struct ast_json *body,
++	struct ast_ari_xivo_move_voicemail_message_args *args);
++
++/*!
++ * \brief Move a voicemail's message.
++ *
++ * \param headers HTTP headers
++ * \param args Swagger parameters
++ * \param[out] response HTTP response
++ */
++void ast_ari_xivo_move_voicemail_message(struct ast_variable *headers, struct ast_ari_xivo_move_voicemail_message_args *args, struct ast_ari_response *response);
++
++#endif /* _ASTERISK_RESOURCE_XIVO_H */
+diff --git a/res/res_ari_xivo.c b/res/res_ari_xivo.c
+new file mode 100644
+index 0000000..596a54b
+--- /dev/null
++++ b/res/res_ari_xivo.c
+@@ -0,0 +1,271 @@
++/*
++ * Asterisk -- An open source telephony toolkit.
++ *
++ * Copyright (C) 2016 Proformatique Inc.
++ *
++ * Etienne Lessard
++ *
++ * See http://www.asterisk.org for more information about
++ * the Asterisk project. Please do not directly contact
++ * any of the maintainers of this project for assistance;
++ * the project provides a web site, mailing lists and IRC
++ * channels for your use.
++ *
++ * This program is free software, distributed under the terms of
++ * the GNU General Public License Version 2. See the LICENSE file
++ * at the top of the source tree.
++ */
++
++/*
++ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
++ * !!!!!                               DO NOT EDIT                        !!!!!
++ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
++ * This file is generated by a mustache template. Please see the original
++ * template in rest-api-templates/res_ari_resource.c.mustache
++ */
++
++/*! \file
++ *
++ * \brief XiVO resources
++ *
++ * \author Etienne Lessard
++ */
++
++/*** MODULEINFO
++	<depend type="module">res_ari</depend>
++	<depend type="module">res_ari_model</depend>
++	<depend type="module">res_stasis</depend>
++	<support_level>core</support_level>
++ ***/
++
++#include "asterisk.h"
++
++ASTERISK_REGISTER_FILE()
++
++#include "asterisk/app.h"
++#include "asterisk/module.h"
++#include "asterisk/stasis_app.h"
++#include "ari/resource_xivo.h"
++#if defined(AST_DEVMODE)
++#include "ari/ari_model_validators.h"
++#endif
++
++#define MAX_VALS 128
++
++int ast_ari_xivo_delete_voicemail_message_parse_body(
++	struct ast_json *body,
++	struct ast_ari_xivo_delete_voicemail_message_args *args)
++{
++	/* Parse query parameters out of it */
++	return 0;
++}
++
++/*!
++ * \brief Parameter parsing callback for /xivo/internal/voicemails/delete_msg.
++ * \param get_params GET parameters in the HTTP request.
++ * \param path_vars Path variables extracted from the request.
++ * \param headers HTTP headers.
++ * \param[out] response Response to the HTTP request.
++ */
++static void ast_ari_xivo_delete_voicemail_message_cb(
++	struct ast_tcptls_session_instance *ser,
++	struct ast_variable *get_params, struct ast_variable *path_vars,
++	struct ast_variable *headers, struct ast_ari_response *response)
++{
++	struct ast_ari_xivo_delete_voicemail_message_args args = {};
++	RAII_VAR(struct ast_json *, body, NULL, ast_json_unref);
++#if defined(AST_DEVMODE)
++	int is_valid;
++	int code;
++#endif /* AST_DEVMODE */
++
++	/* Look for a JSON request entity */
++	body = ast_http_get_json(ser, headers);
++	if (!body) {
++		switch (errno) {
++		case EFBIG:
++			ast_ari_response_error(response, 413, "Request Entity Too Large", "Request body too large");
++			goto fin;
++		case ENOMEM:
++			ast_ari_response_error(response, 500, "Internal Server Error", "Error processing request");
++			goto fin;
++		case EIO:
++			ast_ari_response_error(response, 400, "Bad Request", "Error parsing request body");
++			goto fin;
++		}
++	}
++	args.body = body;
++	ast_ari_xivo_delete_voicemail_message(headers, &args, response);
++#if defined(AST_DEVMODE)
++	code = response->response_code;
++
++	switch (code) {
++	case 0: /* Implementation is still a stub, or the code wasn't set */
++		is_valid = response->message == NULL;
++		break;
++	case 500: /* Internal Server Error */
++	case 501: /* Not Implemented */
++	case 400: /* Bad request body */
++		is_valid = 1;
++		break;
++	default:
++		if (200 <= code && code <= 299) {
++			is_valid = ast_ari_validate_void(
++				response->message);
++		} else {
++			ast_log(LOG_ERROR, "Invalid error response %d for /xivo/internal/voicemails/delete_msg\n", code);
++			is_valid = 0;
++		}
++	}
++
++	if (!is_valid) {
++		ast_log(LOG_ERROR, "Response validation failed for /xivo/internal/voicemails/delete_msg\n");
++		ast_ari_response_error(response, 500,
++			"Internal Server Error", "Response validation failed");
++	}
++#endif /* AST_DEVMODE */
++
++fin: __attribute__((unused))
++	return;
++}
++int ast_ari_xivo_move_voicemail_message_parse_body(
++	struct ast_json *body,
++	struct ast_ari_xivo_move_voicemail_message_args *args)
++{
++	/* Parse query parameters out of it */
++	return 0;
++}
++
++/*!
++ * \brief Parameter parsing callback for /xivo/internal/voicemails/move_msg.
++ * \param get_params GET parameters in the HTTP request.
++ * \param path_vars Path variables extracted from the request.
++ * \param headers HTTP headers.
++ * \param[out] response Response to the HTTP request.
++ */
++static void ast_ari_xivo_move_voicemail_message_cb(
++	struct ast_tcptls_session_instance *ser,
++	struct ast_variable *get_params, struct ast_variable *path_vars,
++	struct ast_variable *headers, struct ast_ari_response *response)
++{
++	struct ast_ari_xivo_move_voicemail_message_args args = {};
++	RAII_VAR(struct ast_json *, body, NULL, ast_json_unref);
++#if defined(AST_DEVMODE)
++	int is_valid;
++	int code;
++#endif /* AST_DEVMODE */
++
++	/* Look for a JSON request entity */
++	body = ast_http_get_json(ser, headers);
++	if (!body) {
++		switch (errno) {
++		case EFBIG:
++			ast_ari_response_error(response, 413, "Request Entity Too Large", "Request body too large");
++			goto fin;
++		case ENOMEM:
++			ast_ari_response_error(response, 500, "Internal Server Error", "Error processing request");
++			goto fin;
++		case EIO:
++			ast_ari_response_error(response, 400, "Bad Request", "Error parsing request body");
++			goto fin;
++		}
++	}
++	args.body = body;
++	ast_ari_xivo_move_voicemail_message(headers, &args, response);
++#if defined(AST_DEVMODE)
++	code = response->response_code;
++
++	switch (code) {
++	case 0: /* Implementation is still a stub, or the code wasn't set */
++		is_valid = response->message == NULL;
++		break;
++	case 500: /* Internal Server Error */
++	case 501: /* Not Implemented */
++	case 400: /* Bad request body */
++		is_valid = 1;
++		break;
++	default:
++		if (200 <= code && code <= 299) {
++			is_valid = ast_ari_validate_void(
++				response->message);
++		} else {
++			ast_log(LOG_ERROR, "Invalid error response %d for /xivo/internal/voicemails/move_msg\n", code);
++			is_valid = 0;
++		}
++	}
++
++	if (!is_valid) {
++		ast_log(LOG_ERROR, "Response validation failed for /xivo/internal/voicemails/move_msg\n");
++		ast_ari_response_error(response, 500,
++			"Internal Server Error", "Response validation failed");
++	}
++#endif /* AST_DEVMODE */
++
++fin: __attribute__((unused))
++	return;
++}
++
++/*! \brief REST handler for /api-docs/xivo.json */
++static struct stasis_rest_handlers xivo_internal_voicemails_delete_msg = {
++	.path_segment = "delete_msg",
++	.callbacks = {
++		[AST_HTTP_POST] = ast_ari_xivo_delete_voicemail_message_cb,
++	},
++	.num_children = 0,
++	.children = {  }
++};
++/*! \brief REST handler for /api-docs/xivo.json */
++static struct stasis_rest_handlers xivo_internal_voicemails_move_msg = {
++	.path_segment = "move_msg",
++	.callbacks = {
++		[AST_HTTP_POST] = ast_ari_xivo_move_voicemail_message_cb,
++	},
++	.num_children = 0,
++	.children = {  }
++};
++/*! \brief REST handler for /api-docs/xivo.json */
++static struct stasis_rest_handlers xivo_internal_voicemails = {
++	.path_segment = "voicemails",
++	.callbacks = {
++	},
++	.num_children = 2,
++	.children = { &xivo_internal_voicemails_delete_msg,&xivo_internal_voicemails_move_msg, }
++};
++/*! \brief REST handler for /api-docs/xivo.json */
++static struct stasis_rest_handlers xivo_internal = {
++	.path_segment = "internal",
++	.callbacks = {
++	},
++	.num_children = 1,
++	.children = { &xivo_internal_voicemails, }
++};
++/*! \brief REST handler for /api-docs/xivo.json */
++static struct stasis_rest_handlers xivo = {
++	.path_segment = "xivo",
++	.callbacks = {
++	},
++	.num_children = 1,
++	.children = { &xivo_internal, }
++};
++
++static int load_module(void)
++{
++	int res = 0;
++	stasis_app_ref();
++	res |= ast_ari_add_handler(&xivo);
++	return res;
++}
++
++static int unload_module(void)
++{
++	ast_ari_remove_handler(&xivo);
++	stasis_app_unref();
++	return 0;
++}
++
++AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_DEFAULT, "RESTful API module - XiVO resources",
++	.support_level = AST_MODULE_SUPPORT_CORE,
++	.load = load_module,
++	.unload = unload_module,
++	.nonoptreq = "res_ari,res_stasis",
++);
+diff --git a/rest-api/api-docs/xivo.json b/rest-api/api-docs/xivo.json
+new file mode 100644
+index 0000000..f94ea5d
+--- /dev/null
++++ b/rest-api/api-docs/xivo.json
+@@ -0,0 +1,68 @@
++{
++	"_copyright": "Copyright (C) 2016 Proformatique Inc.",
++	"_author": "Etienne Lessard",
++	"apiVersion": "1.7.0",
++	"swaggerVersion": "1.1",
++	"basePath": "http://localhost:8088/ari",
++	"resourcePath": "/api-docs/xivo.{format}",
++	"apis": [
++		{
++			"path": "/xivo/internal/voicemails/delete_msg",
++			"description": "Delete a voicemail's message",
++			"operations": [
++				{
++					"httpMethod": "POST",
++					"summary": "Delete a voicemail's message.",
++					"nickname": "deleteVoicemailMessage",
++					"responseClass": "void",
++					"parameters": [
++						{
++							"name": "body",
++							"description": "",
++							"paramType": "body",
++							"required": true,
++							"dataType": "containers",
++							"allowMultiple": false
++						}
++					],
++					"errorResponses": [
++						{
++							"code": 400,
++							"reason": "Bad request body"
++						}
++					]
++				}
++			]
++		},
++		{
++			"path": "/xivo/internal/voicemails/move_msg",
++			"description": "Move a voicemail's message",
++			"operations": [
++				{
++					"httpMethod": "POST",
++					"summary": "Move a voicemail's message.",
++					"nickname": "moveVoicemailMessage",
++					"responseClass": "void",
++					"parameters": [
++						{
++							"name": "body",
++							"description": "",
++							"paramType": "body",
++							"required": true,
++							"dataType": "containers",
++							"allowMultiple": false
++						}
++					],
++					"errorResponses": [
++						{
++							"code": 400,
++							"reason": "Bad request body"
++						}
++					]
++				}
++			]
++		}
++	],
++	"models": {
++	}
++}
+diff --git a/rest-api/resources.json b/rest-api/resources.json
+index ecaf723..04534a1 100644
+--- a/rest-api/resources.json
++++ b/rest-api/resources.json
+@@ -49,6 +49,10 @@
+ 		{
+ 			"path": "/api-docs/applications.{format}",
+ 			"description": "Stasis application resources"
++		},
++		{
++			"path": "/api-docs/xivo.{format}",
++			"description": "XiVO resources"
+ 		}
+ 	]
+ }
