@@ -1,4 +1,4 @@
-asterisk (8:14.1.1-1~xivo4) xivo-dev; urgency=medium
+asterisk (8:14.1.1-1~xivo5) xivo-dev; urgency=medium
 
   * add patch xivo_ari_expose_voicemail_functions
 
