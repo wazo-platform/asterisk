@@ -51,6 +51,7 @@ configure/asterisk::
 			--disable-category MENUSELECT_MOH \
 			--disable BUILD_NATIVE \
 			--enable app_meetme \
+			--enable codec_opus \
 			--enable res_mwi_external \
 			--enable res_stasis_mailbox \
 			--enable res_ari_mailboxes \

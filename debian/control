@@ -57,6 +57,7 @@ Build-Depends:
  unixodbc-dev,
  uuid-dev,
  wget,
+ xmlstarlet,
  zlib1g-dev
 Standards-Version: 3.9.6
 
