@@ -1,17 +1,16 @@
-diff --git a/res/ari.make b/res/ari.make
-index dd32997..9ef1b1f 100644
---- a/res/ari.make
-+++ b/res/ari.make
-@@ -28,3 +28,4 @@ $(call MOD_ADD_C,res_ari_device_states,ari/resource_device_states.c)
+Index: asterisk-14.1.2/res/ari.make
+===================================================================
+--- asterisk-14.1.2.orig/res/ari.make
++++ asterisk-14.1.2/res/ari.make
+@@ -28,3 +28,4 @@ $(call MOD_ADD_C,res_ari_device_states,a
  $(call MOD_ADD_C,res_ari_mailboxes,ari/resource_mailboxes.c)
  $(call MOD_ADD_C,res_ari_events,ari/resource_events.c)
  $(call MOD_ADD_C,res_ari_applications,ari/resource_applications.c)
 +$(call MOD_ADD_C,res_ari_xivo,ari/resource_xivo.c)
-diff --git a/res/ari/resource_xivo.c b/res/ari/resource_xivo.c
-new file mode 100644
-index 0000000..66686ad
+Index: asterisk-14.1.2/res/ari/resource_xivo.c
+===================================================================
 --- /dev/null
-+++ b/res/ari/resource_xivo.c
++++ asterisk-14.1.2/res/ari/resource_xivo.c
 @@ -0,0 +1,94 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -107,11 +106,10 @@ index 0000000..66686ad
 +
 +	ast_ari_response_no_content(response);
 +}
-diff --git a/res/ari/resource_xivo.h b/res/ari/resource_xivo.h
-new file mode 100644
-index 0000000..eab3b52
+Index: asterisk-14.1.2/res/ari/resource_xivo.h
+===================================================================
 --- /dev/null
-+++ b/res/ari/resource_xivo.h
++++ asterisk-14.1.2/res/ari/resource_xivo.h
 @@ -0,0 +1,89 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -202,11 +200,10 @@ index 0000000..eab3b52
 +void ast_ari_xivo_move_voicemail_message(struct ast_variable *headers, struct ast_ari_xivo_move_voicemail_message_args *args, struct ast_ari_response *response);
 +
 +#endif /* _ASTERISK_RESOURCE_XIVO_H */
-diff --git a/res/res_ari_xivo.c b/res/res_ari_xivo.c
-new file mode 100644
-index 0000000..596a54b
+Index: asterisk-14.1.2/res/res_ari_xivo.c
+===================================================================
 --- /dev/null
-+++ b/res/res_ari_xivo.c
++++ asterisk-14.1.2/res/res_ari_xivo.c
 @@ -0,0 +1,271 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -479,11 +476,10 @@ index 0000000..596a54b
 +	.unload = unload_module,
 +	.nonoptreq = "res_ari,res_stasis",
 +);
-diff --git a/rest-api/api-docs/xivo.json b/rest-api/api-docs/xivo.json
-new file mode 100644
-index 0000000..f94ea5d
+Index: asterisk-14.1.2/rest-api/api-docs/xivo.json
+===================================================================
 --- /dev/null
-+++ b/rest-api/api-docs/xivo.json
++++ asterisk-14.1.2/rest-api/api-docs/xivo.json
 @@ -0,0 +1,68 @@
 +{
 +	"_copyright": "Copyright (C) 2016 Proformatique Inc.",
@@ -553,10 +549,10 @@ index 0000000..f94ea5d
 +	"models": {
 +	}
 +}
-diff --git a/rest-api/resources.json b/rest-api/resources.json
-index ecaf723..04534a1 100644
---- a/rest-api/resources.json
-+++ b/rest-api/resources.json
+Index: asterisk-14.1.2/rest-api/resources.json
+===================================================================
+--- asterisk-14.1.2.orig/rest-api/resources.json
++++ asterisk-14.1.2/rest-api/resources.json
 @@ -49,6 +49,10 @@
  		{
  			"path": "/api-docs/applications.{format}",
