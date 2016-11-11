@@ -26,7 +26,6 @@ Build-Depends:
  libnewt-dev,
  libogg-dev,
  libopenr2-dev,
- libpjproject-dev,
  libpopt-dev,
  libpq-dev,
  libpri-dev (>= 1.4.7),

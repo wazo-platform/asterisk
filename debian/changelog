@@ -1,3 +1,9 @@
+asterisk (8:14.1.2-1~xivo3) xivo-dev; urgency=medium
+
+  * use bundled version of pjproject
+
+ -- Etienne Lessard <elessard@proformatique.com>  Fri, 11 Nov 2016 09:44:53 -0500
+
 asterisk (8:14.1.2-1~xivo2) xivo-dev; urgency=medium
 
   * include codec_opus module
