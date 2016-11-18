@@ -1,8 +1,8 @@
-Index: asterisk-14.1.2/res/res_rtp_asterisk.c
+Index: asterisk-14.2.0-rc1/res/res_rtp_asterisk.c
 ===================================================================
---- asterisk-14.1.2.orig/res/res_rtp_asterisk.c
-+++ asterisk-14.1.2/res/res_rtp_asterisk.c
-@@ -460,6 +460,7 @@ static int ast_rtp_sendcng(struct ast_rt
+--- asterisk-14.2.0-rc1.orig/res/res_rtp_asterisk.c
++++ asterisk-14.2.0-rc1/res/res_rtp_asterisk.c
+@@ -464,6 +464,7 @@ static int ast_rtp_sendcng(struct ast_rt
  #ifdef HAVE_OPENSSL_SRTP
  static int ast_rtp_activate(struct ast_rtp_instance *instance);
  static void dtls_srtp_check_pending(struct ast_rtp_instance *instance, struct ast_rtp *rtp, int rtcp);
@@ -10,7 +10,7 @@ Index: asterisk-14.1.2/res/res_rtp_asterisk.c
  static void dtls_srtp_start_timeout_timer(struct ast_rtp_instance *instance, struct ast_rtp *rtp, int rtcp);
  static void dtls_srtp_stop_timeout_timer(struct ast_rtp_instance *instance, struct ast_rtp *rtp, int rtcp);
  #endif
-@@ -1767,15 +1768,20 @@ static void ast_rtp_on_ice_complete(pj_i
+@@ -1771,15 +1772,20 @@ static void ast_rtp_on_ice_complete(pj_i
  		if (rtp->rtcp) {
  			update_address_with_ice_candidate(rtp, AST_RTP_ICE_COMPONENT_RTCP, &rtp->rtcp->them);
  		}
@@ -36,7 +36,7 @@ Index: asterisk-14.1.2/res/res_rtp_asterisk.c
  
  	if (!strictrtp) {
  		return;
-@@ -1970,6 +1976,23 @@ static void dtls_srtp_stop_timeout_timer
+@@ -1974,6 +1980,23 @@ static void dtls_srtp_stop_timeout_timer
  	AST_SCHED_DEL_UNREF(rtp->sched, dtls->timeout_timer, ao2_ref(instance, -1));
  }
  
@@ -60,7 +60,7 @@ Index: asterisk-14.1.2/res/res_rtp_asterisk.c
  static void dtls_srtp_check_pending(struct ast_rtp_instance *instance, struct ast_rtp *rtp, int rtcp)
  {
  	struct dtls_details *dtls = !rtcp ? &rtp->dtls : &rtp->rtcp->dtls;
-@@ -4936,7 +4959,20 @@ static void ast_rtp_remote_address_set(s
+@@ -5006,7 +5029,20 @@ static void ast_rtp_remote_address_set(s
  		rtp_learning_seq_init(&rtp->rtp_source_learn, rtp->seqno);
  	}
  

@@ -1,3 +1,9 @@
+asterisk (8:14.2.0~rc1-1~xivo1) xivo-dev; urgency=medium
+
+  * update to 14.2.0-rc1
+
+ -- Etienne Lessard <elessard@proformatique.com>  Fri, 18 Nov 2016 15:54:34 -0500
+
 asterisk (8:14.1.2-1~xivo4) xivo-dev; urgency=medium
 
   * revert "use systemd notify" (unstable)

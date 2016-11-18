@@ -1,8 +1,8 @@
-Index: asterisk-14.1.2/apps/app_queue.c
+Index: asterisk-14.2.0-rc1/apps/app_queue.c
 ===================================================================
---- asterisk-14.1.2.orig/apps/app_queue.c
-+++ asterisk-14.1.2/apps/app_queue.c
-@@ -1517,6 +1517,7 @@ struct queue_ent {
+--- asterisk-14.2.0-rc1.orig/apps/app_queue.c
++++ asterisk-14.2.0-rc1/apps/app_queue.c
+@@ -1521,6 +1521,7 @@ struct queue_ent {
  	char announce[PATH_MAX];               /*!< Announcement to play for member when call is answered */
  	char context[AST_MAX_CONTEXT];         /*!< Context when user exits queue */
  	char digits[AST_MAX_EXTENSION];        /*!< Digits entered while in queue */
@@ -10,7 +10,7 @@ Index: asterisk-14.1.2/apps/app_queue.c
  	int valid_digits;                      /*!< Digits entered correspond to valid extension. Exited */
  	int pos;                               /*!< Where we are in the queue */
  	int prio;                              /*!< Our priority */
-@@ -2014,6 +2015,20 @@ static struct ast_manager_event_blob *qu
+@@ -2018,6 +2019,20 @@ static struct ast_manager_event_blob *qu
  	RAII_VAR(struct ast_str *, event_string, NULL, ast_free);
  
  	channel_string = ast_manager_build_channel_state_string(obj->snapshot);
@@ -31,7 +31,7 @@ Index: asterisk-14.1.2/apps/app_queue.c
  	event_string = ast_manager_str_from_json_object(obj->blob, NULL);
  	if (!channel_string || !event_string) {
  		return NULL;
-@@ -5078,10 +5093,11 @@ static void leave_queue(struct queue_ent
+@@ -5085,10 +5100,11 @@ static void leave_queue(struct queue_ent
  				ast_devstate_changed(AST_DEVICE_NOT_INUSE, AST_DEVSTATE_CACHABLE, "Queue:%s", q->name);
  			}
  
@@ -45,7 +45,7 @@ Index: asterisk-14.1.2/apps/app_queue.c
  			ast_channel_publish_cached_blob(qe->chan, queue_caller_leave_type(), blob);
  			ast_debug(1, "Queue '%s' Leave, Channel '%s'\n", q->name, ast_channel_name(qe->chan));
  			/* Take us out of the queue */
-@@ -9110,6 +9126,8 @@ static int queue_exec(struct ast_channel
+@@ -9121,6 +9137,8 @@ static int queue_exec(struct ast_channel
  	} else {
  		min_penalty = INT_MAX;
  	}
