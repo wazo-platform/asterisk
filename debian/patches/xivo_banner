@@ -1,7 +1,3 @@
-
- -- Faidon Liambotis <paravoid@debian.org>
- -- Nicolas HICHER <nhicher@proformatique.com>
-
 Index: asterisk-14.2.0/main/asterisk.c
 ===================================================================
 --- asterisk-14.2.0.orig/main/asterisk.c
@@ -12,8 +8,8 @@ Index: asterisk-14.2.0/main/asterisk.c
                  "certain conditions. Type 'core show license' for details.\n" \
 +                "=========================================================================\n" \
 +                "This package has been modified for the Debian GNU/Linux distribution\n" \
-+                "This package has been modified for XiVO, a product of Avencall\n" \
-+                "Please report all bugs to https://projects.xivo.io/projects/xivo/issues\n" \
++                "This package has been modified for Wazo\n" \
++                "Please report all bugs to http://projects.wazo.community/projects/xivo/issues\n" \
                  "=========================================================================\n", ast_get_version()) \
  
  /*! \defgroup main_options Main Configuration Options
