@@ -6,8 +6,8 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get -q update && apt-get -q -y install \
     apt-utils \
     wget
-RUN echo "deb http://mirror.xivo.io/debian/ xivo-dev main" > /etc/apt/sources.list.d/xivo.list
-RUN wget http://mirror.xivo.io/xivo_current.key -O - | apt-key add -
+RUN echo "deb http://mirror.wazo.community/debian/ wazo-dev main" > /etc/apt/sources.list.d/wazo-dist.list
+RUN wget http://mirror.wazo.community/xivo_current.key -O - | apt-key add -
 RUN apt-get -q update && apt-get -q -y install \
     asterisk \
     xivo-libsccp
