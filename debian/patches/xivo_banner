@@ -9,7 +9,7 @@ Index: asterisk-14.2.0/main/asterisk.c
 +                "=========================================================================\n" \
 +                "This package has been modified for the Debian GNU/Linux distribution\n" \
 +                "This package has been modified for Wazo\n" \
-+                "Please report all bugs to http://projects.wazo.community/projects/xivo/issues\n" \
++                "Please report all bugs to http://projects.wazo.community\n" \
                  "=========================================================================\n", ast_get_version()) \
  
  /*! \defgroup main_options Main Configuration Options
