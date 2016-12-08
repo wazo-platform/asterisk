@@ -1,8 +1,7 @@
 Source: asterisk
 Priority: optional
 Section: comm
-Maintainer: XiVO Dev Team <dev+pkg@proformatique.com>
-Uploaders: XiVO Builder Team <release@xivo.io>
+Maintainer: Wazo Maintainers <dev.wazo@gmail.com>
 Build-Depends:
  autoconf,
  automake,
@@ -69,7 +68,7 @@ Depends: ${misc:Depends}, ${shlibs:Depends}, adduser, mpg123
 Breaks:
  xivo-libsccp (<< 16.13~),
  xivo-res-freeze-check (<< 16.13~)
-Description: Open Source Private Branch Exchange (PBX) - XiVO version
+Description: Open Source Private Branch Exchange (PBX) - Wazo version
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
  and Internet and telephony applications at the top.
@@ -104,7 +103,7 @@ Replaces: asterisk11-dbg
 Conflicts: asterisk11-dbg
 Provides: asterisk11-dbg
 Depends: ${misc:Depends}, asterisk (= ${binary:Version})
-Description: Open Source Private Branch Exchange (PBX) - XiVO version
+Description: Open Source Private Branch Exchange (PBX) - Wazo version
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
  and Internet and telephony applications at the top.
