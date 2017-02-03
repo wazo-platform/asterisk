@@ -1,3 +1,9 @@
+asterisk (8:14.2.1-1~wazo4) xivo-dev; urgency=medium
+
+  * fix memory leak when using ARI channelvars
+
+ -- Wazo Maintainers <dev@wazo.community>  Fri, 03 Feb 2017 13:42:21 -0500
+
 asterisk (8:14.2.1-1~wazo3) wazo-dev; urgency=medium
 
   * add frame deferral patch
