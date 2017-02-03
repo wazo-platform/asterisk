@@ -1,0 +1,12 @@
+Index: asterisk-14.2.1/main/stasis_channels.c
+===================================================================
+--- asterisk-14.2.1.orig/main/stasis_channels.c
++++ asterisk-14.2.1/main/stasis_channels.c
+@@ -197,6 +197,7 @@ static void channel_snapshot_dtor(void *
+ 
+ 	ast_string_field_free_memory(snapshot);
+ 	ao2_cleanup(snapshot->manager_vars);
++	ao2_cleanup(snapshot->ari_vars);
+ }
+ 
+ struct ast_channel_snapshot *ast_channel_snapshot_create(struct ast_channel *chan)
