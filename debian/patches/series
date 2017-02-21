@@ -30,4 +30,3 @@ xivo_queue_ringinuse_dynamic_members
 xivo_ari_events_moh
 xivo_ari_set_channel_var_bypass
 xivo_ari_expose_voicemail_functions
-ast_fix_frame_deferral_bug

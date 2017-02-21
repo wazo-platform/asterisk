@@ -1,3 +1,15 @@
+asterisk (8:14.3.0-1~wazo1) wazo-dev; urgency=medium
+
+  * update to 14.3.0
+
+ -- Wazo Maintainers <dev.wazo@gmail.com>  Fri, 17 Feb 2017 13:18:14 -0500
+
+asterisk (8:14.2.1-1~wazo4) xivo-dev; urgency=medium
+
+  * fix memory leak when using ARI channelvars
+
+ -- Wazo Maintainers <dev@wazo.community>  Fri, 03 Feb 2017 13:42:21 -0500
+
 asterisk (8:14.2.1-1~wazo3) wazo-dev; urgency=medium
 
   * add frame deferral patch
