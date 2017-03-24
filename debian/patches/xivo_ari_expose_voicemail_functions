@@ -204,7 +204,7 @@ Index: asterisk-14.3.0/res/res_ari_xivo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-14.3.0/res/res_ari_xivo.c
-@@ -0,0 +1,254 @@
+@@ -0,0 +1,239 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -345,21 +345,6 @@ Index: asterisk-14.3.0/res/res_ari_xivo.c
 +	int code;
 +#endif /* AST_DEVMODE */
 +
-+	/* Look for a JSON request entity */
-+	body = ast_http_get_json(ser, headers);
-+	if (!body) {
-+		switch (errno) {
-+		case EFBIG:
-+			ast_ari_response_error(response, 413, "Request Entity Too Large", "Request body too large");
-+			goto fin;
-+		case ENOMEM:
-+			ast_ari_response_error(response, 500, "Internal Server Error", "Error processing request");
-+			goto fin;
-+		case EIO:
-+			ast_ari_response_error(response, 400, "Bad Request", "Error parsing request body");
-+			goto fin;
-+		}
-+	}
 +	args.body = body;
 +	ast_ari_xivo_move_voicemail_message(headers, &args, response);
 +#if defined(AST_DEVMODE)
