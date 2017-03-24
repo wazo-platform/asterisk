@@ -204,7 +204,7 @@ Index: asterisk-14.3.0/res/res_ari_xivo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-14.3.0/res/res_ari_xivo.c
-@@ -0,0 +1,271 @@
+@@ -0,0 +1,239 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -277,30 +277,14 @@ Index: asterisk-14.3.0/res/res_ari_xivo.c
 +static void ast_ari_xivo_delete_voicemail_message_cb(
 +	struct ast_tcptls_session_instance *ser,
 +	struct ast_variable *get_params, struct ast_variable *path_vars,
-+	struct ast_variable *headers, struct ast_ari_response *response)
++	struct ast_variable *headers, struct ast_json *body, struct ast_ari_response *response)
 +{
 +	struct ast_ari_xivo_delete_voicemail_message_args args = {};
-+	RAII_VAR(struct ast_json *, body, NULL, ast_json_unref);
 +#if defined(AST_DEVMODE)
 +	int is_valid;
 +	int code;
 +#endif /* AST_DEVMODE */
 +
-+	/* Look for a JSON request entity */
-+	body = ast_http_get_json(ser, headers);
-+	if (!body) {
-+		switch (errno) {
-+		case EFBIG:
-+			ast_ari_response_error(response, 413, "Request Entity Too Large", "Request body too large");
-+			goto fin;
-+		case ENOMEM:
-+			ast_ari_response_error(response, 500, "Internal Server Error", "Error processing request");
-+			goto fin;
-+		case EIO:
-+			ast_ari_response_error(response, 400, "Bad Request", "Error parsing request body");
-+			goto fin;
-+		}
-+	}
 +	args.body = body;
 +	ast_ari_xivo_delete_voicemail_message(headers, &args, response);
 +#if defined(AST_DEVMODE)
@@ -353,30 +337,14 @@ Index: asterisk-14.3.0/res/res_ari_xivo.c
 +static void ast_ari_xivo_move_voicemail_message_cb(
 +	struct ast_tcptls_session_instance *ser,
 +	struct ast_variable *get_params, struct ast_variable *path_vars,
-+	struct ast_variable *headers, struct ast_ari_response *response)
++	struct ast_variable *headers, struct ast_json *body, struct ast_ari_response *response)
 +{
 +	struct ast_ari_xivo_move_voicemail_message_args args = {};
-+	RAII_VAR(struct ast_json *, body, NULL, ast_json_unref);
 +#if defined(AST_DEVMODE)
 +	int is_valid;
 +	int code;
 +#endif /* AST_DEVMODE */
 +
-+	/* Look for a JSON request entity */
-+	body = ast_http_get_json(ser, headers);
-+	if (!body) {
-+		switch (errno) {
-+		case EFBIG:
-+			ast_ari_response_error(response, 413, "Request Entity Too Large", "Request body too large");
-+			goto fin;
-+		case ENOMEM:
-+			ast_ari_response_error(response, 500, "Internal Server Error", "Error processing request");
-+			goto fin;
-+		case EIO:
-+			ast_ari_response_error(response, 400, "Bad Request", "Error parsing request body");
-+			goto fin;
-+		}
-+	}
 +	args.body = body;
 +	ast_ari_xivo_move_voicemail_message(headers, &args, response);
 +#if defined(AST_DEVMODE)
