@@ -1,3 +1,9 @@
+asterisk (8:14.3.0-1~wazo2) UNRELEASED; urgency=medium
+
+  * Fix res_ari_xivo
+
+ -- Wazo Maintainers <dev.wazo@gmail.com>  Fri, 24 Mar 2017 15:24:20 -0500
+
 asterisk (8:14.3.0-1~wazo1) wazo-dev; urgency=medium
 
   * update to 14.3.0
