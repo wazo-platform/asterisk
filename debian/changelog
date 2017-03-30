@@ -1,3 +1,9 @@
+asterisk (8:14.4.0-rc1~wazo2) wazo-dev; urgency=medium
+
+  * Fix download version
+
+ -- Sylvain Boily <sboily@wazo.community>  Thu, 30 Mar 2017 15:41:46 -0400
+
 asterisk (8:14.4.0-rc1~wazo1) wazo-dev; urgency=medium
 
   * update to 14.4.0-rc1
