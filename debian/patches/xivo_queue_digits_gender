@@ -1,8 +1,8 @@
-Index: asterisk-14.3.0/apps/app_queue.c
+Index: asterisk-14.4.0-rc1/apps/app_queue.c
 ===================================================================
---- asterisk-14.3.0.orig/apps/app_queue.c
-+++ asterisk-14.3.0/apps/app_queue.c
-@@ -4989,7 +4989,7 @@ static int say_position(struct queue_ent
+--- asterisk-14.4.0-rc1.orig/apps/app_queue.c
++++ asterisk-14.4.0-rc1/apps/app_queue.c
+@@ -4083,7 +4083,7 @@ static int say_position(struct queue_ent
  		}
  
  		if (avgholdmins >= 1) {
@@ -11,7 +11,7 @@ Index: asterisk-14.3.0/apps/app_queue.c
  			if (res) {
  				goto playout;
  			}
-@@ -7835,7 +7835,7 @@ static int try_calling(struct queue_ent
+@@ -6940,7 +6940,7 @@ static int try_calling(struct queue_ent
  						holdtime = labs((now - qe->start) / 60);
  						holdtimesecs = labs((now - qe->start) % 60);
  						if (holdtime > 0) {
