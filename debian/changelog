@@ -1,3 +1,9 @@
+asterisk (8:14.4.0-rc1~wazo3) wazo-dev; urgency=medium
+
+  * fix queue skills
+
+ -- Sylvain Boily <sboily@wazo.community>  Thu, 30 Mar 2017 17:21:12 -0400
+
 asterisk (8:14.4.0-rc1~wazo2) wazo-dev; urgency=medium
 
   * Fix download version
