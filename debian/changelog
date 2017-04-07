@@ -1,3 +1,27 @@
+asterisk (8:14.4.0~wazo1) wazo-dev; urgency=medium
+
+  * update to 14.4.0
+
+ -- Wazo Maintainers <dev@wazo.community>  Fri, 07 Apr 2017 14:58:09 -0400
+
+asterisk (8:14.4.0-rc1~wazo3) wazo-dev; urgency=medium
+
+  * fix queue skills
+
+ -- Sylvain Boily <sboily@wazo.community>  Thu, 30 Mar 2017 17:21:12 -0400
+
+asterisk (8:14.4.0-rc1~wazo2) wazo-dev; urgency=medium
+
+  * Fix download version
+
+ -- Sylvain Boily <sboily@wazo.community>  Thu, 30 Mar 2017 15:41:46 -0400
+
+asterisk (8:14.4.0-rc1~wazo1) wazo-dev; urgency=medium
+
+  * update to 14.4.0-rc1
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 30 Mar 2017 15:29:56 -0400
+
 asterisk (8:14.3.0-1~wazo4) wazo-dev; urgency=medium
 
   * version bump for the builder
@@ -14,7 +38,7 @@ asterisk (8:14.3.0-1~wazo2) wazo-dev; urgency=medium
 
   * Fix res_ari_xivo
 
- -- Wazo Maintainers <dev.wazo@gmail.com>  Fri, 24 Mar 2017 15:24:20 -0500
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 30 Mar 2017 15:29:30 -0400
 
 asterisk (8:14.3.0-1~wazo1) wazo-dev; urgency=medium
 
