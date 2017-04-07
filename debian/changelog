@@ -1,4 +1,10 @@
-asterisk (8:14.3.0-1~wazo2) UNRELEASED; urgency=medium
+asterisk (8:14.3.0-1~wazo3) wazo-dev; urgency=medium
+
+  * Fix avoid an infinite loop on AMI redirect with 2 channels
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 07 Apr 2017 13:37:41 -0400
+
+asterisk (8:14.3.0-1~wazo2) wazo-dev; urgency=medium
 
   * Fix res_ari_xivo
 
