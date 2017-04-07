@@ -1,3 +1,9 @@
+asterisk (8:14.3.0-1~wazo4) wazo-dev; urgency=medium
+
+  * version bump for the builder
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 07 Apr 2017 14:20:27 -0400
+
 asterisk (8:14.3.0-1~wazo3) wazo-dev; urgency=medium
 
   * Fix avoid an infinite loop on AMI redirect with 2 channels
