@@ -1,3 +1,9 @@
+asterisk (8:14.4.0-1~wazo6) wazo-dev; urgency=medium
+
+  * refactor xivo_skill_queues for applicability
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 20 Apr 2017 11:16:22 -0400
+
 asterisk (8:14.4.0-1~wazo5) wazo-dev; urgency=medium
 
   * fix changelog versions
