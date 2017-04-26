@@ -1,4 +1,5 @@
-ari-py
+https://github.com/digium/swagger-py/archive/master.zip  # the release 0.2.1 has blocking bugs, so we need master
+https://github.com/wazo-pbx/ari-py/archive/0.2.2.zip
 docker-compose
 pyhamcrest
 pytest
