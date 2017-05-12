@@ -1,7 +1,7 @@
-Index: asterisk-14.4.0-rc1/channels/chan_sip.c
+Index: asterisk-14.4.0/channels/chan_sip.c
 ===================================================================
---- asterisk-14.4.0-rc1.orig/channels/chan_sip.c
-+++ asterisk-14.4.0-rc1/channels/chan_sip.c
+--- asterisk-14.4.0.orig/channels/chan_sip.c
++++ asterisk-14.4.0/channels/chan_sip.c
 @@ -553,6 +553,11 @@ ASTERISK_REGISTER_FILE()
  			via multiple <literal>Variable: name=value</literal> sequences.</para>
  		</description>

@@ -1,7 +1,7 @@
-Index: asterisk-14.3.0/include/asterisk/channel.h
+Index: asterisk-14.4.0/include/asterisk/channel.h
 ===================================================================
---- asterisk-14.3.0.orig/include/asterisk/channel.h
-+++ asterisk-14.3.0/include/asterisk/channel.h
+--- asterisk-14.4.0.orig/include/asterisk/channel.h
++++ asterisk-14.4.0/include/asterisk/channel.h
 @@ -4736,4 +4736,8 @@ enum ast_channel_error ast_channel_errno
   */
  int ast_channel_get_intercept_mode(void);
@@ -11,10 +11,10 @@ Index: asterisk-14.3.0/include/asterisk/channel.h
 +int ast_dual_redirect_is_set(struct ast_channel* chan);
 +
  #endif /* _ASTERISK_CHANNEL_H */
-Index: asterisk-14.3.0/main/bridge_channel.c
+Index: asterisk-14.4.0/main/bridge_channel.c
 ===================================================================
---- asterisk-14.3.0.orig/main/bridge_channel.c
-+++ asterisk-14.3.0/main/bridge_channel.c
+--- asterisk-14.4.0.orig/main/bridge_channel.c
++++ asterisk-14.4.0/main/bridge_channel.c
 @@ -2815,7 +2815,7 @@ int bridge_channel_internal_join(struct
  	 * Must be done while "still in the bridge" for ast_async_goto()
  	 * to work right.
@@ -24,11 +24,11 @@ Index: asterisk-14.3.0/main/bridge_channel.c
  		sched_yield();
  	}
  	ast_channel_lock(bridge_channel->chan);
-Index: asterisk-14.3.0/main/channel.c
+Index: asterisk-14.4.0/main/channel.c
 ===================================================================
---- asterisk-14.3.0.orig/main/channel.c
-+++ asterisk-14.3.0/main/channel.c
-@@ -11048,3 +11048,56 @@ ast_mutex_t *ast_channels_get_mutex(void
+--- asterisk-14.4.0.orig/main/channel.c
++++ asterisk-14.4.0/main/channel.c
+@@ -11046,3 +11046,56 @@ ast_mutex_t *ast_channels_get_mutex(void
  {
  	return ao2_object_get_lockaddr(channels);
  }
@@ -85,10 +85,10 @@ Index: asterisk-14.3.0/main/channel.c
 +
 +	return found;
 +}
-Index: asterisk-14.3.0/main/manager.c
+Index: asterisk-14.4.0/main/manager.c
 ===================================================================
---- asterisk-14.3.0.orig/main/manager.c
-+++ asterisk-14.3.0/main/manager.c
+--- asterisk-14.4.0.orig/main/manager.c
++++ asterisk-14.4.0/main/manager.c
 @@ -4821,19 +4821,15 @@ static int action_redirect(struct manses
  	}
  

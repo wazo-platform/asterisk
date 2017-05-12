@@ -1,8 +1,8 @@
-Index: asterisk-14.4.0-rc1/apps/app_queue.c
+Index: asterisk-14.4.0/apps/app_queue.c
 ===================================================================
---- asterisk-14.4.0-rc1.orig/apps/app_queue.c
-+++ asterisk-14.4.0-rc1/apps/app_queue.c
-@@ -7381,7 +7381,6 @@ static int add_to_queue(const char *queu
+--- asterisk-14.4.0.orig/apps/app_queue.c
++++ asterisk-14.4.0/apps/app_queue.c
+@@ -7434,7 +7434,6 @@ static int add_to_queue(const char *queu
  	ao2_lock(q);
  	if ((old_member = interface_exists(q, interface)) == NULL) {
  		if ((new_member = create_queue_member(interface, membername, penalty, paused, state_interface, q->ringinuse, skills))) {
@@ -10,7 +10,7 @@ Index: asterisk-14.4.0-rc1/apps/app_queue.c
  			new_member->dynamic = 1;
  			if (reason_paused) {
  				ast_copy_string(new_member->reason_paused, reason_paused, sizeof(new_member->reason_paused));
-@@ -9423,6 +9422,7 @@ static void reload_single_queue(struct a
+@@ -9362,6 +9361,7 @@ static void reload_single_queue(struct a
  {
  	int new;
  	struct call_queue *q = NULL;
@@ -18,7 +18,7 @@ Index: asterisk-14.4.0-rc1/apps/app_queue.c
  	/*We're defining a queue*/
  	struct call_queue tmpq = {
  		.name = queuename,
-@@ -9432,6 +9432,8 @@ static void reload_single_queue(struct a
+@@ -9371,6 +9371,8 @@ static void reload_single_queue(struct a
  	const int member_reload = ast_test_flag(mask, QUEUE_RELOAD_MEMBER);
  	int prev_weight = 0;
  	struct ast_variable *var;
@@ -27,7 +27,7 @@ Index: asterisk-14.4.0-rc1/apps/app_queue.c
  	if (!(q = ao2_t_find(queues, &tmpq, OBJ_POINTER, "Find queue for reload"))) {
  		if (queue_reload) {
  			/* Make one then */
-@@ -9500,6 +9502,20 @@ static void reload_single_queue(struct a
+@@ -9439,6 +9441,20 @@ static void reload_single_queue(struct a
  		}
  	}
  

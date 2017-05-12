@@ -1,7 +1,7 @@
-Index: asterisk-14.4.0-rc1/cel/cel_odbc.c
+Index: asterisk-14.4.0/cel/cel_odbc.c
 ===================================================================
---- asterisk-14.4.0-rc1.orig/cel/cel_odbc.c
-+++ asterisk-14.4.0-rc1/cel/cel_odbc.c
+--- asterisk-14.4.0.orig/cel/cel_odbc.c
++++ asterisk-14.4.0/cel/cel_odbc.c
 @@ -53,6 +53,7 @@ ASTERISK_REGISTER_FILE()
  #define	CONFIG	"cel_odbc.conf"
  
