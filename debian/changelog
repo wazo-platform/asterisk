@@ -1,3 +1,9 @@
+asterisk (8:14.4.0-1~wazo7) wazo-dev; urgency=medium
+
+  * remove patch cel HOLD UNHOLD
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 12 May 2017 11:09:58 -0400
+
 asterisk (8:14.4.0-1~wazo6) wazo-dev; urgency=medium
 
   * refactor xivo_skill_queues for applicability
