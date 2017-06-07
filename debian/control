@@ -1,7 +1,7 @@
 Source: asterisk
 Priority: optional
 Section: comm
-Maintainer: Wazo Maintainers <dev.wazo@gmail.com>
+Maintainer: Wazo Maintainers <dev@wazo.community>
 Build-Depends:
  autoconf,
  automake,
