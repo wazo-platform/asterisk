@@ -1,5 +1,5 @@
 FROM debian:jessie
-MAINTAINER dev+docker@proformatique.com
+MAINTAINER dev+docker@wazo.community
 
 ENV DEBIAN_FRONTEND noninteractive
 

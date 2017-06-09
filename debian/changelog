@@ -1,3 +1,9 @@
+asterisk (8:14.5.0-1~wazo2) wazo-dev; urgency=medium
+
+  * update to 14.5.0
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 07 Jun 2017 09:50:06 -0400
+
 asterisk (8:14.4.0-1~wazo9) wazo-dev; urgency=medium
 
   * ignore integration-tests when building (2)

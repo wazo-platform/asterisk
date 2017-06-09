@@ -1,7 +1,7 @@
-Index: asterisk-14.4.0/channels/chan_sip.c
+Index: asterisk-14.5.0/channels/chan_sip.c
 ===================================================================
---- asterisk-14.4.0.orig/channels/chan_sip.c
-+++ asterisk-14.4.0/channels/chan_sip.c
+--- asterisk-14.5.0.orig/channels/chan_sip.c
++++ asterisk-14.5.0/channels/chan_sip.c
 @@ -553,6 +553,11 @@ ASTERISK_REGISTER_FILE()
  			via multiple <literal>Variable: name=value</literal> sequences.</para>
  		</description>
@@ -14,7 +14,7 @@ Index: asterisk-14.4.0/channels/chan_sip.c
  	<manager name="SIPpeerstatus" language="en_US">
  		<synopsis>
  			Show the status of one or all of the sip peers.
-@@ -15514,20 +15519,54 @@ static int transmit_notify_with_sipfrag(
+@@ -15542,20 +15547,54 @@ static int transmit_notify_with_sipfrag(
  	return send_request(p, &req, XMIT_RELIABLE, p->ocseq);
  }
  
@@ -75,7 +75,7 @@ Index: asterisk-14.4.0/channels/chan_sip.c
  	}
  
  	if (!(p = sip_alloc(NULL, NULL, 0, SIP_NOTIFY, NULL, 0))) {
-@@ -15535,7 +15574,7 @@ static int manager_sipnotify(struct mans
+@@ -15563,7 +15602,7 @@ static int manager_sipnotify(struct mans
  		return 0;
  	}
  
@@ -84,7 +84,7 @@ Index: asterisk-14.4.0/channels/chan_sip.c
  		/* Maybe they're not registered, etc. */
  		dialog_unlink_all(p);
  		dialog_unref(p, "unref dialog inside for loop" );
-@@ -35450,6 +35489,7 @@ static int load_module(void)
+@@ -35486,6 +35525,7 @@ static int load_module(void)
  	ast_manager_register_xml("SIPqualifypeer", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_sip_qualify_peer);
  	ast_manager_register_xml("SIPshowregistry", EVENT_FLAG_SYSTEM | EVENT_FLAG_REPORTING, manager_show_registry);
  	ast_manager_register_xml("SIPnotify", EVENT_FLAG_SYSTEM, manager_sipnotify);
@@ -92,7 +92,7 @@ Index: asterisk-14.4.0/channels/chan_sip.c
  	ast_manager_register_xml("SIPpeerstatus", EVENT_FLAG_SYSTEM, manager_sip_peer_status);
  	sip_poke_all_peers();
  	sip_keepalive_all_peers();
-@@ -35571,6 +35611,7 @@ static int unload_module(void)
+@@ -35607,6 +35647,7 @@ static int unload_module(void)
  	ast_manager_unregister("SIPqualifypeer");
  	ast_manager_unregister("SIPshowregistry");
  	ast_manager_unregister("SIPnotify");

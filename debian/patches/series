@@ -1,7 +1,7 @@
 ### upstream fixes
 deb_astgenkey-security
 deb_make-clean-fixes
-## proformatique patches
+## Wazo patches
 xivo_queue_agent_talking
 xivo_banner
 xivo_sip_autocreate_context
@@ -16,7 +16,6 @@ xivo_senddigit_begin
 xivo_event_sip_ringing
 xivo_ccss_exten_context_var
 xivo_dtmf_xfer_plus
-xivo_cel_odbc_bad_eventtime
 xivo_sip_missing_contact
 xivo_agent_complete_ast11_compat
 xivo_queue_caller_leave_ast11_compat
