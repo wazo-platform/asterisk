@@ -1,3 +1,9 @@
+asterisk (8:14.5.0-1~wazo4) xivo-dev; urgency=medium
+
+  * ignore LICENSE file when building
+
+ -- Wazo Maintainers <dev@wazo.community>  Thu, 15 Jun 2017 08:58:09 -0400
+
 asterisk (8:14.5.0-1~wazo3) xivo-dev; urgency=medium
 
   * add LICENSE file
