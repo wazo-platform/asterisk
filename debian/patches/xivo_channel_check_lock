@@ -1,7 +1,7 @@
-Index: asterisk-14.5.0/include/asterisk/channel.h
+Index: asterisk-14.6.0/include/asterisk/channel.h
 ===================================================================
---- asterisk-14.5.0.orig/include/asterisk/channel.h
-+++ asterisk-14.5.0/include/asterisk/channel.h
+--- asterisk-14.6.0.orig/include/asterisk/channel.h
++++ asterisk-14.6.0/include/asterisk/channel.h
 @@ -4307,6 +4307,18 @@ int ast_channel_dialed_causes_add(const
   */
  void ast_channel_dialed_causes_clear(const struct ast_channel *chan);
@@ -21,15 +21,14 @@ Index: asterisk-14.5.0/include/asterisk/channel.h
  struct ast_flags *ast_channel_flags(struct ast_channel *chan);
  
  /*!
-Index: asterisk-14.5.0/main/channel.c
+Index: asterisk-14.6.0/main/channel.c
 ===================================================================
---- asterisk-14.5.0.orig/main/channel.c
-+++ asterisk-14.5.0/main/channel.c
-@@ -11036,3 +11036,8 @@ enum ast_channel_error ast_channel_errno
- {
- 	return ast_channel_internal_errno();
+--- asterisk-14.6.0.orig/main/channel.c
++++ asterisk-14.6.0/main/channel.c
+@@ -11074,3 +11074,7 @@ void ast_channel_clear_flag(struct ast_c
+ 	ast_channel_unlock(chan);
  }
-+
+ 
 +ast_mutex_t *ast_channels_get_mutex(void)
 +{
 +	return ao2_object_get_lockaddr(channels);

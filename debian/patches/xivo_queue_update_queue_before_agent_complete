@@ -1,41 +1,41 @@
-Index: asterisk-14.5.0/apps/app_queue.c
+Index: asterisk-14.6.0/apps/app_queue.c
 ===================================================================
---- asterisk-14.5.0.orig/apps/app_queue.c
-+++ asterisk-14.5.0/apps/app_queue.c
-@@ -6233,10 +6233,10 @@ static void handle_blind_transfer(void *
+--- asterisk-14.6.0.orig/apps/app_queue.c
++++ asterisk-14.6.0/apps/app_queue.c
+@@ -6237,10 +6237,10 @@ static void handle_blind_transfer(void *
  			(long) (queue_data->starttime - queue_data->holdstart),
  			(long) (time(NULL) - queue_data->starttime), queue_data->caller_pos);
  
 -	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
 -			queue_data->holdstart, queue_data->starttime, queue_data->caller_uniqueid, queue_data->queue->wrapuptime, TRANSFER);
  	update_queue(queue_data->queue, queue_data->member, queue_data->callcompletedinsl,
- 			time(NULL) - queue_data->starttime);
+ 			queue_data->starttime);
 +	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
 +			queue_data->holdstart, queue_data->starttime, queue_data->caller_uniqueid, queue_data->queue->wrapuptime, TRANSFER);
  	remove_stasis_subscriptions(queue_data);
  }
  
-@@ -6293,10 +6293,10 @@ static void handle_attended_transfer(voi
+@@ -6297,10 +6297,10 @@ static void handle_attended_transfer(voi
  
  	log_attended_transfer(queue_data, caller_snapshot, atxfer_msg);
  
 -	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
 -			queue_data->holdstart, queue_data->starttime, queue_data->caller_uniqueid, queue_data->queue->wrapuptime, TRANSFER);
  	update_queue(queue_data->queue, queue_data->member, queue_data->callcompletedinsl,
- 			time(NULL) - queue_data->starttime);
+ 			queue_data->starttime);
 +	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
 +			queue_data->holdstart, queue_data->starttime, queue_data->caller_uniqueid, queue_data->queue->wrapuptime, TRANSFER);
  	remove_stasis_subscriptions(queue_data);
  }
  
-@@ -6494,10 +6494,10 @@ static void handle_hangup(void *userdata
+@@ -6498,10 +6498,10 @@ static void handle_hangup(void *userdata
  		(long) (queue_data->starttime - queue_data->holdstart),
  		(long) (time(NULL) - queue_data->starttime), queue_data->caller_pos);
  
 -	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
 -			queue_data->holdstart, queue_data->starttime, queue_data->caller_uniqueid, queue_data->queue->wrapuptime, reason);
  	update_queue(queue_data->queue, queue_data->member, queue_data->callcompletedinsl,
- 			time(NULL) - queue_data->starttime);
+ 			queue_data->starttime);
 +	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
 +			queue_data->holdstart, queue_data->starttime, queue_data->caller_uniqueid, queue_data->queue->wrapuptime, reason);
  	remove_stasis_subscriptions(queue_data);
