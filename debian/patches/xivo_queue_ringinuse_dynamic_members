@@ -1,7 +1,7 @@
-Index: asterisk-14.6.0/apps/app_queue.c
+Index: asterisk-14.6.1/apps/app_queue.c
 ===================================================================
---- asterisk-14.6.0.orig/apps/app_queue.c
-+++ asterisk-14.6.0/apps/app_queue.c
+--- asterisk-14.6.1.orig/apps/app_queue.c
++++ asterisk-14.6.1/apps/app_queue.c
 @@ -7424,7 +7424,6 @@ static int add_to_queue(const char *queu
  	ao2_lock(q);
  	if ((old_member = interface_exists(q, interface)) == NULL) {
