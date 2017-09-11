@@ -1,20 +1,8 @@
-asterisk (8:14.6.0-1~wazo6) wazo-dev; urgency=medium
+asterisk (8:14.6.1-1~wazo2) wazo-dev; urgency=medium
 
-  * fix doc build
+  * update to 14.6.1
 
- -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 11 Sep 2017 12:56:16 -0400
-
-asterisk (8:14.6.0-1~wazo5) wazo-dev; urgency=medium
-
-  * rebuild with a clean builder
-
- -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 11 Sep 2017 08:04:18 -0400
-
-asterisk (8:14.6.0-1~wazo2) wazo-dev; urgency=medium
-
-  * add manpages
-
- -- Wazo Maintainers <dev@wazo.community>  Tue, 01 Aug 2017 10:18:15 -0400
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 05 Sep 2017 11:00:39 -0400
 
 asterisk (8:14.6.0-1~wazo1) wazo-dev; urgency=medium
 
