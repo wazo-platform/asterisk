@@ -1,4 +1,4 @@
-asterisk (8:14.6.0-1~wazo3) wazo-dev; urgency=medium
+asterisk (8:14.6.0-1~wazo4) wazo-dev; urgency=medium
 
   * rebuild with a clean builder
 
