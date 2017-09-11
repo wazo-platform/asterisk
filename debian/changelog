@@ -1,3 +1,9 @@
+asterisk (8:14.6.0-1~wazo6) wazo-dev; urgency=medium
+
+  * fix doc build
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 11 Sep 2017 12:56:16 -0400
+
 asterisk (8:14.6.0-1~wazo5) wazo-dev; urgency=medium
 
   * rebuild with a clean builder
