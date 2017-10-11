@@ -27,7 +27,6 @@ class AssetLauncher(AssetLaunchingTestCase):
 
 @pytest.fixture()
 def ari():
-    AssetLauncher.pushd(os.path.join(AssetLauncher.assets_root, AssetLauncher.asset))
     AssetLauncher.kill_containers()
     AssetLauncher.rm_containers()
     AssetLauncher.launch_service_with_asset()
@@ -37,7 +36,6 @@ def ari():
     yield ari
 
     AssetLauncher.kill_containers()
-    AssetLauncher.popd()
 
 
 def test_delete_voicemail_message_without_body(ari):

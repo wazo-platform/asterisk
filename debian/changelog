@@ -1,14 +1,8 @@
-asterisk (8:14.6.2-1~wazo1) wazo-dev; urgency=medium
+asterisk (8:15.0.0-1~wazo1) asterisk-15; urgency=medium
 
-  * update to 14.6.2
+  * Asterisk 15 is released!
 
- -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 20 Sep 2017 14:11:23 -0400
-
-asterisk (8:14.6.1-1~wazo2) wazo-dev; urgency=medium
-
-  * update to 14.6.1
-
- -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 05 Sep 2017 11:00:39 -0400
+ -- Sylvain Boily <sboily@wazo.community>  Tue, 03 Oct 2017 09:25:12 -0400
 
 asterisk (8:14.6.0-1~wazo1) wazo-dev; urgency=medium
 

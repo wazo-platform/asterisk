@@ -1,8 +1,8 @@
-Index: asterisk-14.6.2/apps/app_queue.c
+Index: asterisk-15.0.0/apps/app_queue.c
 ===================================================================
---- asterisk-14.6.2.orig/apps/app_queue.c
-+++ asterisk-14.6.2/apps/app_queue.c
-@@ -1521,6 +1521,7 @@ struct queue_ent {
+--- asterisk-15.0.0.orig/apps/app_queue.c
++++ asterisk-15.0.0/apps/app_queue.c
+@@ -1549,6 +1549,7 @@ struct queue_ent {
  	char announce[PATH_MAX];               /*!< Announcement to play for member when call is answered */
  	char context[AST_MAX_CONTEXT];         /*!< Context when user exits queue */
  	char digits[AST_MAX_EXTENSION];        /*!< Digits entered while in queue */
@@ -10,7 +10,7 @@ Index: asterisk-14.6.2/apps/app_queue.c
  	int valid_digits;                      /*!< Digits entered correspond to valid extension. Exited */
  	int pos;                               /*!< Where we are in the queue */
  	int prio;                              /*!< Our priority */
-@@ -2052,6 +2053,20 @@ static struct ast_manager_event_blob *qu
+@@ -2085,6 +2086,20 @@ static struct ast_manager_event_blob *qu
  	RAII_VAR(struct ast_str *, event_string, NULL, ast_free);
  
  	channel_string = ast_manager_build_channel_state_string(obj->snapshot);
@@ -31,7 +31,7 @@ Index: asterisk-14.6.2/apps/app_queue.c
  	event_string = ast_manager_str_from_json_object(obj->blob, NULL);
  	if (!channel_string || !event_string) {
  		return NULL;
-@@ -4237,10 +4252,11 @@ static void leave_queue(struct queue_ent
+@@ -4307,10 +4322,11 @@ static void leave_queue(struct queue_ent
  				ast_devstate_changed(AST_DEVICE_NOT_INUSE, AST_DEVSTATE_CACHABLE, "Queue:%s", q->name);
  			}
  
@@ -45,9 +45,9 @@ Index: asterisk-14.6.2/apps/app_queue.c
  			ast_channel_publish_cached_blob(qe->chan, queue_caller_leave_type(), blob);
  			ast_debug(1, "Queue '%s' Leave, Channel '%s'\n", q->name, ast_channel_name(qe->chan));
  			/* Take us out of the queue */
-@@ -8270,6 +8286,8 @@ static int queue_exec(struct ast_channel
+@@ -8415,6 +8431,8 @@ static int queue_exec(struct ast_channel
  	} else {
- 		min_penalty = INT_MAX;
+ 		raise_penalty = INT_MAX;
  	}
 +
 +	ast_copy_string(qe.chan_uniqueid, ast_channel_uniqueid(chan), sizeof(qe.chan_uniqueid));
