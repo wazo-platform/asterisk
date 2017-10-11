@@ -23,6 +23,7 @@ class AssetLauncher(AssetLaunchingTestCase):
 
     assets_root = os.path.join(os.path.dirname(__file__), '..', 'assets')
     asset = 'base'
+    service = 'asterisk'
 
 
 @pytest.fixture()
