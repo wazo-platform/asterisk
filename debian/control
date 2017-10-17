@@ -66,8 +66,10 @@ Conflicts: asterisk11
 Provides: asterisk11
 Depends: ${misc:Depends}, ${shlibs:Depends}, adduser, mpg123
 Breaks:
- xivo-libsccp (<< 16.13~),
- xivo-res-freeze-check (<< 16.13~)
+ wazo-res-amqp (<< 17.14~),
+ wazo-res-stasis-amqp (<< 17.14~),
+ xivo-libsccp (<< 17.14~),
+ xivo-res-freeze-check (<< 17.14~)
 Description: Open Source Private Branch Exchange (PBX) - Wazo version
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
