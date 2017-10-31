@@ -1,3 +1,9 @@
+asterisk (8:15.1.0-1~wazo1) wazo-dev; urgency=medium
+
+  * update to 15.1.0.
+
+ -- Sylvain Boily <sboily@wazo.community>  Mon, 30 Oct 2017 14:37:47 -0400
+
 asterisk (8:15.0.0-1~wazo4) wazo-dev; urgency=medium
 
   * control: update breaks
