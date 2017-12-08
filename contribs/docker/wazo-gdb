@@ -8,5 +8,17 @@ if [ -z "$wazo_version" -o -z "$core_file" ] ; then
     exit 1
 fi
 
+extract_asterisk_sources() {
+    destination=$1
+    rm -rf "${destination}"
+    container_id=$(docker create "wazopbx/wazo-asterisk-gdb:${wazo_version}")
+    docker cp "${container_id}:/usr/src/" "${destination}"
+    docker rm "${container_id}"
+}
+
 cat Dockerfile-gdb | sed "s/\${WAZO_VERSION}/${wazo_version}/" | docker build -t "wazopbx/wazo-asterisk-gdb:${wazo_version}" -
+
+mkdir -p sources
+extract_asterisk_sources "sources/wazo-${wazo_version}"
+
 docker run -it -v "${core_file}:/core" "wazopbx/wazo-asterisk-gdb:${wazo_version}"
