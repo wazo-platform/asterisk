@@ -1,0 +1,12 @@
+#!/bin/bash
+
+wazo_version=$1
+core_file=$2
+
+if [ -z "$wazo_version" -o -z "$core_file" ] ; then
+    echo "Usage: $0 <wazo_version> <core_file>"
+    exit 1
+fi
+
+cat Dockerfile-gdb | sed "s/\${WAZO_VERSION}/${wazo_version}/" | docker build -t "wazopbx/wazo-asterisk-gdb:${wazo_version}" -
+docker run -it -v "${core_file}:/core" "wazopbx/wazo-asterisk-gdb:${wazo_version}"
