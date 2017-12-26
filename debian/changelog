@@ -1,3 +1,9 @@
+asterisk (8:15.1.3-1~wazo9) wazo-dev; urgency=medium
+
+  * bump version 
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 26 Dec 2017 14:53:09 -0500
+
 asterisk (8:15.1.3-1~wazo8) wazo-dev; urgency=medium
 
   * fix dependencies for stretch
