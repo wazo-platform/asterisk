@@ -1,4 +1,10 @@
-asterisk (8:15.1.3-1~wazo6.1) wazo-dev; urgency=medium
+asterisk (8:15.1.3-1~wazo8) wazo-dev; urgency=medium
+
+  * fix dependencies for stretch
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 26 Dec 2017 11:40:30 -0500
+
+asterisk (8:15.1.3-1~wazo7) wazo-dev; urgency=medium
 
   * update dependencies for stretch
 
