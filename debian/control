@@ -28,7 +28,7 @@ Build-Depends:
  libpopt-dev,
  libpq-dev,
  libpri-dev (>= 1.4.7),
- libfreeradius-client-dev,
+ libfreeradius3-dev,
  libreadline-dev,
  libresample1-dev,
  libsnmp9-dev | libsnmp-dev,
