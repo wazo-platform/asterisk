@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM debian:${DEBIAN_DISTRIBUTION}
 MAINTAINER dev+docker@wazo.community
 
 ENV DEBIAN_FRONTEND noninteractive
