@@ -19,8 +19,8 @@ To test that it compiles and builds fine (example for 13.10.0 on a remote xivo):
 * rsync -v -rtlp asterisk-13.10.0.tar.gz debian xivo:ast-rebuild
 * ssh xivo
   * cd ast-rebuild
-  * tar xf asterisk-13.10.0.tar.gz
-  * mv asterisk-13.10.0.tar.gz asterisk_13.10.0.orig.tar.gz
-  * cd asterisk-13.10.0
+  * tar xf asterisk-*.tar.gz
+  * rename 's/asterisk-(.*).tar.gz/asterisk_$1.orig.tar.gz/' asterisk-*.tar.gz
+  * cd asterisk-*
   * mv ../debian .
   * dpkg-buildpackage -us -uc
