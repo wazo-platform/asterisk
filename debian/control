@@ -91,7 +91,7 @@ Description: Open Source Private Branch Exchange (PBX) - Wazo version
   * Tormenta T1/E1 card (http://www.zapatatelephony.org)
   * QuickNet Internet PhoneJack and LineJack (http://www.quicknet.net)
  .
- This software was heavily patched by Debian and Proformatique.
+ This software was heavily patched by Debian and Wazo.
  .
  This Debian package contains the classic Asterisk binary.
  .
@@ -126,7 +126,7 @@ Description: Open Source Private Branch Exchange (PBX) - Wazo version
   * Tormenta T1/E1 card (http://www.zapatatelephony.org)
   * QuickNet Internet PhoneJack and LineJack (http://www.quicknet.net)
  .
- This software was heavily patched by Debian and Proformatique.
+ This software was heavily patched by Debian and Wazo.
  .
  This package contains gdb debugging symbols for the classic Asterisk binary.
  .
@@ -158,7 +158,7 @@ Description: development files for asterisk
   * Tormenta T1/E1 card (http://www.zapatatelephony.org)
   * QuickNet Internet PhoneJack and LineJack (http://www.quicknet.net)
  .
- This software was heavily patched by Debian and Proformatique.
+ This software was heavily patched by Debian and Wazo.
  .
  This package contains the include files used if you wish to compile a
  package which requires asterisk source file headers.
@@ -224,7 +224,7 @@ Description: sound files for asterisk
   * Tormenta T1/E1 card (http://www.zapatatelephony.org)
   * QuickNet Internet PhoneJack and LineJack (http://www.quicknet.net)
  .
- This software was heavily patched by Debian and Proformatique.
+ This software was heavily patched by Debian and Wazo.
  .
  This package contains the default sound files for operation of asterisk
  .

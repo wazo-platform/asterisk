@@ -1,8 +1,8 @@
-Index: asterisk-15.1.3/main/ccss.c
+Index: asterisk-15.2.0/main/ccss.c
 ===================================================================
---- asterisk-15.1.3.orig/main/ccss.c
-+++ asterisk-15.1.3/main/ccss.c
-@@ -2661,6 +2661,8 @@ struct cc_generic_agent_pvt {
+--- asterisk-15.2.0.orig/main/ccss.c
++++ asterisk-15.2.0/main/ccss.c
+@@ -2678,6 +2678,8 @@ struct cc_generic_agent_pvt {
  static int cc_generic_agent_init(struct ast_cc_agent *agent, struct ast_channel *chan)
  {
  	struct cc_generic_agent_pvt *generic_pvt = ast_calloc(1, sizeof(*generic_pvt));
@@ -11,7 +11,7 @@ Index: asterisk-15.1.3/main/ccss.c
  
  	if (!generic_pvt) {
  		return -1;
-@@ -2673,8 +2675,19 @@ static int cc_generic_agent_init(struct
+@@ -2690,8 +2692,19 @@ static int cc_generic_agent_init(struct
  	if (ast_channel_caller(chan)->id.name.valid && ast_channel_caller(chan)->id.name.str) {
  		ast_copy_string(generic_pvt->cid_name, ast_channel_caller(chan)->id.name.str, sizeof(generic_pvt->cid_name));
  	}

@@ -3,11 +3,11 @@ Author: Faidon Liambotis <paravoid@debian.org>
 Forwarded: not-needed
 Last-Update: 2009-12-19
 
-Index: asterisk-15.1.3/Makefile
+Index: asterisk-15.2.0/Makefile
 ===================================================================
---- asterisk-15.1.3.orig/Makefile
-+++ asterisk-15.1.3/Makefile
-@@ -414,7 +414,6 @@ dist-clean: distclean
+--- asterisk-15.2.0.orig/Makefile
++++ asterisk-15.2.0/Makefile
+@@ -424,7 +424,6 @@ dist-clean: distclean
  
  distclean: $(SUBDIRS_DIST_CLEAN) _clean
  	@$(MAKE) -C menuselect dist-clean
@@ -15,7 +15,7 @@ Index: asterisk-15.1.3/Makefile
  	rm -f menuselect.makeopts makeopts menuselect-tree menuselect.makedeps
  	rm -f config.log config.status config.cache
  	rm -rf autom4te.cache
-@@ -424,6 +423,10 @@ distclean: $(SUBDIRS_DIST_CLEAN) _clean
+@@ -434,6 +433,10 @@ distclean: $(SUBDIRS_DIST_CLEAN) _clean
  	rm -f doc/asterisk-ng-doxygen
  	rm -f build_tools/menuselect-deps
  
@@ -23,6 +23,6 @@ Index: asterisk-15.1.3/Makefile
 +all-clean: distclean
 +	@$(MAKE) -C sounds dist-clean
 +
- datafiles: _all doc/core-en_US.xml
+ datafiles: _all $(CORE_XMLDOC)
  	CFLAGS="$(_ASTCFLAGS) $(ASTCFLAGS)" build_tools/mkpkgconfig "$(DESTDIR)$(libdir)/pkgconfig";
  
