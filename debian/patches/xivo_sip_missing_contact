@@ -1,8 +1,8 @@
-Index: asterisk-15.1.3/channels/chan_sip.c
+Index: asterisk-15.2.0/channels/chan_sip.c
 ===================================================================
---- asterisk-15.1.3.orig/channels/chan_sip.c
-+++ asterisk-15.1.3/channels/chan_sip.c
-@@ -28883,6 +28883,7 @@ static int handle_incoming(struct sip_pv
+--- asterisk-15.2.0.orig/channels/chan_sip.c
++++ asterisk-15.2.0/channels/chan_sip.c
+@@ -28904,6 +28904,7 @@ static int handle_incoming(struct sip_pv
  			} else if (req->method != SIP_ACK) {
  				transmit_response(p, "500 Server error", req);	/* We must respond according to RFC 3261 sec 12.2 */
  			}

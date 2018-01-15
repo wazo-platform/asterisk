@@ -1,8 +1,8 @@
-Index: asterisk-15.1.3/main/stasis_channels.c
+Index: asterisk-15.2.0/main/stasis_channels.c
 ===================================================================
---- asterisk-15.1.3.orig/main/stasis_channels.c
-+++ asterisk-15.1.3/main/stasis_channels.c
-@@ -1204,6 +1204,47 @@ static struct ast_json *unhold_to_json(s
+--- asterisk-15.2.0.orig/main/stasis_channels.c
++++ asterisk-15.2.0/main/stasis_channels.c
+@@ -1206,6 +1206,47 @@ static struct ast_json *unhold_to_json(s
  		"channel", json_channel);
  }
  
@@ -50,7 +50,7 @@ Index: asterisk-15.1.3/main/stasis_channels.c
  /*!
   * @{ \brief Define channel message types.
   */
-@@ -1232,8 +1273,12 @@ STASIS_MESSAGE_TYPE_DEFN(ast_channel_cha
+@@ -1234,8 +1275,12 @@ STASIS_MESSAGE_TYPE_DEFN(ast_channel_cha
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_chanspy_stop_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_fax_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_hangup_handler_type);
@@ -65,10 +65,10 @@ Index: asterisk-15.1.3/main/stasis_channels.c
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_monitor_start_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_monitor_stop_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_agent_login_type,
-Index: asterisk-15.1.3/rest-api/api-docs/events.json
+Index: asterisk-15.2.0/rest-api/api-docs/events.json
 ===================================================================
---- asterisk-15.1.3.orig/rest-api/api-docs/events.json
-+++ asterisk-15.1.3/rest-api/api-docs/events.json
+--- asterisk-15.2.0.orig/rest-api/api-docs/events.json
++++ asterisk-15.2.0/rest-api/api-docs/events.json
 @@ -185,7 +185,9 @@
  				"StasisStart",
  				"TextMessageReceived",
