@@ -1,3 +1,9 @@
+asterisk (8:15.2.0-1~wazo3) wazo-dev-stretch; urgency=medium
+
+  * Add a patch to fix the VoicemailUserEntry event
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 19 Jan 2018 12:21:51 -0500
+
 asterisk (8:15.2.0-1~wazo2) wazo-dev-stretch; urgency=medium
 
   * rebuild
