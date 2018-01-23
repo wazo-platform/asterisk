@@ -1,0 +1,58 @@
+From c9d6bfc169c2f6131a0895562f9f66c2ac791658 Mon Sep 17 00:00:00 2001
+From: Joshua Colp <jcolp@digium.com>
+Date: Sat, 13 Jan 2018 14:04:33 +0000
+Subject: [PATCH] rtp_engine / channel: Don't allow an unnegotiated format to be passed up.
+
+When an RTP packet is received by an RTP engine it has to map the
+payload into the Asterisk format. The code was incorrectly checking
+our own static list for ALL payloads if it couldn't find a negotiated one.
+This included dynamic payloads. If the payload mapped to a format
+of a different type (for example receiving a video packet on an audio
+RTP instance) then the core stream code could cause a crash if a legacy
+channel driver was in use as no stream would be present.
+
+To provide further protection the core stream code will no longer assume
+that a video or audio frame will always have a stream for legacy channel
+drivers. If no stream is present the frame is dropped.
+
+ASTERISK-27488
+
+Change-Id: I022556f524ad8379ee73f14037040af17ea3316a
+---
+
+Index: asterisk-15.2.0/main/channel.c
+===================================================================
+--- asterisk-15.2.0.orig/main/channel.c
++++ asterisk-15.2.0/main/channel.c
+@@ -3667,7 +3667,17 @@ static struct ast_frame *__ast_read(stru
+ 				 * originated from and update the frame to include it.
+ 				 */
+ 				stream = default_stream = ast_channel_get_default_stream(chan, ast_format_get_type(f->subclass.format));
+-				f->stream_num = ast_stream_get_position(stream);
++				/* In order to allow media to be passed up the underlying media type has to have a format negotiated on
++				 * the channel itself. In cases where this hasn't happened the channel driver is incorrectly passing up
++				 * a frame for a format that has not been negotiated. If this occurs just drop the frame as we have no
++				 * stream that it came from.
++				 */
++				if (!stream) {
++					ast_frfree(f);
++					f = &ast_null_frame;
++				} else {
++					f->stream_num = ast_stream_get_position(stream);
++				}
+ 			}
+ 		}
+ 	} else {
+Index: asterisk-15.2.0/main/rtp_engine.c
+===================================================================
+--- asterisk-15.2.0.orig/main/rtp_engine.c
++++ asterisk-15.2.0/main/rtp_engine.c
+@@ -1210,7 +1210,7 @@ struct ast_rtp_payload_type *ast_rtp_cod
+ 	}
+ 	ast_rwlock_unlock(&codecs->codecs_lock);
+ 
+-	if (!type) {
++	if (!type && payload <= AST_RTP_PT_LAST_STATIC) {
+ 		ast_rwlock_rdlock(&static_RTP_PT_lock);
+ 		type = ao2_bump(static_RTP_PT[payload]);
+ 		ast_rwlock_unlock(&static_RTP_PT_lock);

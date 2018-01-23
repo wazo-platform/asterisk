@@ -1,3 +1,9 @@
+asterisk (8:15.2.0-1~wazo4) wazo-dev-stretch; urgency=medium
+
+  * Fix Asterisk bug 27488
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 23 Jan 2018 14:50:53 -0500
+
 asterisk (8:15.2.0-1~wazo3) wazo-dev-stretch; urgency=medium
 
   * Add a patch to fix the VoicemailUserEntry event
