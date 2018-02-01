@@ -7,6 +7,7 @@ WORKDIR /usr/src
 RUN true && \
     apt-get -q update && \
     apt-get -q -y install apt-utils \
+                          gnupg \
                           wget && \
     echo "deb http://mirror.wazo.community/archive/ wazo-${WAZO_VERSION} main" >> /etc/apt/sources.list.d/wazo-dist.list && \
     echo "deb-src http://mirror.wazo.community/archive/ wazo-${WAZO_VERSION} main" >> /etc/apt/sources.list.d/wazo-dist.list && \
