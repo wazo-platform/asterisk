@@ -25,7 +25,7 @@ debian_distribution() {
     fi
 }
 
-cat Dockerfile-gdb.template | sed "s/\${WAZO_VERSION}/${wazo_version}/; s/\${DEBIAN_DISTRIBUTION}/$(debian_distribution ${wazo_version})/" | docker build -t "wazopbx/wazo-asterisk-gdb:${wazo_version}" -
+cat Dockerfile-gdb.tpl | sed "s/\${WAZO_VERSION}/${wazo_version}/; s/\${DEBIAN_DISTRIBUTION}/$(debian_distribution ${wazo_version})/" | docker build -t "wazopbx/wazo-asterisk-gdb:${wazo_version}" -
 
 mkdir -p sources
 extract_asterisk_sources "sources/wazo-${wazo_version}"
