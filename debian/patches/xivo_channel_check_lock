@@ -1,7 +1,7 @@
-Index: asterisk-15.2.0/include/asterisk/channel.h
+Index: asterisk-15.2.2/include/asterisk/channel.h
 ===================================================================
---- asterisk-15.2.0.orig/include/asterisk/channel.h
-+++ asterisk-15.2.0/include/asterisk/channel.h
+--- asterisk-15.2.2.orig/include/asterisk/channel.h
++++ asterisk-15.2.2/include/asterisk/channel.h
 @@ -4434,6 +4434,18 @@ int ast_channel_dialed_causes_add(const
   */
  void ast_channel_dialed_causes_clear(const struct ast_channel *chan);
@@ -21,11 +21,11 @@ Index: asterisk-15.2.0/include/asterisk/channel.h
  struct ast_flags *ast_channel_flags(struct ast_channel *chan);
  
  /*!
-Index: asterisk-15.2.0/main/channel.c
+Index: asterisk-15.2.2/main/channel.c
 ===================================================================
---- asterisk-15.2.0.orig/main/channel.c
-+++ asterisk-15.2.0/main/channel.c
-@@ -10907,3 +10907,8 @@ void ast_channel_clear_flag(struct ast_c
+--- asterisk-15.2.2.orig/main/channel.c
++++ asterisk-15.2.2/main/channel.c
+@@ -10922,3 +10922,8 @@ void ast_channel_clear_flag(struct ast_c
  	ast_clear_flag(ast_channel_flags(chan), flag);
  	ast_channel_unlock(chan);
  }

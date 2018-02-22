@@ -1,7 +1,7 @@
-Index: asterisk-15.2.0/apps/app_voicemail.c
+Index: asterisk-15.2.2/apps/app_voicemail.c
 ===================================================================
---- asterisk-15.2.0.orig/apps/app_voicemail.c
-+++ asterisk-15.2.0/apps/app_voicemail.c
+--- asterisk-15.2.2.orig/apps/app_voicemail.c
++++ asterisk-15.2.2/apps/app_voicemail.c
 @@ -13351,7 +13351,7 @@ static int manager_list_voicemail_users(
  			ast_test_flag(vmu, VM_OPERATOR) ? "Yes" : "No",
  			vmu->maxmsg,

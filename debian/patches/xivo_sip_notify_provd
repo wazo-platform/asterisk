@@ -1,7 +1,7 @@
-Index: asterisk-15.2.0/channels/chan_sip.c
+Index: asterisk-15.2.2/channels/chan_sip.c
 ===================================================================
---- asterisk-15.2.0.orig/channels/chan_sip.c
-+++ asterisk-15.2.0/channels/chan_sip.c
+--- asterisk-15.2.2.orig/channels/chan_sip.c
++++ asterisk-15.2.2/channels/chan_sip.c
 @@ -556,6 +556,11 @@
  			via multiple <literal>Variable: name=value</literal> sequences.</para>
  		</description>

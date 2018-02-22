@@ -1,3 +1,9 @@
+asterisk (8:15.2.2-1~wazo1) wazo-dev-stretch; urgency=medium
+
+  * upgrade to asterisk 15.2.2
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 22 Feb 2018 11:24:26 -0500
+
 asterisk (8:15.2.0-1~wazo4) wazo-dev-stretch; urgency=medium
 
   * Fix Asterisk bug 27488
