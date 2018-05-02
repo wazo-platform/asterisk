@@ -1,8 +1,8 @@
-Index: asterisk-15.2.2/main/asterisk.c
+Index: asterisk-15.4.0-rc2/main/asterisk.c
 ===================================================================
---- asterisk-15.2.2.orig/main/asterisk.c
-+++ asterisk-15.2.2/main/asterisk.c
-@@ -314,6 +314,10 @@ int daemon(int, int);  /* defined in lib
+--- asterisk-15.4.0-rc2.orig/main/asterisk.c
++++ asterisk-15.4.0-rc2/main/asterisk.c
+@@ -310,6 +310,10 @@ int daemon(int, int);  /* defined in lib
                  "This is free software, with components licensed under the GNU General Public\n" \
                  "License version 2 and other licenses; you are welcome to redistribute it under\n" \
                  "certain conditions. Type 'core show license' for details.\n" \
@@ -12,4 +12,4 @@ Index: asterisk-15.2.2/main/asterisk.c
 +                "Please report all bugs to http://projects.wazo.community\n" \
                  "=========================================================================\n", ast_get_version()) \
  
- /*! \defgroup main_options Main Configuration Options
+ static int ast_socket = -1;		/*!< UNIX Socket for allowing remote control */
