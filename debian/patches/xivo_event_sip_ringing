@@ -1,7 +1,7 @@
-Index: asterisk-15.4.0-rc2/channels/chan_sip.c
+Index: asterisk-15.4.0/channels/chan_sip.c
 ===================================================================
---- asterisk-15.4.0-rc2.orig/channels/chan_sip.c
-+++ asterisk-15.4.0-rc2/channels/chan_sip.c
+--- asterisk-15.4.0.orig/channels/chan_sip.c
++++ asterisk-15.4.0/channels/chan_sip.c
 @@ -23830,6 +23830,10 @@ static void handle_response_invite(struc
  
  	case 180:	/* 180 Ringing */
