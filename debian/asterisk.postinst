@@ -111,6 +111,9 @@ case "$1" in
 				systemctl daemon-reload || true
 			fi
 		)
+
+		# cancel systemd unit masking when changing from asterisk to asterisk-vanilla
+		deb-systemd-helper unmask asterisk.service
 	fi
     ;;
 
