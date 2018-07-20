@@ -1,3 +1,9 @@
+asterisk (8:15.5.0-1~wazo1) wazo-dev-stretch; urgency=medium
+
+  * upgrade to asterisk 15.5.0
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 20 Jul 2018 15:26:42 -0400
+
 asterisk (8:15.4.1-1~wazo1) wazo-dev-stretch; urgency=medium
 
   * upgrade to asterisk 15.4.1
