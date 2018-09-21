@@ -1,7 +1,7 @@
-Index: asterisk-15.6.0/include/asterisk/cel.h
+Index: asterisk-15.6.1/include/asterisk/cel.h
 ===================================================================
---- asterisk-15.6.0.orig/include/asterisk/cel.h
-+++ asterisk-15.6.0/include/asterisk/cel.h
+--- asterisk-15.6.1.orig/include/asterisk/cel.h
++++ asterisk-15.6.1/include/asterisk/cel.h
 @@ -207,6 +207,7 @@ struct ast_cel_general_config {
  		AST_STRING_FIELD(date_format); /*!< The desired date format for logging */
  	);
@@ -10,10 +10,10 @@ Index: asterisk-15.6.0/include/asterisk/cel.h
  	int64_t events;			/*!< The events to be logged */
  	/*! The apps for which to log app start and end events. This is
  	 * ast_str_container_alloc()ed and filled with ao2-allocated
-Index: asterisk-15.6.0/include/asterisk/nova.h
+Index: asterisk-15.6.1/include/asterisk/nova.h
 ===================================================================
 --- /dev/null
-+++ asterisk-15.6.0/include/asterisk/nova.h
++++ asterisk-15.6.1/include/asterisk/nova.h
 @@ -0,0 +1,35 @@
 +/*
 + * Copyright 2016 Avencall
@@ -50,10 +50,10 @@ Index: asterisk-15.6.0/include/asterisk/nova.h
 +	struct ast_channel_snapshot *channel2, struct ast_channel_snapshot *transferee, struct ast_channel_snapshot *transfer_target);
 +
 +#endif /* _ASTERISK_NOVA_H_ */
-Index: asterisk-15.6.0/main/cel.c
+Index: asterisk-15.6.1/main/cel.c
 ===================================================================
---- asterisk-15.6.0.orig/main/cel.c
-+++ asterisk-15.6.0/main/cel.c
+--- asterisk-15.6.1.orig/main/cel.c
++++ asterisk-15.6.1/main/cel.c
 @@ -58,6 +58,7 @@
  #include "asterisk/pickup.h"
  #include "asterisk/core_local.h"
@@ -222,10 +222,10 @@ Index: asterisk-15.6.0/main/cel.c
  	return 0;
  }
  
-Index: asterisk-15.6.0/main/nova.c
+Index: asterisk-15.6.1/main/nova.c
 ===================================================================
 --- /dev/null
-+++ asterisk-15.6.0/main/nova.c
++++ asterisk-15.6.1/main/nova.c
 @@ -0,0 +1,540 @@
 +/*
 + * Copyright 2016 Avencall
