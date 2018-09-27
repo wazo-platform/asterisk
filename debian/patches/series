@@ -26,4 +26,4 @@ xivo_nova_compatibility
 xivo_ari_events_moh
 xivo_ari_set_channel_var_bypass
 xivo_ari_expose_voicemail_functions
-fix-stale-moh-wrapper.diff
+res_stasis-Fix-stale-data-in-ARI-bridges
