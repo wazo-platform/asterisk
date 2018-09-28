@@ -1,0 +1,190 @@
+Index: asterisk-15.6.1/include/asterisk/stasis_app.h
+===================================================================
+--- asterisk-15.6.1.orig/include/asterisk/stasis_app.h
++++ asterisk-15.6.1/include/asterisk/stasis_app.h
+@@ -335,6 +335,21 @@ enum stasis_app_subscribe_res stasis_app
+ enum stasis_app_subscribe_res stasis_app_subscribe_channel(const char *app_name,
+ 	struct ast_channel *chan);
+ 
++/*!
++ * \brief Directly subscribe an application to a bridge
++ *
++ * \param app_name Name of the application to subscribe.
++ * \param bridge The bridge to subscribe to
++ *
++ * \return \ref stasis_app_subscribe_res return code.
++ *
++ * \note This method can be used when you already hold a bridge and its
++ *       lock. This bypasses the channel lookup that would normally be
++ *       performed by \ref stasis_app_subscribe.
++ */
++enum stasis_app_subscribe_res stasis_app_subscribe_bridge(const char *app_name,
++	struct ast_bridge *bridge);
++
+ /*! @} */
+ 
+ /*! @{ */
+Index: asterisk-15.6.1/res/ari/resource_bridges.c
+===================================================================
+--- asterisk-15.6.1.orig/res/ari/resource_bridges.c
++++ asterisk-15.6.1/res/ari/resource_bridges.c
+@@ -939,6 +939,10 @@ void ast_ari_bridges_create(struct ast_v
+ 		return;
+ 	}
+ 
++	if (!ast_strlen_zero(args->app)) {
++		stasis_app_subscribe_bridge(args->app, bridge);
++	}
++
+ 	ast_bridge_lock(bridge);
+ 	snapshot = ast_bridge_snapshot_create(bridge);
+ 	ast_bridge_unlock(bridge);
+@@ -989,6 +993,10 @@ void ast_ari_bridges_create_with_id(stru
+ 		return;
+ 	}
+ 
++	if (!ast_strlen_zero(args->app)) {
++		stasis_app_subscribe_bridge(args->app, bridge);
++	}
++
+ 	ast_bridge_lock(bridge);
+ 	snapshot = ast_bridge_snapshot_create(bridge);
+ 	ast_bridge_unlock(bridge);
+Index: asterisk-15.6.1/res/res_ari_bridges.c
+===================================================================
+--- asterisk-15.6.1.orig/res/res_ari_bridges.c
++++ asterisk-15.6.1/res/res_ari_bridges.c
+@@ -118,6 +118,10 @@ int ast_ari_bridges_create_parse_body(
+ 	if (field) {
+ 		args->name = ast_json_string_get(field);
+ 	}
++	field = ast_json_object_get(body, "app");
++	if (field) {
++		args->app = ast_json_string_get(field);
++	}
+ 	return 0;
+ }
+ 
+@@ -150,6 +154,9 @@ static void ast_ari_bridges_create_cb(
+ 		if (strcmp(i->name, "name") == 0) {
+ 			args.name = (i->value);
+ 		} else
++		if (strcmp(i->name, "app") == 0) {
++			args.app = (i->value);
++		} else
+ 		{}
+ 	}
+ 	if (ast_ari_bridges_create_parse_body(body, &args)) {
+@@ -202,6 +209,10 @@ int ast_ari_bridges_create_with_id_parse
+ 	if (field) {
+ 		args->name = ast_json_string_get(field);
+ 	}
++	field = ast_json_object_get(body, "app");
++	if (field) {
++		args->app = ast_json_string_get(field);
++	}
+ 	return 0;
+ }
+ 
+@@ -231,6 +242,9 @@ static void ast_ari_bridges_create_with_
+ 		if (strcmp(i->name, "name") == 0) {
+ 			args.name = (i->value);
+ 		} else
++		if (strcmp(i->name, "app") == 0) {
++			args.app = (i->value);
++		} else
+ 		{}
+ 	}
+ 	for (i = path_vars; i; i = i->next) {
+Index: asterisk-15.6.1/res/res_stasis.c
+===================================================================
+--- asterisk-15.6.1.orig/res/res_stasis.c
++++ asterisk-15.6.1/res/res_stasis.c
+@@ -1841,6 +1841,31 @@ enum stasis_app_subscribe_res stasis_app
+ }
+ 
+ 
++enum stasis_app_subscribe_res stasis_app_subscribe_bridge(const char *app_name,
++	struct ast_bridge *bridge)
++{
++	struct stasis_app *app = find_app_by_name(app_name);
++	int res;
++
++	if (!app) {
++		return STASIS_ASR_APP_NOT_FOUND;
++	}
++
++	ast_debug(3, "%s: Subscribing to %s\n", app_name, bridge->uniqueid);
++
++	res = app_subscribe_bridge(app, bridge);
++	ao2_ref(app, -1);
++
++	if (res != 0) {
++		ast_log(LOG_ERROR, "Error subscribing app '%s' to bridge '%s'\n",
++			app_name, bridge->uniqueid);
++		return STASIS_ASR_INTERNAL_ERROR;
++	}
++
++	return STASIS_ASR_OK;
++}
++
++
+ /*!
+  * \internal
+  * \brief Subscribe an app to an event source.
+Index: asterisk-15.6.1/res/ari/resource_bridges.h
+===================================================================
+--- asterisk-15.6.1.orig/res/ari/resource_bridges.h
++++ asterisk-15.6.1/res/ari/resource_bridges.h
+@@ -58,6 +58,8 @@ struct ast_ari_bridges_create_args {
+ 	const char *bridge_id;
+ 	/*! Name to give to the bridge being created. */
+ 	const char *name;
++	/*! The application that is subscribed to the bridge. */
++	const char *app;
+ };
+ /*!
+  * \brief Body parsing function for /bridges.
+@@ -88,6 +90,8 @@ struct ast_ari_bridges_create_with_id_ar
+ 	const char *bridge_id;
+ 	/*! Set the name of the bridge. */
+ 	const char *name;
++	/*! The application that is subscribed to the bridge. */
++	const char *app;
+ };
+ /*!
+  * \brief Body parsing function for /bridges/{bridgeId}.
+Index: asterisk-15.6.1/rest-api/api-docs/bridges.json
+===================================================================
+--- asterisk-15.6.1.orig/rest-api/api-docs/bridges.json
++++ asterisk-15.6.1/rest-api/api-docs/bridges.json
+@@ -47,6 +47,14 @@
+ 							"required": false,
+ 							"allowMultiple": false,
+ 							"dataType": "string"
++						},
++						{
++							"name": "app",
++							"description": "The application that is subscribed to the bridge.",
++							"paramType": "query",
++							"required": false,
++							"allowMultiple": false,
++							"dataType": "string"
+ 						}
+ 					]
+ 				}
+@@ -85,6 +93,14 @@
+ 							"paramType": "query",
+ 							"required": false,
+ 							"allowMultiple": false,
++							"dataType": "string"
++						},
++						{
++							"name": "app",
++							"description": "The application that is subscribed to the bridge.",
++							"paramType": "query",
++							"required": false,
++							"allowMultiple": false,
+ 							"dataType": "string"
+ 						}
+ 					]

@@ -1,3 +1,9 @@
+asterisk (8:15.6.1-1~wazo4) wazo-dev-stretch; urgency=medium
+
+  * add the app parameter to the bridge api
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 28 Sep 2018 07:54:39 -0400
+
 asterisk (8:15.6.1-1~wazo3) wazo-dev-stretch; urgency=medium
 
   * update patch from gerrit review
