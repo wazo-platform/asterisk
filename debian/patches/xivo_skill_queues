@@ -1813,7 +1813,7 @@ Index: asterisk-15.6.1/apps/app_queue.c
 +{
 +	struct skill_rule_operand *operand;
 +	size_t len = 512;
-+	char *str = malloc(len);
++	char *str = ast_malloc(len);
 +	char *s = str;
 +
 +	*str = '\0';
@@ -1843,7 +1843,7 @@ Index: asterisk-15.6.1/apps/app_queue.c
 +		{
 +			char *tmp = display_operator(operand->u.operator);
 +			ast_build_string(&s, &len, "(%s)", tmp);
-+			free(tmp);
++			ast_free(tmp);
 +			break;
 +		}
 +		}
