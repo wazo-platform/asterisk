@@ -434,7 +434,7 @@ Index: asterisk-16.0.0/res/res_ari_xivo.c
 +	.support_level = AST_MODULE_SUPPORT_CORE,
 +	.load = load_module,
 +	.unload = unload_module,
-+	.nonoptreq = "res_ari,res_stasis",
++	.requires = "res_ari,res_stasis",
 +);
 Index: asterisk-16.0.0/rest-api/api-docs/xivo.json
 ===================================================================
