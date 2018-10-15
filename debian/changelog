@@ -2,6 +2,7 @@ asterisk (8:16.0.0-1~wazo1) wazo-dev-stretch; urgency=medium
 
   * remove nova compatibility patch
   * upgrade to asterisk 16.0.0
+  * use the bundled jansson lib
 
  -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 15 Oct 2018 11:42:46 -0400
 
