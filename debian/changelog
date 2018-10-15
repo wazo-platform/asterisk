@@ -1,6 +1,7 @@
-asterisk (8:15.6.1-1~wazo5) UNRELEASED; urgency=medium
+asterisk (8:16.0.0-1~wazo1) wazo-dev-stretch; urgency=medium
 
   * remove nova compatibility patch
+  * upgrade to asterisk 16.0.0
 
  -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 15 Oct 2018 11:42:46 -0400
 

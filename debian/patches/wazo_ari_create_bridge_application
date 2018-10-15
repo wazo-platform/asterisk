@@ -1,8 +1,8 @@
-Index: asterisk-15.6.1/include/asterisk/stasis_app.h
+Index: asterisk-16.0.0/include/asterisk/stasis_app.h
 ===================================================================
---- asterisk-15.6.1.orig/include/asterisk/stasis_app.h
-+++ asterisk-15.6.1/include/asterisk/stasis_app.h
-@@ -335,6 +335,21 @@ enum stasis_app_subscribe_res stasis_app
+--- asterisk-16.0.0.orig/include/asterisk/stasis_app.h
++++ asterisk-16.0.0/include/asterisk/stasis_app.h
+@@ -323,6 +323,21 @@ enum stasis_app_subscribe_res stasis_app
  enum stasis_app_subscribe_res stasis_app_subscribe_channel(const char *app_name,
  	struct ast_channel *chan);
  
@@ -24,11 +24,11 @@ Index: asterisk-15.6.1/include/asterisk/stasis_app.h
  /*! @} */
  
  /*! @{ */
-Index: asterisk-15.6.1/res/ari/resource_bridges.c
+Index: asterisk-16.0.0/res/ari/resource_bridges.c
 ===================================================================
---- asterisk-15.6.1.orig/res/ari/resource_bridges.c
-+++ asterisk-15.6.1/res/ari/resource_bridges.c
-@@ -939,6 +939,10 @@ void ast_ari_bridges_create(struct ast_v
+--- asterisk-16.0.0.orig/res/ari/resource_bridges.c
++++ asterisk-16.0.0/res/ari/resource_bridges.c
+@@ -943,6 +943,10 @@ void ast_ari_bridges_create(struct ast_v
  		return;
  	}
  
@@ -39,7 +39,7 @@ Index: asterisk-15.6.1/res/ari/resource_bridges.c
  	ast_bridge_lock(bridge);
  	snapshot = ast_bridge_snapshot_create(bridge);
  	ast_bridge_unlock(bridge);
-@@ -989,6 +993,10 @@ void ast_ari_bridges_create_with_id(stru
+@@ -993,6 +997,10 @@ void ast_ari_bridges_create_with_id(stru
  		return;
  	}
  
@@ -50,11 +50,11 @@ Index: asterisk-15.6.1/res/ari/resource_bridges.c
  	ast_bridge_lock(bridge);
  	snapshot = ast_bridge_snapshot_create(bridge);
  	ast_bridge_unlock(bridge);
-Index: asterisk-15.6.1/res/res_ari_bridges.c
+Index: asterisk-16.0.0/res/res_ari_bridges.c
 ===================================================================
---- asterisk-15.6.1.orig/res/res_ari_bridges.c
-+++ asterisk-15.6.1/res/res_ari_bridges.c
-@@ -118,6 +118,10 @@ int ast_ari_bridges_create_parse_body(
+--- asterisk-16.0.0.orig/res/res_ari_bridges.c
++++ asterisk-16.0.0/res/res_ari_bridges.c
+@@ -120,6 +120,10 @@ int ast_ari_bridges_create_parse_body(
  	if (field) {
  		args->name = ast_json_string_get(field);
  	}
@@ -65,7 +65,7 @@ Index: asterisk-15.6.1/res/res_ari_bridges.c
  	return 0;
  }
  
-@@ -150,6 +154,9 @@ static void ast_ari_bridges_create_cb(
+@@ -152,6 +156,9 @@ static void ast_ari_bridges_create_cb(
  		if (strcmp(i->name, "name") == 0) {
  			args.name = (i->value);
  		} else
@@ -75,7 +75,7 @@ Index: asterisk-15.6.1/res/res_ari_bridges.c
  		{}
  	}
  	if (ast_ari_bridges_create_parse_body(body, &args)) {
-@@ -202,6 +209,10 @@ int ast_ari_bridges_create_with_id_parse
+@@ -204,6 +211,10 @@ int ast_ari_bridges_create_with_id_parse
  	if (field) {
  		args->name = ast_json_string_get(field);
  	}
@@ -86,7 +86,7 @@ Index: asterisk-15.6.1/res/res_ari_bridges.c
  	return 0;
  }
  
-@@ -231,6 +242,9 @@ static void ast_ari_bridges_create_with_
+@@ -233,6 +244,9 @@ static void ast_ari_bridges_create_with_
  		if (strcmp(i->name, "name") == 0) {
  			args.name = (i->value);
  		} else
@@ -96,11 +96,11 @@ Index: asterisk-15.6.1/res/res_ari_bridges.c
  		{}
  	}
  	for (i = path_vars; i; i = i->next) {
-Index: asterisk-15.6.1/res/res_stasis.c
+Index: asterisk-16.0.0/res/res_stasis.c
 ===================================================================
---- asterisk-15.6.1.orig/res/res_stasis.c
-+++ asterisk-15.6.1/res/res_stasis.c
-@@ -1841,6 +1841,31 @@ enum stasis_app_subscribe_res stasis_app
+--- asterisk-16.0.0.orig/res/res_stasis.c
++++ asterisk-16.0.0/res/res_stasis.c
+@@ -1831,6 +1831,31 @@ enum stasis_app_subscribe_res stasis_app
  }
  
  
@@ -132,10 +132,10 @@ Index: asterisk-15.6.1/res/res_stasis.c
  /*!
   * \internal
   * \brief Subscribe an app to an event source.
-Index: asterisk-15.6.1/res/ari/resource_bridges.h
+Index: asterisk-16.0.0/res/ari/resource_bridges.h
 ===================================================================
---- asterisk-15.6.1.orig/res/ari/resource_bridges.h
-+++ asterisk-15.6.1/res/ari/resource_bridges.h
+--- asterisk-16.0.0.orig/res/ari/resource_bridges.h
++++ asterisk-16.0.0/res/ari/resource_bridges.h
 @@ -58,6 +58,8 @@ struct ast_ari_bridges_create_args {
  	const char *bridge_id;
  	/*! Name to give to the bridge being created. */
@@ -154,11 +154,11 @@ Index: asterisk-15.6.1/res/ari/resource_bridges.h
  };
  /*!
   * \brief Body parsing function for /bridges/{bridgeId}.
-Index: asterisk-15.6.1/rest-api/api-docs/bridges.json
+Index: asterisk-16.0.0/rest-api/api-docs/bridges.json
 ===================================================================
---- asterisk-15.6.1.orig/rest-api/api-docs/bridges.json
-+++ asterisk-15.6.1/rest-api/api-docs/bridges.json
-@@ -47,6 +47,14 @@
+--- asterisk-16.0.0.orig/rest-api/api-docs/bridges.json
++++ asterisk-16.0.0/rest-api/api-docs/bridges.json
+@@ -51,6 +51,14 @@
  							"required": false,
  							"allowMultiple": false,
  							"dataType": "string"
@@ -173,7 +173,7 @@ Index: asterisk-15.6.1/rest-api/api-docs/bridges.json
  						}
  					]
  				}
-@@ -85,6 +93,14 @@
+@@ -89,6 +97,14 @@
  							"paramType": "query",
  							"required": false,
  							"allowMultiple": false,

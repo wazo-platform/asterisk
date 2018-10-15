@@ -39,11 +39,11 @@ Change-Id: Ibff479e167b3320c68aaabfada7e1d0ef7bd548c
  res/res_stasis.c           | 81 +++++++++++++++++---------------------
  2 files changed, 37 insertions(+), 45 deletions(-)
 
-Index: asterisk-15.6.1/res/ari/resource_bridges.c
+Index: asterisk-16.0.0/res/ari/resource_bridges.c
 ===================================================================
---- asterisk-15.6.1.orig/res/ari/resource_bridges.c
-+++ asterisk-15.6.1/res/ari/resource_bridges.c
-@@ -821,6 +821,7 @@ void ast_ari_bridges_start_moh(struct as
+--- asterisk-16.0.0.orig/res/ari/resource_bridges.c
++++ asterisk-16.0.0/res/ari/resource_bridges.c
+@@ -825,6 +825,7 @@ void ast_ari_bridges_start_moh(struct as
  	}
  
  	ast_moh_start(moh_channel, moh_class, NULL);
@@ -51,10 +51,10 @@ Index: asterisk-15.6.1/res/ari/resource_bridges.c
  
  	ast_ari_response_no_content(response);
  
-Index: asterisk-15.6.1/res/res_stasis.c
+Index: asterisk-16.0.0/res/res_stasis.c
 ===================================================================
---- asterisk-15.6.1.orig/res/res_stasis.c
-+++ asterisk-15.6.1/res/res_stasis.c
+--- asterisk-16.0.0.orig/res/res_stasis.c
++++ asterisk-16.0.0/res/res_stasis.c
 @@ -472,29 +472,6 @@ static int bridges_channel_sort_fn(const
  	return cmp;
  }
@@ -184,7 +184,7 @@ Index: asterisk-15.6.1/res/res_stasis.c
  		ast_hangup(chan);
  		return NULL;
  	}
-@@ -2200,8 +2191,8 @@ static int load_module(void)
+@@ -2180,8 +2171,8 @@ static int load_module(void)
  	app_controls = ao2_container_alloc(CONTROLS_NUM_BUCKETS, control_hash, control_compare);
  	app_bridges = ao2_container_alloc(BRIDGES_NUM_BUCKETS, bridges_hash, bridges_compare);
  	app_bridges_moh = ao2_container_alloc_hash(
