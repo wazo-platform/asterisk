@@ -1,3 +1,9 @@
+asterisk (8:16.0.0-1~wazo2) wazo-dev-stretch; urgency=medium
+
+  * add libedit-dev to build dependencies
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 15 Oct 2018 14:47:37 -0400
+
 asterisk (8:16.0.0-1~wazo1) wazo-dev-stretch; urgency=medium
 
   * remove nova compatibility patch
