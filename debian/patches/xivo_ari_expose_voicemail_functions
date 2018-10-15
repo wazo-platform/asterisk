@@ -201,11 +201,11 @@ Index: asterisk-16.0.0/res/res_ari_xivo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.0.0/res/res_ari_xivo.c
-@@ -0,0 +1,236 @@
+@@ -0,0 +1,234 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
-+ * Copyright (C) 2016 Proformatique Inc.
++ * Copyright 2016-2018 The Wazo Authors  (see the AUTHORS file)
 + *
 + * Etienne Lessard
 + *
@@ -420,7 +420,6 @@ Index: asterisk-16.0.0/res/res_ari_xivo.c
 +static int load_module(void)
 +{
 +	int res = 0;
-+	stasis_app_ref();
 +	res |= ast_ari_add_handler(&xivo);
 +	return res;
 +}
@@ -428,7 +427,6 @@ Index: asterisk-16.0.0/res/res_ari_xivo.c
 +static int unload_module(void)
 +{
 +	ast_ari_remove_handler(&xivo);
-+	stasis_app_unref();
 +	return 0;
 +}
 +
