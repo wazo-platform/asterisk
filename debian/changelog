@@ -1,16 +1,11 @@
-asterisk (8:16.0.0-1~wazo2) wazo-dev-stretch; urgency=medium
-
-  * add libedit-dev to build dependencies
-
- -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 15 Oct 2018 14:47:37 -0400
-
-asterisk (8:16.0.0-1~wazo1) wazo-dev-stretch; urgency=medium
+asterisk (8:16.0.0-1~wazo3) wazo-dev-stretch; urgency=medium
 
   * remove nova compatibility patch
   * upgrade to asterisk 16.0.0
   * use the bundled jansson lib
+  * add libedit-dev to build dependencies
 
- -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 15 Oct 2018 11:42:46 -0400
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 22 Oct 2018 08:46:24 -0400
 
 asterisk (8:15.6.1-1~wazo4) wazo-dev-stretch; urgency=medium
 
