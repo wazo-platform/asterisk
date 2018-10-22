@@ -3,7 +3,7 @@
 
 PKG  = $(word 2,$(shell dpkg-parsechangelog | grep Source))
 VER ?= $(shell dpkg-parsechangelog | grep Version: | awk -F': ' '{print $$NF}' | sed -ne 's/^\(\([0-9]\+\):\)\?\(.*\)-.*/\3/p')
-ASTERISK_URL_DOWNLOAD = "http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-15.6.1.tar.gz"
+ASTERISK_URL_DOWNLOAD = "http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-16.0.0.tar.gz"
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/autotools.mk
@@ -32,7 +32,7 @@ DEB_MAKE_INVOKE += MENUSELECT_MOH= \
 
 # Debian needs
 DEB_DH_INSTALLINIT_ARGS = --name asterisk -- defaults 30 70
-DEB_CONFIGURE_EXTRA_FLAGS = --without-h323 --without-misdn
+DEB_CONFIGURE_EXTRA_FLAGS = --without-h323 --without-misdn --with-jansson-bundled
 DEB_CONFIGURE_SCRIPT_ENV += $(FETCH_ENV)
 
 # on the system. However it is generally not a good idea to actually

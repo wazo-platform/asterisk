@@ -1,3 +1,12 @@
+asterisk (8:16.0.0-1~wazo3) wazo-dev-stretch; urgency=medium
+
+  * remove nova compatibility patch
+  * upgrade to asterisk 16.0.0
+  * use the bundled jansson lib
+  * add libedit-dev to build dependencies
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 22 Oct 2018 08:46:24 -0400
+
 asterisk (8:15.6.1-1~wazo4) wazo-dev-stretch; urgency=medium
 
   * add the app parameter to the bridge api

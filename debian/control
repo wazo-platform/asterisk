@@ -16,6 +16,7 @@ Build-Depends:
  libc-client-dev,
  libcap-dev (>= 1:2.16-4) | libcap2-dev,
  libcurl4-openssl-dev,
+ libedit-dev,
  libgsm1-dev,
  libical-dev,
  libiksemel-dev,
