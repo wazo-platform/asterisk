@@ -18,8 +18,8 @@ RUN true && \
                           dpkg-dev \
                           gdb \
                           libc6-dbg \
-                          xivo-libsccp \
-                          xivo-libsccp-dbg && \
+                          wazo-libsccp \
+                          wazo-libsccp-dbg && \
     apt-get -q source asterisk && \
     true
 
