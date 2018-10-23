@@ -65,7 +65,7 @@ Section: comm
 Replaces: asterisk11
 Conflicts: asterisk11
 Provides: asterisk11
-Depends: ${misc:Depends}, ${shlibs:Depends}, adduser, mpg123
+Depends: ${misc:Depends}, ${shlibs:Depends}, adduser, mpg123, wazo-asterisk-config
 Breaks:
  wazo-res-amqp (<< 17.14~),
  wazo-res-stasis-amqp (<< 17.14~),
