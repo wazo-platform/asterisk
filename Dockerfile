@@ -11,7 +11,7 @@ RUN echo "deb http://mirror.wazo.community/debian/ wazo-dev-stretch main" > /etc
 RUN wget http://mirror.wazo.community/wazo_current.key -O - | apt-key add -
 RUN apt-get -q update && apt-get -q -y install \
     asterisk \
-    xivo-libsccp
+    wazo-libsccp
 
 EXPOSE 2000 5038 5060/udp
 
