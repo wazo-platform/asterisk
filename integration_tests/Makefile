@@ -1,5 +1,5 @@
 test-setup:
-	docker pull waisbrot/wait
+	docker pull wazopbx/wait
 	docker pull wazopbx/asterisk
 
 test:
