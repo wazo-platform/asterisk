@@ -1,3 +1,9 @@
+asterisk (8:16.0.0-1~wazo8) wazo-dev-stretch; urgency=medium
+
+  * remove patches that are not necessary with pjsip
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 19 Nov 2018 13:51:06 -0500
+
 asterisk (8:16.0.0-1~wazo7) wazo-dev-stretch; urgency=medium
 
   * upgrade libsrtp 1.5.4
