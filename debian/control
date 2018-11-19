@@ -38,7 +38,7 @@ Build-Depends:
  libspeexdsp-dev,
  libsqlite-dev,
  libsqlite3-dev,
- libsrtp0-dev,
+ libsrtp0-dev (>= 1.5.4),
  libss7-dev (>= 2.0),
  libssl-dev,
  libtonezone-dev (>= 1:2.0.0),
