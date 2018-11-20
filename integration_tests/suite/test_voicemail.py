@@ -25,14 +25,6 @@ class AssetLauncher(AssetLaunchingTestCase):
     asset = 'base'
     service = 'asterisk'
 
-    @classmethod
-    def _docker_compose_options(cls):
-        return [
-            '--file', os.path.join(cls.assets_root, 'docker-compose.yml'),
-            '--file', os.path.join(cls.assets_root, 'docker-compose.{}.override.yml'.format(cls.asset)),
-            '--project-name', cls.service,
-        ]
-
 
 @pytest.fixture()
 def ari():
