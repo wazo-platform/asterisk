@@ -1,7 +1,7 @@
-Index: asterisk-16.0.0/apps/app_queue.c
+Index: asterisk-16.0.1/apps/app_queue.c
 ===================================================================
---- asterisk-16.0.0.orig/apps/app_queue.c
-+++ asterisk-16.0.0/apps/app_queue.c
+--- asterisk-16.0.1.orig/apps/app_queue.c
++++ asterisk-16.0.1/apps/app_queue.c
 @@ -4295,7 +4295,7 @@ static int say_position(struct queue_ent
  		}
  

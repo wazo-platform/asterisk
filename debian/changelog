@@ -1,3 +1,9 @@
+asterisk (8:16.0.1-1~wazo1) wazo-dev-stretch; urgency=medium
+
+  * upgrade to asterisk 16.0.1
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 20 Nov 2018 13:25:13 -0500
+
 asterisk (8:16.0.0-1~wazo8) wazo-dev-stretch; urgency=medium
 
   * remove patches that are not necessary with pjsip
