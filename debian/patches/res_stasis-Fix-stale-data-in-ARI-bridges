@@ -39,10 +39,10 @@ Change-Id: Ibff479e167b3320c68aaabfada7e1d0ef7bd548c
  res/res_stasis.c           | 81 +++++++++++++++++---------------------
  2 files changed, 37 insertions(+), 45 deletions(-)
 
-Index: asterisk-16.0.0/res/ari/resource_bridges.c
+Index: asterisk-16.0.1/res/ari/resource_bridges.c
 ===================================================================
---- asterisk-16.0.0.orig/res/ari/resource_bridges.c
-+++ asterisk-16.0.0/res/ari/resource_bridges.c
+--- asterisk-16.0.1.orig/res/ari/resource_bridges.c
++++ asterisk-16.0.1/res/ari/resource_bridges.c
 @@ -825,6 +825,7 @@ void ast_ari_bridges_start_moh(struct as
  	}
  
@@ -51,10 +51,10 @@ Index: asterisk-16.0.0/res/ari/resource_bridges.c
  
  	ast_ari_response_no_content(response);
  
-Index: asterisk-16.0.0/res/res_stasis.c
+Index: asterisk-16.0.1/res/res_stasis.c
 ===================================================================
---- asterisk-16.0.0.orig/res/res_stasis.c
-+++ asterisk-16.0.0/res/res_stasis.c
+--- asterisk-16.0.1.orig/res/res_stasis.c
++++ asterisk-16.0.1/res/res_stasis.c
 @@ -472,29 +472,6 @@ static int bridges_channel_sort_fn(const
  	return cmp;
  }
