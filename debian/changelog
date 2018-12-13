@@ -1,3 +1,15 @@
+asterisk (8:16.1.0-1~wazo2) wazo-dev-stretch; urgency=medium
+
+  * rebuild
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 13 Dec 2018 10:17:45 -0500
+
+asterisk (8:16.1.0-1~wazo1) wazo-dev-stretch; urgency=medium
+
+  * upgrade to Asterisk 16.1.0
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 12 Dec 2018 08:07:23 -0500
+
 asterisk (8:16.0.1-1~wazo1) wazo-dev-stretch; urgency=medium
 
   * upgrade to asterisk 16.0.1
