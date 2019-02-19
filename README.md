@@ -14,10 +14,10 @@ To update the version of Asterisk:
   * Repeat the last step until all patches have been refreshed
 * Commit and push
 
-To test that it compiles and builds fine (example for 13.10.0 on a remote xivo):
+To test that it compiles and builds fine (example for 13.10.0 on a remote wazo):
 
-* rsync -v -rtlp asterisk-13.10.0.tar.gz debian xivo:ast-rebuild
-* ssh xivo
+* rsync -v -rtlp asterisk-13.10.0.tar.gz debian wazo:ast-rebuild
+* ssh wazo
   * cd ast-rebuild
   * tar xf asterisk-*.tar.gz
   * rename 's/asterisk-(.*).tar.gz/asterisk_$1.orig.tar.gz/' asterisk-*.tar.gz

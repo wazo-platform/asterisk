@@ -1,16 +1,16 @@
-Index: asterisk-16.1.1/res/ari.make
+Index: asterisk-16.2.0/res/ari.make
 ===================================================================
---- asterisk-16.1.1.orig/res/ari.make
-+++ asterisk-16.1.1/res/ari.make
+--- asterisk-16.2.0.orig/res/ari.make
++++ asterisk-16.2.0/res/ari.make
 @@ -28,3 +28,4 @@ $(call MOD_ADD_C,res_ari_device_states,a
  $(call MOD_ADD_C,res_ari_mailboxes,ari/resource_mailboxes.c)
  $(call MOD_ADD_C,res_ari_events,ari/resource_events.c)
  $(call MOD_ADD_C,res_ari_applications,ari/resource_applications.c)
 +$(call MOD_ADD_C,res_ari_xivo,ari/resource_xivo.c)
-Index: asterisk-16.1.1/res/ari/resource_xivo.c
+Index: asterisk-16.2.0/res/ari/resource_xivo.c
 ===================================================================
 --- /dev/null
-+++ asterisk-16.1.1/res/ari/resource_xivo.c
++++ asterisk-16.2.0/res/ari/resource_xivo.c
 @@ -0,0 +1,91 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -103,10 +103,10 @@ Index: asterisk-16.1.1/res/ari/resource_xivo.c
 +
 +	ast_ari_response_no_content(response);
 +}
-Index: asterisk-16.1.1/res/ari/resource_xivo.h
+Index: asterisk-16.2.0/res/ari/resource_xivo.h
 ===================================================================
 --- /dev/null
-+++ asterisk-16.1.1/res/ari/resource_xivo.h
++++ asterisk-16.2.0/res/ari/resource_xivo.h
 @@ -0,0 +1,89 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -197,10 +197,10 @@ Index: asterisk-16.1.1/res/ari/resource_xivo.h
 +void ast_ari_xivo_move_voicemail_message(struct ast_variable *headers, struct ast_ari_xivo_move_voicemail_message_args *args, struct ast_ari_response *response);
 +
 +#endif /* _ASTERISK_RESOURCE_XIVO_H */
-Index: asterisk-16.1.1/res/res_ari_xivo.c
+Index: asterisk-16.2.0/res/res_ari_xivo.c
 ===================================================================
 --- /dev/null
-+++ asterisk-16.1.1/res/res_ari_xivo.c
++++ asterisk-16.2.0/res/res_ari_xivo.c
 @@ -0,0 +1,234 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -436,10 +436,10 @@ Index: asterisk-16.1.1/res/res_ari_xivo.c
 +	.unload = unload_module,
 +	.requires = "res_ari,res_stasis",
 +);
-Index: asterisk-16.1.1/rest-api/api-docs/xivo.json
+Index: asterisk-16.2.0/rest-api/api-docs/xivo.json
 ===================================================================
 --- /dev/null
-+++ asterisk-16.1.1/rest-api/api-docs/xivo.json
++++ asterisk-16.2.0/rest-api/api-docs/xivo.json
 @@ -0,0 +1,68 @@
 +{
 +	"_copyright": "Copyright (C) 2016 Proformatique Inc.",
@@ -509,10 +509,10 @@ Index: asterisk-16.1.1/rest-api/api-docs/xivo.json
 +	"models": {
 +	}
 +}
-Index: asterisk-16.1.1/rest-api/resources.json
+Index: asterisk-16.2.0/rest-api/resources.json
 ===================================================================
---- asterisk-16.1.1.orig/rest-api/resources.json
-+++ asterisk-16.1.1/rest-api/resources.json
+--- asterisk-16.2.0.orig/rest-api/resources.json
++++ asterisk-16.2.0/rest-api/resources.json
 @@ -49,6 +49,10 @@
  		{
  			"path": "/api-docs/applications.{format}",

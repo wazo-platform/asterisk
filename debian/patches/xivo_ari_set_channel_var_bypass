@@ -1,8 +1,8 @@
-Index: asterisk-16.1.1/res/ari/resource_channels.c
+Index: asterisk-16.2.0/res/ari/resource_channels.c
 ===================================================================
---- asterisk-16.1.1.orig/res/ari/resource_channels.c
-+++ asterisk-16.1.1/res/ari/resource_channels.c
-@@ -1508,6 +1508,21 @@ void ast_ari_channels_set_channel_var(st
+--- asterisk-16.2.0.orig/res/ari/resource_channels.c
++++ asterisk-16.2.0/res/ari/resource_channels.c
+@@ -1524,6 +1524,21 @@ void ast_ari_channels_set_channel_var(st
  		return;
  	}
  
@@ -24,10 +24,10 @@ Index: asterisk-16.1.1/res/ari/resource_channels.c
  	control = find_control(response, args->channel_id);
  	if (control == NULL) {
  		/* response filled in by find_control */
-Index: asterisk-16.1.1/res/ari/resource_channels.h
+Index: asterisk-16.2.0/res/ari/resource_channels.h
 ===================================================================
---- asterisk-16.1.1.orig/res/ari/resource_channels.h
-+++ asterisk-16.1.1/res/ari/resource_channels.h
+--- asterisk-16.2.0.orig/res/ari/resource_channels.h
++++ asterisk-16.2.0/res/ari/resource_channels.h
 @@ -661,6 +661,8 @@ struct ast_ari_channels_set_channel_var_
  	const char *variable;
  	/*! The value to set the variable to */
@@ -37,10 +37,10 @@ Index: asterisk-16.1.1/res/ari/resource_channels.h
  };
  /*!
   * \brief Body parsing function for /channels/{channelId}/variable.
-Index: asterisk-16.1.1/res/res_ari_channels.c
+Index: asterisk-16.2.0/res/res_ari_channels.c
 ===================================================================
---- asterisk-16.1.1.orig/res/res_ari_channels.c
-+++ asterisk-16.1.1/res/res_ari_channels.c
+--- asterisk-16.2.0.orig/res/res_ari_channels.c
++++ asterisk-16.2.0/res/res_ari_channels.c
 @@ -2279,6 +2279,10 @@ int ast_ari_channels_set_channel_var_par
  	if (field) {
  		args->value = ast_json_string_get(field);
@@ -62,11 +62,11 @@ Index: asterisk-16.1.1/res/res_ari_channels.c
  		{}
  	}
  	for (i = path_vars; i; i = i->next) {
-Index: asterisk-16.1.1/rest-api/api-docs/channels.json
+Index: asterisk-16.2.0/rest-api/api-docs/channels.json
 ===================================================================
---- asterisk-16.1.1.orig/rest-api/api-docs/channels.json
-+++ asterisk-16.1.1/rest-api/api-docs/channels.json
-@@ -1407,6 +1407,15 @@
+--- asterisk-16.2.0.orig/rest-api/api-docs/channels.json
++++ asterisk-16.2.0/rest-api/api-docs/channels.json
+@@ -1415,6 +1415,15 @@
  							"required": false,
  							"allowMultiple": false,
  							"dataType": "string"
