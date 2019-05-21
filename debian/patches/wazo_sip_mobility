@@ -93,7 +93,7 @@ Index: asterisk-16.3.0/include/asterisk/res_pjsip.h
  struct ast_sip_contact *ast_sip_location_create_contact(struct ast_sip_aor *aor,
  	const char *uri, struct timeval expiration_time, const char *path_info,
  	const char *user_agent, const char *via_addr, int via_port, const char *call_id,
--	int prune_on_boot, struct ast_sip_endpoint *endpoint, pj_str_t* mobility);
+-	int prune_on_boot, struct ast_sip_endpoint *endpoint);
 +	int prune_on_boot, struct ast_sip_endpoint *endpoint, const char* mobility);
  
  /*!
