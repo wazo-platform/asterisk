@@ -44,21 +44,25 @@ Index: asterisk/asterisk-16.3.0/res/res_pjsip/location.c
 Index: asterisk/asterisk-16.3.0/res/res_pjsip_registrar.c
 ===================================================================
 --- asterisk.orig/asterisk-16.3.0/res/res_pjsip_registrar.c	2019-05-21 11:06:14.069470986 -0400
-+++ asterisk/asterisk-16.3.0/res/res_pjsip_registrar.c	2019-05-21 13:49:30.282536863 -0400
-@@ -742,7 +742,7 @@
++++ asterisk/asterisk-16.3.0/res/res_pjsip_registrar.c	2019-05-21 14:06:59.909723747 -0400
+@@ -742,6 +742,9 @@
  
  		if (!contact) {
  			int prune_on_boot;
--
-+			char* mobility;
++			char* mobility = NULL;
++			pj_str_t mobility_str = pj_str("mobility");
++			pjsip_param* mobility_param = NULL;
+ 
  			/* If they are actually trying to delete a contact that does not exist... be forgiving */
  			if (!expiration) {
- 				ast_verb(3, "Attempted to remove non-existent contact '%s' from AOR '%s' by request\n",
-@@ -750,12 +750,16 @@
+@@ -750,12 +753,19 @@
  				continue;
  			}
  
-+			ast_copy_pj_str2(&mobility, &contact_hdr->other_param.prev->prev->value);
++			mobility_param = pjsip_param_find(&contact_hdr->other_param, &mobility_str);
++			if(mobility_param) {
++				ast_copy_pj_str2(&mobility, &pjsip_param_find(&contact_hdr->other_param, &mobility_str)->value);
++			}
 +
  			prune_on_boot = !ast_sip_will_uri_survive_restart(details.uri, endpoint, rdata);
  
