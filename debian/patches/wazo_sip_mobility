@@ -1,0 +1,42 @@
+Index: asterisk/asterisk-16.3.0/res/res_pjsip/location.c
+===================================================================
+--- asterisk.orig/asterisk-16.3.0/res/res_pjsip/location.c	2019-04-04 10:49:57.000000000 -0400
++++ asterisk/asterisk-16.3.0/res/res_pjsip/location.c	2019-05-21 11:08:54.594381284 -0400
+@@ -398,6 +398,16 @@
+ 	if (!ast_strlen_zero(call_id)) {
+ 		ast_string_field_set(contact, call_id, call_id);
+ 	}
++	if (pj_strlen(mobility)) {
++		char *temp = (char*) ast_calloc(mobility->slen + 1, sizeof(char));
++		int i = 0;
++		for (; i < mobility->slen; ++i) {
++			temp[i] = mobility->ptr[i];
++		}
++		temp[mobility->slen] = '\0';
++		ast_string_field_set(contact, mobility, temp);
++		ast_free(temp);
++	}
+ 
+ 	contact->endpoint = ao2_bump(endpoint);
+ 	if (endpoint) {
+@@ -1373,6 +1383,7 @@
+ 	ast_sorcery_object_field_register(sorcery, "contact", "via_port", "0", OPT_UINT_T, 0, FLDSET(struct ast_sip_contact, via_port));
+ 	ast_sorcery_object_field_register(sorcery, "contact", "call_id", "", OPT_STRINGFIELD_T, 0, STRFLDSET(struct ast_sip_contact, call_id));
+ 	ast_sorcery_object_field_register(sorcery, "contact", "prune_on_boot", "no", OPT_YESNO_T, 1, FLDSET(struct ast_sip_contact, prune_on_boot));
++	ast_sorcery_object_field_register(sorcery, "contact", "mobility", "", OPT_STRINGFIELD_T, 0, STRFLDSET(struct ast_sip_contact, mobility));
+ 
+ 	ast_sorcery_object_field_register(sorcery, "aor", "type", "", OPT_NOOP_T, 0, 0);
+ 	ast_sorcery_object_field_register(sorcery, "aor", "minimum_expiration", "60", OPT_UINT_T, 0, FLDSET(struct ast_sip_aor, minimum_expiration));
+Index: asterisk/asterisk-16.3.0/res/res_pjsip_registrar.c
+===================================================================
+--- asterisk.orig/asterisk-16.3.0/res/res_pjsip_registrar.c	2019-05-21 11:06:14.069470986 -0400
++++ asterisk/asterisk-16.3.0/res/res_pjsip_registrar.c	2019-05-21 11:06:53.225696092 -0400
+@@ -755,7 +755,7 @@
+ 			contact = ast_sip_location_create_contact(aor, contact_uri,
+ 				ast_tvadd(ast_tvnow(), ast_samp2tv(expiration, 1)),
+ 				path_str ? ast_str_buffer(path_str) : NULL,
+-				user_agent, via_addr, via_port, call_id, prune_on_boot, endpoint);
++				user_agent, via_addr, via_port, call_id, prune_on_boot, endpoint, &contact_hdr->other_param.prev->prev->value);
+ 			if (!contact) {
+ 				ast_log(LOG_ERROR, "Unable to bind contact '%s' to AOR '%s'\n",
+ 					contact_uri, aor_name);
