@@ -1,35 +1,28 @@
 Index: asterisk/asterisk-16.3.0/res/res_pjsip/location.c
 ===================================================================
 --- asterisk.orig/asterisk-16.3.0/res/res_pjsip/location.c	2019-04-04 10:49:57.000000000 -0400
-+++ asterisk/asterisk-16.3.0/res/res_pjsip/location.c	2019-05-21 12:06:14.561607091 -0400
++++ asterisk/asterisk-16.3.0/res/res_pjsip/location.c	2019-05-21 13:47:25.897511423 -0400
 @@ -355,7 +355,7 @@
  struct ast_sip_contact *ast_sip_location_create_contact(struct ast_sip_aor *aor,
  	const char *uri, struct timeval expiration_time, const char *path_info,
  	const char *user_agent, const char *via_addr, int via_port, const char *call_id,
 -	int prune_on_boot, struct ast_sip_endpoint *endpoint)
-+	int prune_on_boot, struct ast_sip_endpoint *endpoint, pj_str_t* mobility)
++	int prune_on_boot, struct ast_sip_endpoint *endpoint, const char* mobility)
  {
  	struct ast_sip_contact *contact;
  	char name[MAX_OBJECT_FIELD * 2 + 3];
-@@ -399,6 +399,17 @@
+@@ -399,6 +399,10 @@
  		ast_string_field_set(contact, call_id, call_id);
  	}
  
-+	if (mobility && pj_strlen(mobility)) {
-+		char *temp = (char*) ast_calloc(mobility->slen + 1, sizeof(char));
-+		int i = 0;
-+		for (; i < mobility->slen; ++i) {
-+			temp[i] = mobility->ptr[i];
-+		}
-+		temp[mobility->slen] = '\0';
-+		ast_string_field_set(contact, mobility, temp);
-+		ast_free(temp);
++	if (!ast_strlen_zero(mobility)) {
++		ast_string_field_set(contact, mobility, mobility);
 +	}
 +
  	contact->endpoint = ao2_bump(endpoint);
  	if (endpoint) {
  		ast_string_field_set(contact, endpoint_name, ast_sorcery_object_get_id(endpoint));
-@@ -419,9 +430,8 @@
+@@ -419,9 +423,8 @@
  		struct ast_sip_endpoint *endpoint)
  {
  	struct ast_sip_contact *contact;
@@ -40,7 +33,7 @@ Index: asterisk/asterisk-16.3.0/res/res_pjsip/location.c
  	ao2_cleanup(contact);
  	return contact ? 0 : -1;
  }
-@@ -1373,6 +1383,7 @@
+@@ -1373,6 +1376,7 @@
  	ast_sorcery_object_field_register(sorcery, "contact", "via_port", "0", OPT_UINT_T, 0, FLDSET(struct ast_sip_contact, via_port));
  	ast_sorcery_object_field_register(sorcery, "contact", "call_id", "", OPT_STRINGFIELD_T, 0, STRFLDSET(struct ast_sip_contact, call_id));
  	ast_sorcery_object_field_register(sorcery, "contact", "prune_on_boot", "no", OPT_YESNO_T, 1, FLDSET(struct ast_sip_contact, prune_on_boot));
@@ -51,20 +44,38 @@ Index: asterisk/asterisk-16.3.0/res/res_pjsip/location.c
 Index: asterisk/asterisk-16.3.0/res/res_pjsip_registrar.c
 ===================================================================
 --- asterisk.orig/asterisk-16.3.0/res/res_pjsip_registrar.c	2019-05-21 11:06:14.069470986 -0400
-+++ asterisk/asterisk-16.3.0/res/res_pjsip_registrar.c	2019-05-21 11:06:53.225696092 -0400
-@@ -755,7 +755,7 @@
++++ asterisk/asterisk-16.3.0/res/res_pjsip_registrar.c	2019-05-21 13:49:30.282536863 -0400
+@@ -742,7 +742,7 @@
+ 
+ 		if (!contact) {
+ 			int prune_on_boot;
+-
++			char* mobility;
+ 			/* If they are actually trying to delete a contact that does not exist... be forgiving */
+ 			if (!expiration) {
+ 				ast_verb(3, "Attempted to remove non-existent contact '%s' from AOR '%s' by request\n",
+@@ -750,12 +750,16 @@
+ 				continue;
+ 			}
+ 
++			ast_copy_pj_str2(&mobility, &contact_hdr->other_param.prev->prev->value);
++
+ 			prune_on_boot = !ast_sip_will_uri_survive_restart(details.uri, endpoint, rdata);
+ 
  			contact = ast_sip_location_create_contact(aor, contact_uri,
  				ast_tvadd(ast_tvnow(), ast_samp2tv(expiration, 1)),
  				path_str ? ast_str_buffer(path_str) : NULL,
 -				user_agent, via_addr, via_port, call_id, prune_on_boot, endpoint);
-+				user_agent, via_addr, via_port, call_id, prune_on_boot, endpoint, &contact_hdr->other_param.prev->prev->value);
++				user_agent, via_addr, via_port, call_id, prune_on_boot, endpoint, mobility);
++			ast_free(mobility);
++
  			if (!contact) {
  				ast_log(LOG_ERROR, "Unable to bind contact '%s' to AOR '%s'\n",
  					contact_uri, aor_name);
 Index: asterisk/asterisk-16.3.0/include/asterisk/res_pjsip.h
 ===================================================================
 --- asterisk.orig/asterisk-16.3.0/include/asterisk/res_pjsip.h	2019-05-21 12:00:42.007394048 -0400
-+++ asterisk/asterisk-16.3.0/include/asterisk/res_pjsip.h	2019-05-21 12:00:55.155486502 -0400
++++ asterisk/asterisk-16.3.0/include/asterisk/res_pjsip.h	2019-05-21 13:46:48.965193060 -0400
 @@ -265,6 +265,8 @@
  		AST_STRING_FIELD(call_id);
  		/*! The name of the endpoint that added the contact */
@@ -74,3 +85,12 @@ Index: asterisk/asterisk-16.3.0/include/asterisk/res_pjsip.h
  	);
  	/*! Absolute time that this contact is no longer valid after */
  	struct timeval expiration_time;
+@@ -1327,7 +1329,7 @@
+ struct ast_sip_contact *ast_sip_location_create_contact(struct ast_sip_aor *aor,
+ 	const char *uri, struct timeval expiration_time, const char *path_info,
+ 	const char *user_agent, const char *via_addr, int via_port, const char *call_id,
+-	int prune_on_boot, struct ast_sip_endpoint *endpoint, pj_str_t* mobility);
++	int prune_on_boot, struct ast_sip_endpoint *endpoint, const char* mobility);
+ 
+ /*!
+  * \brief Update a contact
