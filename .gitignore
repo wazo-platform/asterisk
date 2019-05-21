@@ -2,3 +2,4 @@
 contribs/docker/sources
 asterisk-*.tar.gz
 asterisk-*/
+.pc
