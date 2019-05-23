@@ -1,3 +1,9 @@
+asterisk (8:16.3.0-1~wazo6) wazo-dev-stetch; urgency=medium
+
+  * update test for the wazo resource
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 23 May 2019 09:01:32 -0400
+
 asterisk (8:16.3.0-1~wazo5) wazo-dev-stetch; urgency=medium
 
   * update diff ignore of the AUTHORS file

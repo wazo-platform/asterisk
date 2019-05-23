@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2017-2018 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2019 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
 import ari as ari_client
@@ -40,10 +40,10 @@ def ari():
 
 
 def test_delete_voicemail_message_without_body(ari):
-    assert_that(calling(ari.xivo.deleteVoicemailMessage).with_args(body={'wrong_key': 'wrong_value'}),
+    assert_that(calling(ari.wazo.deleteVoicemailMessage).with_args(body={'wrong_key': 'wrong_value'}),
                 raises(HTTPError).matching(has_property('response', has_property('status_code', 400))))
 
 
 def test_move_voicemail_message_without_body(ari):
-    assert_that(calling(ari.xivo.moveVoicemailMessage).with_args(body={'wrong_key': 'wrong_value'}),
+    assert_that(calling(ari.wazo.moveVoicemailMessage).with_args(body={'wrong_key': 'wrong_value'}),
                 raises(HTTPError).matching(has_property('response', has_property('status_code', 400))))
