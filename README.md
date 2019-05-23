@@ -16,11 +16,18 @@ To update the version of Asterisk:
 
 To test that it compiles and builds fine (example for 13.10.0 on a remote wazo):
 
-* rsync -v -rtlp asterisk-13.10.0.tar.gz debian wazo:ast-rebuild
-* ssh wazo
-  * cd ast-rebuild
-  * tar xf asterisk-*.tar.gz
-  * rename 's/asterisk-(.*).tar.gz/asterisk_$1.orig.tar.gz/' asterisk-*.tar.gz
-  * cd asterisk-*
-  * mv ../debian .
-  * dpkg-buildpackage -us -uc
+```sh
+rsync -v -rtlp asterisk-13.10.0.tar.gz debian wazo:ast-rebuild
+ssh wazo
+```
+
+On the remote Wazo
+
+```sh
+cd ast-rebuild
+tar xf asterisk-*.tar.gz
+rename 's/asterisk-(.*).tar.gz/asterisk_$1.orig.tar.gz/' asterisk-*.tar.gz
+cd asterisk-*
+mv ../debian .
+dpkg-buildpackage -us -uc
+```
