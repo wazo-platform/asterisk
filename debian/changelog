@@ -1,3 +1,9 @@
+asterisk (8:16.3.0-1~wazo5) wazo-dev-stetch; urgency=medium
+
+  * update diff ignore of the AUTHORS file
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 23 May 2019 08:53:47 -0400
+
 asterisk (8:16.3.0-1~wazo4) wazo-dev-stretch; urgency=medium
 
   * rename the ari voicemail patch
