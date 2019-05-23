@@ -18,4 +18,4 @@ xivo_queue_digits_gender
 xivo_dtmf_workaround_when_no_rtp
 xivo_ari_events_moh
 xivo_ari_set_channel_var_bypass
-xivo_ari_expose_voicemail_functions
+wazo_ari_expose_voicemail_functions

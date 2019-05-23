@@ -6,16 +6,16 @@ Index: asterisk-16.3.0/res/ari.make
  $(call MOD_ADD_C,res_ari_mailboxes,ari/resource_mailboxes.c)
  $(call MOD_ADD_C,res_ari_events,ari/resource_events.c)
  $(call MOD_ADD_C,res_ari_applications,ari/resource_applications.c)
-+$(call MOD_ADD_C,res_ari_xivo,ari/resource_xivo.c)
-Index: asterisk-16.3.0/res/ari/resource_xivo.c
++$(call MOD_ADD_C,res_ari_wazo,ari/resource_wazo.c)
+Index: asterisk-16.3.0/res/ari/resource_wazo.c
 ===================================================================
 --- /dev/null
-+++ asterisk-16.3.0/res/ari/resource_xivo.c
++++ asterisk-16.3.0/res/ari/resource_wazo.c
 @@ -0,0 +1,91 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
-+ * Copyright (C) 2016-2017 The Wazo Authors  (see the AUTHORS file)
++ * Copyright (C) 2016-2019 The Wazo Authors  (see the AUTHORS file)
 + *
 + * See http://www.asterisk.org for more information about
 + * the Asterisk project. Please do not directly contact
@@ -30,15 +30,15 @@ Index: asterisk-16.3.0/res/ari/resource_xivo.c
 +
 +/*! \file
 + *
-+ * \brief /api-docs/xivo.{format} implementation- XiVO resources
++ * \brief /api-docs/wazo.{format} implementation- Wazo resources
 + */
 +
 +#include "asterisk.h"
 +#include "asterisk/app.h"
-+#include "resource_xivo.h"
++#include "resource_wazo.h"
 +
-+void ast_ari_xivo_delete_voicemail_message(struct ast_variable *headers,
-+	struct ast_ari_xivo_delete_voicemail_message_args *args,
++void ast_ari_wazo_delete_voicemail_message(struct ast_variable *headers,
++	struct ast_ari_wazo_delete_voicemail_message_args *args,
 +	struct ast_ari_response *response)
 +{
 +	const char *mailbox;
@@ -70,8 +70,8 @@ Index: asterisk-16.3.0/res/ari/resource_xivo.c
 +	ast_ari_response_no_content(response);
 +}
 +
-+void ast_ari_xivo_move_voicemail_message(struct ast_variable *headers,
-+	struct ast_ari_xivo_move_voicemail_message_args *args,
++void ast_ari_wazo_move_voicemail_message(struct ast_variable *headers,
++	struct ast_ari_wazo_move_voicemail_message_args *args,
 +	struct ast_ari_response *response)
 +{
 +	const char *mailbox;
@@ -103,15 +103,15 @@ Index: asterisk-16.3.0/res/ari/resource_xivo.c
 +
 +	ast_ari_response_no_content(response);
 +}
-Index: asterisk-16.3.0/res/ari/resource_xivo.h
+Index: asterisk-16.3.0/res/ari/resource_wazo.h
 ===================================================================
 --- /dev/null
-+++ asterisk-16.3.0/res/ari/resource_xivo.h
++++ asterisk-16.3.0/res/ari/resource_wazo.h
 @@ -0,0 +1,89 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
-+ * Copyright (C) 2016 Proformatique Inc.
++ * Copyright (C) 2016-2019 The Wazo Authors  (see the AUTHORS file)
 + *
 + * Etienne Lessard
 + *
@@ -129,9 +129,9 @@ Index: asterisk-16.3.0/res/ari/resource_xivo.h
 +/*! \file
 + *
 + * \brief Generated file - declares stubs to be implemented in
-+ * res/ari/resource_xivo.c
++ * res/ari/resource_wazo.c
 + *
-+ * XiVO resources
++ * wazo resources
 + *
 + * \author Etienne Lessard
 + */
@@ -144,25 +144,25 @@ Index: asterisk-16.3.0/res/ari/resource_xivo.h
 + * template in rest-api-templates/ari_resource.h.mustache
 + */
 +
-+#ifndef _ASTERISK_RESOURCE_XIVO_H
-+#define _ASTERISK_RESOURCE_XIVO_H
++#ifndef _ASTERISK_RESOURCE_WAZO_H
++#define _ASTERISK_RESOURCE_WAZO_H
 +
 +#include "asterisk/ari.h"
 +
-+/*! Argument struct for ast_ari_xivo_delete_voicemail_message() */
-+struct ast_ari_xivo_delete_voicemail_message_args {
++/*! Argument struct for ast_ari_wazo_delete_voicemail_message() */
++struct ast_ari_wazo_delete_voicemail_message_args {
 +	struct ast_json *body;
 +};
 +/*!
-+ * \brief Body parsing function for /xivo/internal/voicemails/delete_msg.
++ * \brief Body parsing function for /wazo/internal/voicemails/delete_msg.
 + * \param body The JSON body from which to parse parameters.
 + * \param[out] args The args structure to parse into.
 + * \retval zero on success
 + * \retval non-zero on failure
 + */
-+int ast_ari_xivo_delete_voicemail_message_parse_body(
++int ast_ari_wazo_delete_voicemail_message_parse_body(
 +	struct ast_json *body,
-+	struct ast_ari_xivo_delete_voicemail_message_args *args);
++	struct ast_ari_wazo_delete_voicemail_message_args *args);
 +
 +/*!
 + * \brief Delete a voicemail's message.
@@ -171,21 +171,21 @@ Index: asterisk-16.3.0/res/ari/resource_xivo.h
 + * \param args Swagger parameters
 + * \param[out] response HTTP response
 + */
-+void ast_ari_xivo_delete_voicemail_message(struct ast_variable *headers, struct ast_ari_xivo_delete_voicemail_message_args *args, struct ast_ari_response *response);
-+/*! Argument struct for ast_ari_xivo_move_voicemail_message() */
-+struct ast_ari_xivo_move_voicemail_message_args {
++void ast_ari_wazo_delete_voicemail_message(struct ast_variable *headers, struct ast_ari_wazo_delete_voicemail_message_args *args, struct ast_ari_response *response);
++/*! Argument struct for ast_ari_wazo_move_voicemail_message() */
++struct ast_ari_wazo_move_voicemail_message_args {
 +	struct ast_json *body;
 +};
 +/*!
-+ * \brief Body parsing function for /xivo/internal/voicemails/move_msg.
++ * \brief Body parsing function for /wazo/internal/voicemails/move_msg.
 + * \param body The JSON body from which to parse parameters.
 + * \param[out] args The args structure to parse into.
 + * \retval zero on success
 + * \retval non-zero on failure
 + */
-+int ast_ari_xivo_move_voicemail_message_parse_body(
++int ast_ari_wazo_move_voicemail_message_parse_body(
 +	struct ast_json *body,
-+	struct ast_ari_xivo_move_voicemail_message_args *args);
++	struct ast_ari_wazo_move_voicemail_message_args *args);
 +
 +/*!
 + * \brief Move a voicemail's message.
@@ -194,18 +194,18 @@ Index: asterisk-16.3.0/res/ari/resource_xivo.h
 + * \param args Swagger parameters
 + * \param[out] response HTTP response
 + */
-+void ast_ari_xivo_move_voicemail_message(struct ast_variable *headers, struct ast_ari_xivo_move_voicemail_message_args *args, struct ast_ari_response *response);
++void ast_ari_wazo_move_voicemail_message(struct ast_variable *headers, struct ast_ari_wazo_move_voicemail_message_args *args, struct ast_ari_response *response);
 +
-+#endif /* _ASTERISK_RESOURCE_XIVO_H */
-Index: asterisk-16.3.0/res/res_ari_xivo.c
++#endif /* _ASTERISK_RESOURCE_WAZO_H */
+Index: asterisk-16.3.0/res/res_ari_wazo.c
 ===================================================================
 --- /dev/null
-+++ asterisk-16.3.0/res/res_ari_xivo.c
++++ asterisk-16.3.0/res/res_ari_wazo.c
 @@ -0,0 +1,234 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
-+ * Copyright 2016-2018 The Wazo Authors  (see the AUTHORS file)
++ * Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
 + *
 + * Etienne Lessard
 + *
@@ -230,7 +230,7 @@ Index: asterisk-16.3.0/res/res_ari_xivo.c
 +
 +/*! \file
 + *
-+ * \brief XiVO resources
++ * \brief wazo resources
 + *
 + * \author Etienne Lessard
 + */
@@ -246,41 +246,41 @@ Index: asterisk-16.3.0/res/res_ari_xivo.c
 +#include "asterisk/app.h"
 +#include "asterisk/module.h"
 +#include "asterisk/stasis_app.h"
-+#include "ari/resource_xivo.h"
++#include "ari/resource_wazo.h"
 +#if defined(AST_DEVMODE)
 +#include "ari/ari_model_validators.h"
 +#endif
 +
 +#define MAX_VALS 128
 +
-+int ast_ari_xivo_delete_voicemail_message_parse_body(
++int ast_ari_wazo_delete_voicemail_message_parse_body(
 +	struct ast_json *body,
-+	struct ast_ari_xivo_delete_voicemail_message_args *args)
++	struct ast_ari_wazo_delete_voicemail_message_args *args)
 +{
 +	/* Parse query parameters out of it */
 +	return 0;
 +}
 +
 +/*!
-+ * \brief Parameter parsing callback for /xivo/internal/voicemails/delete_msg.
++ * \brief Parameter parsing callback for /wazo/internal/voicemails/delete_msg.
 + * \param get_params GET parameters in the HTTP request.
 + * \param path_vars Path variables extracted from the request.
 + * \param headers HTTP headers.
 + * \param[out] response Response to the HTTP request.
 + */
-+static void ast_ari_xivo_delete_voicemail_message_cb(
++static void ast_ari_wazo_delete_voicemail_message_cb(
 +	struct ast_tcptls_session_instance *ser,
 +	struct ast_variable *get_params, struct ast_variable *path_vars,
 +	struct ast_variable *headers, struct ast_json *body, struct ast_ari_response *response)
 +{
-+	struct ast_ari_xivo_delete_voicemail_message_args args = {};
++	struct ast_ari_wazo_delete_voicemail_message_args args = {};
 +#if defined(AST_DEVMODE)
 +	int is_valid;
 +	int code;
 +#endif /* AST_DEVMODE */
 +
 +	args.body = body;
-+	ast_ari_xivo_delete_voicemail_message(headers, &args, response);
++	ast_ari_wazo_delete_voicemail_message(headers, &args, response);
 +#if defined(AST_DEVMODE)
 +	code = response->response_code;
 +
@@ -298,13 +298,13 @@ Index: asterisk-16.3.0/res/res_ari_xivo.c
 +			is_valid = ast_ari_validate_void(
 +				response->message);
 +		} else {
-+			ast_log(LOG_ERROR, "Invalid error response %d for /xivo/internal/voicemails/delete_msg\n", code);
++			ast_log(LOG_ERROR, "Invalid error response %d for /wazo/internal/voicemails/delete_msg\n", code);
 +			is_valid = 0;
 +		}
 +	}
 +
 +	if (!is_valid) {
-+		ast_log(LOG_ERROR, "Response validation failed for /xivo/internal/voicemails/delete_msg\n");
++		ast_log(LOG_ERROR, "Response validation failed for /wazo/internal/voicemails/delete_msg\n");
 +		ast_ari_response_error(response, 500,
 +			"Internal Server Error", "Response validation failed");
 +	}
@@ -313,34 +313,34 @@ Index: asterisk-16.3.0/res/res_ari_xivo.c
 +fin: __attribute__((unused))
 +	return;
 +}
-+int ast_ari_xivo_move_voicemail_message_parse_body(
++int ast_ari_wazo_move_voicemail_message_parse_body(
 +	struct ast_json *body,
-+	struct ast_ari_xivo_move_voicemail_message_args *args)
++	struct ast_ari_wazo_move_voicemail_message_args *args)
 +{
 +	/* Parse query parameters out of it */
 +	return 0;
 +}
 +
 +/*!
-+ * \brief Parameter parsing callback for /xivo/internal/voicemails/move_msg.
++ * \brief Parameter parsing callback for /wazo/internal/voicemails/move_msg.
 + * \param get_params GET parameters in the HTTP request.
 + * \param path_vars Path variables extracted from the request.
 + * \param headers HTTP headers.
 + * \param[out] response Response to the HTTP request.
 + */
-+static void ast_ari_xivo_move_voicemail_message_cb(
++static void ast_ari_wazo_move_voicemail_message_cb(
 +	struct ast_tcptls_session_instance *ser,
 +	struct ast_variable *get_params, struct ast_variable *path_vars,
 +	struct ast_variable *headers, struct ast_json *body, struct ast_ari_response *response)
 +{
-+	struct ast_ari_xivo_move_voicemail_message_args args = {};
++	struct ast_ari_wazo_move_voicemail_message_args args = {};
 +#if defined(AST_DEVMODE)
 +	int is_valid;
 +	int code;
 +#endif /* AST_DEVMODE */
 +
 +	args.body = body;
-+	ast_ari_xivo_move_voicemail_message(headers, &args, response);
++	ast_ari_wazo_move_voicemail_message(headers, &args, response);
 +#if defined(AST_DEVMODE)
 +	code = response->response_code;
 +
@@ -358,13 +358,13 @@ Index: asterisk-16.3.0/res/res_ari_xivo.c
 +			is_valid = ast_ari_validate_void(
 +				response->message);
 +		} else {
-+			ast_log(LOG_ERROR, "Invalid error response %d for /xivo/internal/voicemails/move_msg\n", code);
++			ast_log(LOG_ERROR, "Invalid error response %d for /wazo/internal/voicemails/move_msg\n", code);
 +			is_valid = 0;
 +		}
 +	}
 +
 +	if (!is_valid) {
-+		ast_log(LOG_ERROR, "Response validation failed for /xivo/internal/voicemails/move_msg\n");
++		ast_log(LOG_ERROR, "Response validation failed for /wazo/internal/voicemails/move_msg\n");
 +		ast_ari_response_error(response, 500,
 +			"Internal Server Error", "Response validation failed");
 +	}
@@ -374,83 +374,83 @@ Index: asterisk-16.3.0/res/res_ari_xivo.c
 +	return;
 +}
 +
-+/*! \brief REST handler for /api-docs/xivo.json */
-+static struct stasis_rest_handlers xivo_internal_voicemails_delete_msg = {
++/*! \brief REST handler for /api-docs/wazo.json */
++static struct stasis_rest_handlers wazo_internal_voicemails_delete_msg = {
 +	.path_segment = "delete_msg",
 +	.callbacks = {
-+		[AST_HTTP_POST] = ast_ari_xivo_delete_voicemail_message_cb,
++		[AST_HTTP_POST] = ast_ari_wazo_delete_voicemail_message_cb,
 +	},
 +	.num_children = 0,
 +	.children = {  }
 +};
-+/*! \brief REST handler for /api-docs/xivo.json */
-+static struct stasis_rest_handlers xivo_internal_voicemails_move_msg = {
++/*! \brief REST handler for /api-docs/wazo.json */
++static struct stasis_rest_handlers wazo_internal_voicemails_move_msg = {
 +	.path_segment = "move_msg",
 +	.callbacks = {
-+		[AST_HTTP_POST] = ast_ari_xivo_move_voicemail_message_cb,
++		[AST_HTTP_POST] = ast_ari_wazo_move_voicemail_message_cb,
 +	},
 +	.num_children = 0,
 +	.children = {  }
 +};
-+/*! \brief REST handler for /api-docs/xivo.json */
-+static struct stasis_rest_handlers xivo_internal_voicemails = {
++/*! \brief REST handler for /api-docs/wazo.json */
++static struct stasis_rest_handlers wazo_internal_voicemails = {
 +	.path_segment = "voicemails",
 +	.callbacks = {
 +	},
 +	.num_children = 2,
-+	.children = { &xivo_internal_voicemails_delete_msg,&xivo_internal_voicemails_move_msg, }
++	.children = { &wazo_internal_voicemails_delete_msg,&wazo_internal_voicemails_move_msg, }
 +};
-+/*! \brief REST handler for /api-docs/xivo.json */
-+static struct stasis_rest_handlers xivo_internal = {
++/*! \brief REST handler for /api-docs/wazo.json */
++static struct stasis_rest_handlers wazo_internal = {
 +	.path_segment = "internal",
 +	.callbacks = {
 +	},
 +	.num_children = 1,
-+	.children = { &xivo_internal_voicemails, }
++	.children = { &wazo_internal_voicemails, }
 +};
-+/*! \brief REST handler for /api-docs/xivo.json */
-+static struct stasis_rest_handlers xivo = {
-+	.path_segment = "xivo",
++/*! \brief REST handler for /api-docs/wazo.json */
++static struct stasis_rest_handlers wazo = {
++	.path_segment = "wazo",
 +	.callbacks = {
 +	},
 +	.num_children = 1,
-+	.children = { &xivo_internal, }
++	.children = { &wazo_internal, }
 +};
 +
 +static int load_module(void)
 +{
 +	int res = 0;
-+	res |= ast_ari_add_handler(&xivo);
++	res |= ast_ari_add_handler(&wazo);
 +	return res;
 +}
 +
 +static int unload_module(void)
 +{
-+	ast_ari_remove_handler(&xivo);
++	ast_ari_remove_handler(&wazo);
 +	return 0;
 +}
 +
-+AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_DEFAULT, "RESTful API module - XiVO resources",
++AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_DEFAULT, "RESTful API module - Wazo resources",
 +	.support_level = AST_MODULE_SUPPORT_CORE,
 +	.load = load_module,
 +	.unload = unload_module,
 +	.requires = "res_ari,res_stasis",
 +);
-Index: asterisk-16.3.0/rest-api/api-docs/xivo.json
+Index: asterisk-16.3.0/rest-api/api-docs/wazo.json
 ===================================================================
 --- /dev/null
-+++ asterisk-16.3.0/rest-api/api-docs/xivo.json
++++ asterisk-16.3.0/rest-api/api-docs/wazo.json
 @@ -0,0 +1,68 @@
 +{
-+	"_copyright": "Copyright (C) 2016 Proformatique Inc.",
++	"_copyright": "Copyright (C) 2016-2019 The Wazo Authors  (see the AUTHORS file)",
 +	"_author": "Etienne Lessard",
 +	"apiVersion": "1.7.0",
 +	"swaggerVersion": "1.1",
 +	"basePath": "http://localhost:8088/ari",
-+	"resourcePath": "/api-docs/xivo.{format}",
++	"resourcePath": "/api-docs/wazo.{format}",
 +	"apis": [
 +		{
-+			"path": "/xivo/internal/voicemails/delete_msg",
++			"path": "/wazo/internal/voicemails/delete_msg",
 +			"description": "Delete a voicemail's message",
 +			"operations": [
 +				{
@@ -478,7 +478,7 @@ Index: asterisk-16.3.0/rest-api/api-docs/xivo.json
 +			]
 +		},
 +		{
-+			"path": "/xivo/internal/voicemails/move_msg",
++			"path": "/wazo/internal/voicemails/move_msg",
 +			"description": "Move a voicemail's message",
 +			"operations": [
 +				{
@@ -519,8 +519,8 @@ Index: asterisk-16.3.0/rest-api/resources.json
  			"description": "Stasis application resources"
 +		},
 +		{
-+			"path": "/api-docs/xivo.{format}",
-+			"description": "XiVO resources"
++			"path": "/api-docs/wazo.{format}",
++			"description": "Wazo resources"
  		}
  	]
  }
