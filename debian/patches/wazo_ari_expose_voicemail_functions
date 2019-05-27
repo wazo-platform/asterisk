@@ -123,7 +123,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +		return;
 +	}
 +
-+	const char* context = ast_json_string_get(ast_json_object_get(args->body, "context"));
++	const char* context = args->context;
 +	if(!context) {
 +		ast_ari_response_error(response, 10, "Invalid argument", "Invalid context");
 +		ast_log(LOG_ERROR, "Invalid context");
@@ -131,7 +131,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +		return;
 +	}
 +
-+	const char* voicemail = ast_json_string_get(ast_json_object_get(args->body, "voicemail"));
++	const char* voicemail = args->voicemail;
 +	if(!voicemail) {
 +		ast_ari_response_error(response, 10, "Invalid argument", "Invalid voicemail");
 +		ast_log(LOG_ERROR, "Invalid voicemail");
@@ -182,7 +182,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +
 +	int n = ast_base64encode(encoded_data, (const unsigned char*) raw_data, length, encoded_length);
 +
-+	ast_log(LOG_ERROR, "N: %d, L: %d, E: %d, '%s'\n", n, length, encoded_length, raw_data);
++//	ast_log(LOG_ERROR, "N: %d, L: %d, E: %d, '%s'\n", n, length, encoded_length, raw_data);
 +	if(n <= 0) {
 +		ast_ari_response_error(response, 10, "Encoding Error", "Unable to encode base64");
 +		ast_log(LOG_ERROR, "Unable to encode data\n");
@@ -201,7 +201,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.h
 ===================================================================
 --- /dev/null
 +++ asterisk-16.3.0/res/ari/resource_wazo.h
-@@ -0,0 +1,136 @@
+@@ -0,0 +1,138 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -291,7 +291,9 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.h
 +void ast_ari_wazo_move_voicemail_message(struct ast_variable *headers, struct ast_ari_wazo_move_voicemail_message_args *args, struct ast_ari_response *response);
 +/*! Argument struct for ast_ari_wazo_rec_voicemail_message() */
 +struct ast_ari_wazo_rec_voicemail_message_args {
++	const char *context;
 +	struct ast_json *body;
++	const char *voicemail;
 +};
 +/*!
 + * \brief Body parsing function for /wazo/internal/voicemails/record_greeting.
@@ -342,7 +344,7 @@ Index: asterisk-16.3.0/res/res_ari_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.3.0/res/res_ari_wazo.c
-@@ -0,0 +1,402 @@
+@@ -0,0 +1,421 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -519,7 +521,16 @@ Index: asterisk-16.3.0/res/res_ari_wazo.c
 +	struct ast_json *body,
 +	struct ast_ari_wazo_rec_voicemail_message_args *args)
 +{
++	struct ast_json *field;
 +	/* Parse query parameters out of it */
++	field = ast_json_object_get(body, "context");
++	if (field) {
++		args->context = ast_json_string_get(field);
++	}
++	field = ast_json_object_get(body, "voicemail");
++	if (field) {
++		args->voicemail = ast_json_string_get(field);
++	}
 +	return 0;
 +}
 +
@@ -536,11 +547,21 @@ Index: asterisk-16.3.0/res/res_ari_wazo.c
 +	struct ast_variable *headers, struct ast_json *body, struct ast_ari_response *response)
 +{
 +	struct ast_ari_wazo_rec_voicemail_message_args args = {};
++	struct ast_variable *i;
 +#if defined(AST_DEVMODE)
 +	int is_valid;
 +	int code;
 +#endif /* AST_DEVMODE */
 +
++	for (i = get_params; i; i = i->next) {
++		if (strcmp(i->name, "context") == 0) {
++			args.context = (i->value);
++		} else
++		if (strcmp(i->name, "voicemail") == 0) {
++			args.voicemail = (i->value);
++		} else
++		{}
++	}
 +	args.body = body;
 +	ast_ari_wazo_rec_voicemail_message(headers, &args, response);
 +#if defined(AST_DEVMODE)
@@ -749,7 +770,7 @@ Index: asterisk-16.3.0/rest-api/api-docs/wazo.json
 ===================================================================
 --- /dev/null
 +++ asterisk-16.3.0/rest-api/api-docs/wazo.json
-@@ -0,0 +1,134 @@
+@@ -0,0 +1,150 @@
 +{
 +	"_copyright": "Copyright (C) 2016 Proformatique Inc.",
 +	"_author": "Etienne Lessard",
@@ -824,6 +845,22 @@ Index: asterisk-16.3.0/rest-api/api-docs/wazo.json
 +					"nickname": "recVoicemailMessage",
 +					"responseClass": "void",
 +					"parameters": [
++						{
++							"name": "context",
++							"description": "",
++							"paramType": "query",
++							"required": true,
++							"dataType": "string",
++							"allowMultiple": false
++						},
++						{
++							"name": "voicemail",
++							"description": "",
++							"paramType": "query",
++							"required": true,
++							"dataType": "string",
++							"allowMultiple": false
++						},
 +						{
 +							"name": "body",
 +							"description": "",
