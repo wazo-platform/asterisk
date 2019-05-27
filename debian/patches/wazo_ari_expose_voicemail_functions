@@ -139,7 +139,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +		return;
 +	}
 +
-+	ast_vm_save_greeting((const char*) decoded_data, context, voicemail);
++	ast_vm_save_greeting((const char*) decoded_data, n, context, voicemail);
 +	ast_ari_response_accepted(response);
 +	ast_free(decoded_data);
 +}
@@ -936,3 +936,93 @@ Index: asterisk-16.4.0/rest-api/resources.json
  		}
  	]
  }
+Index: asterisk-16.3.0/include/asterisk/app.h
+===================================================================
+--- asterisk-16.3.0.orig/include/asterisk/app.h
++++ asterisk-16.3.0/include/asterisk/app.h
+@@ -533,6 +533,13 @@ typedef int (ast_vm_msg_forward_fn)(cons
+ typedef int (ast_vm_msg_play_fn)(struct ast_channel *chan, const char *mailbox,
+ 	const char *context, const char *folder, const char *msg_num, ast_vm_msg_play_cb *cb);
+ 
++
++typedef int (ast_vm_save_greeting_fn)(const char *data, unsigned int length, const char* context, const char* voicemail);
++
++
++typedef int (ast_vm_get_greeting_fn)(char** data, const char* context, const char* voicemail);
++
++
+ #define VM_MODULE_VERSION 2
+ 
+ /*! \brief Voicemail function table definition. */
+@@ -561,8 +568,11 @@ struct ast_vm_functions {
+ 	ast_vm_msg_remove_fn *msg_remove;
+ 	ast_vm_msg_forward_fn *msg_forward;
+ 	ast_vm_msg_play_fn *msg_play;
++	ast_vm_save_greeting_fn *save_greeting;
++	ast_vm_get_greeting_fn *get_greeting;
+ };
+ 
++
+ /*!
+  * \brief Determine if a voicemail provider is registered.
+  * \since 12.0.0
+@@ -584,6 +594,24 @@ int ast_vm_is_registered(void);
+  */
+ int __ast_vm_register(const struct ast_vm_functions *vm_table, struct ast_module *module);
+ 
++/*!
++ * \brief Save a greeting to a file
++ *
++ * \param file the path to the file
++ * \param data the data to be written
++ * @return -1 on error, 0 on success
++ */
++int ast_vm_save_greeting(const char* data, unsigned int length, const char* context, const char* voicemail);
++
++/*!
++ * \brief Retrieve a greeting file
++ *
++ * \param file the path to the file
++ * \param data A buffer where the file's data will be held
++ * @return The length of the data buffer, negative number on error
++ */
++int ast_vm_get_greeting(char** data, const char* context, const char* voicemail);
++
+ /*! \brief See \ref __ast_vm_register() */
+ #define ast_vm_register(vm_table) __ast_vm_register(vm_table, AST_MODULE_SELF)
+ 
+@@ -1663,6 +1691,7 @@ struct stasis_message_type *ast_mwi_stat
+  */
+ struct stasis_message_type *ast_mwi_vm_app_type(void);
+ 
++
+ /*!
+  * \brief Get the \ref stasis topic for queue messages
+  * \retval The topic structure for queue messages
+Index: asterisk-16.3.0/main/app.c
+===================================================================
+--- asterisk-16.3.0.orig/main/app.c
++++ asterisk-16.3.0/main/app.c
+@@ -855,6 +855,22 @@ int ast_vm_msg_play(struct ast_channel *
+ 	return res;
+ }
+ 
++int ast_vm_save_greeting(const char* data, unsigned int length, const char* context, const char* voicemail) {
++	int res = 0;
++
++	VM_API_CALL(res,save_greeting, (data, length, context, voicemail));
++
++	return res;
++}
++
++
++int ast_vm_get_greeting(char** data, const char* context, const char* voicemail) {
++	int res = 0;
++
++	VM_API_CALL(res, get_greeting, (data, context, voicemail));
++
++	return res;
++}
+ #ifdef TEST_FRAMEWORK
+ int ast_vm_test_create_user(const char *context, const char *mailbox)
+ {
