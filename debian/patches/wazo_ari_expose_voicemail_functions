@@ -11,11 +11,11 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.4.0/res/ari/resource_wazo.c
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,184 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
-+ * Copyright (C) 2016-2019 The Wazo Authors  (see the AUTHORS file)
++ * Copyright (C) 2016-2017 The Wazo Authors  (see the AUTHORS file)
 + *
 + * See http://www.asterisk.org for more information about
 + * the Asterisk project. Please do not directly contact
@@ -30,7 +30,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +
 +/*! \file
 + *
-+ * \brief /api-docs/wazo.{format} implementation- Wazo resources
++ * \brief /api-docs/wazo.{format} implementation- wazo resources
 + */
 +
 +#include "asterisk.h"
@@ -38,9 +38,8 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +#include "resource_wazo.h"
 +
 +void ast_ari_wazo_delete_voicemail_message(struct ast_variable *headers,
-+	struct ast_ari_wazo_delete_voicemail_message_args *args,
-+	struct ast_ari_response *response)
-+{
++										   struct ast_ari_wazo_delete_voicemail_message_args *args,
++										   struct ast_ari_response *response) {
 +	const char *mailbox;
 +	const char *context;
 +	const char *folder;
@@ -58,7 +57,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	if (strcmp(folder, "Deleted") == 0) {
 +		/* ast_vm_msg_remove doesn't handle this case properly */
 +		ast_ari_response_error(response, 400, "Bad request",
-+			"Deleting a message from the Deleted folder is not supported");
++							   "Deleting a message from the Deleted folder is not supported");
 +		return;
 +	}
 +
@@ -71,9 +70,8 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +}
 +
 +void ast_ari_wazo_move_voicemail_message(struct ast_variable *headers,
-+	struct ast_ari_wazo_move_voicemail_message_args *args,
-+	struct ast_ari_response *response)
-+{
++										 struct ast_ari_wazo_move_voicemail_message_args *args,
++										 struct ast_ari_response *response) {
 +	const char *mailbox;
 +	const char *context;
 +	const char *src_folder;
@@ -103,15 +101,111 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +
 +	ast_ari_response_no_content(response);
 +}
++
++void ast_ari_wazo_rec_voicemail_message(struct ast_variable *headers,
++										struct ast_ari_wazo_rec_voicemail_message_args *args,
++										struct ast_ari_response *response) {
++
++	const char *encoded_data = ast_json_string_get(ast_json_object_get(args->body, "encoded-data"));
++	if(!encoded_data) {
++		ast_ari_response_error(response, 10, "Invalid argument", "Invalid data");
++		ast_log(LOG_ERROR, "Unable to parse data");
++		return;
++	}
++
++	int length = strlen(encoded_data);
++	unsigned char *decoded_data = ast_calloc(length + 2, sizeof(char)); /*account for NULL character*/
++	int n = ast_base64decode(decoded_data, encoded_data, length - 1);
++	if(n <= 0) {
++		ast_ari_response_error(response, 10, "Decoding Error", "Unable to decode base64");
++		ast_log(LOG_ERROR, "Unable to decode data\n");
++		ast_free(decoded_data);
++		return;
++	}
++
++	const char* context = ast_json_string_get(ast_json_object_get(args->body, "context"));
++	if(!context) {
++		ast_ari_response_error(response, 10, "Invalid argument", "Invalid context");
++		ast_log(LOG_ERROR, "Invalid context");
++		ast_free(decoded_data);
++		return;
++	}
++
++	const char* voicemail = ast_json_string_get(ast_json_object_get(args->body, "voicemail"));
++	if(!voicemail) {
++		ast_ari_response_error(response, 10, "Invalid argument", "Invalid voicemail");
++		ast_log(LOG_ERROR, "Invalid voicemail");
++		ast_free(decoded_data);
++		return;
++	}
++
++	ast_vm_save_greeting((const char*) decoded_data, context, voicemail);
++	ast_ari_response_accepted(response);
++	ast_free(decoded_data);
++}
++
++void ast_ari_wazo_get_voicemail_message(struct ast_variable *headers,
++										struct ast_ari_wazo_get_voicemail_message_args *args,
++										struct ast_ari_response *response) {
++
++	const char* context = args->context;
++	if(!context) {
++		ast_ari_response_error(response, 10, "Invalid argument", "Invalid context");
++		ast_log(LOG_ERROR, "Invalid context");
++		return;
++	}
++
++	const char* voicemail = args->voicemail;
++	if(!voicemail) {
++		ast_ari_response_error(response, 10, "Invalid argument", "Invalid voicemail");
++		ast_log(LOG_ERROR, "Invalid voicemail");
++		return;
++	}
++	char* raw_data = NULL;
++	int length = 0;
++	length = ast_vm_get_greeting(&raw_data, context, voicemail);
++
++	if(!raw_data) {
++		ast_ari_response_error(response, 10, "Error", "Unable to read file");
++		ast_log(LOG_ERROR, "Unable to read file");
++		return;
++	}
++	if(length <= 0){
++		ast_ari_response_error(response, 10, "Error", "Unable to read file, got length 0");
++		ast_log(LOG_ERROR, "Unable to read file");
++		ast_free(raw_data);
++		return;
++	}
++	/*formula for getting length of base64 encoded string, each element's size is 3*sizeof(char) */
++	unsigned long encoded_length = ((3 * length * 4 + 2) / 3) + 1;
++	char* encoded_data = ast_calloc(encoded_length, sizeof(char));
++
++	int n = ast_base64encode(encoded_data, (const unsigned char*) raw_data, length, encoded_length);
++
++	ast_log(LOG_ERROR, "N: %d, L: %d, E: %d, '%s'\n", n, length, encoded_length, raw_data);
++	if(n <= 0) {
++		ast_ari_response_error(response, 10, "Encoding Error", "Unable to encode base64");
++		ast_log(LOG_ERROR, "Unable to encode data\n");
++		ast_free(encoded_data);
++		return;
++	}
++	response->message = ast_json_object_create();
++	ast_json_object_set(response->message, "encoded-data", ast_json_string_create(encoded_data));
++
++	ast_free(raw_data);
++	ast_ari_response_ok(response, response->message);
++
++}
+\ No newline at end of file
 Index: asterisk-16.4.0/res/ari/resource_wazo.h
 ===================================================================
 --- /dev/null
 +++ asterisk-16.4.0/res/ari/resource_wazo.h
-@@ -0,0 +1,89 @@
+@@ -0,0 +1,136 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
-+ * Copyright (C) 2016-2019 The Wazo Authors  (see the AUTHORS file)
++ * Copyright (C) 2016 Proformatique Inc.
 + *
 + * Etienne Lessard
 + *
@@ -195,17 +289,64 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.h
 + * \param[out] response HTTP response
 + */
 +void ast_ari_wazo_move_voicemail_message(struct ast_variable *headers, struct ast_ari_wazo_move_voicemail_message_args *args, struct ast_ari_response *response);
++/*! Argument struct for ast_ari_wazo_rec_voicemail_message() */
++struct ast_ari_wazo_rec_voicemail_message_args {
++	struct ast_json *body;
++};
++/*!
++ * \brief Body parsing function for /wazo/internal/voicemails/record_greeting.
++ * \param body The JSON body from which to parse parameters.
++ * \param[out] args The args structure to parse into.
++ * \retval zero on success
++ * \retval non-zero on failure
++ */
++int ast_ari_wazo_rec_voicemail_message_parse_body(
++	struct ast_json *body,
++	struct ast_ari_wazo_rec_voicemail_message_args *args);
++
++/*!
++ * \brief Record a voicemail's greet message.
++ *
++ * \param headers HTTP headers
++ * \param args Swagger parameters
++ * \param[out] response HTTP response
++ */
++void ast_ari_wazo_rec_voicemail_message(struct ast_variable *headers, struct ast_ari_wazo_rec_voicemail_message_args *args, struct ast_ari_response *response);
++/*! Argument struct for ast_ari_wazo_get_voicemail_message() */
++struct ast_ari_wazo_get_voicemail_message_args {
++	const char *context;
++	const char *voicemail;
++};
++/*!
++ * \brief Body parsing function for /wazo/internal/voicemails/listen_greeting.
++ * \param body The JSON body from which to parse parameters.
++ * \param[out] args The args structure to parse into.
++ * \retval zero on success
++ * \retval non-zero on failure
++ */
++int ast_ari_wazo_get_voicemail_message_parse_body(
++	struct ast_json *body,
++	struct ast_ari_wazo_get_voicemail_message_args *args);
++
++/*!
++ * \brief Listen to a voicemail's greet message.
++ *
++ * \param headers HTTP headers
++ * \param args Swagger parameters
++ * \param[out] response HTTP response
++ */
++void ast_ari_wazo_get_voicemail_message(struct ast_variable *headers, struct ast_ari_wazo_get_voicemail_message_args *args, struct ast_ari_response *response);
 +
 +#endif /* _ASTERISK_RESOURCE_WAZO_H */
 Index: asterisk-16.4.0/res/res_ari_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.4.0/res/res_ari_wazo.c
-@@ -0,0 +1,234 @@
+@@ -0,0 +1,402 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
-+ * Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)
++ * Copyright (C) 2016 Proformatique Inc.
 + *
 + * Etienne Lessard
 + *
@@ -243,6 +384,7 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 + ***/
 +
 +#include "asterisk.h"
++
 +#include "asterisk/app.h"
 +#include "asterisk/module.h"
 +#include "asterisk/stasis_app.h"
@@ -373,6 +515,148 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +fin: __attribute__((unused))
 +	return;
 +}
++int ast_ari_wazo_rec_voicemail_message_parse_body(
++	struct ast_json *body,
++	struct ast_ari_wazo_rec_voicemail_message_args *args)
++{
++	/* Parse query parameters out of it */
++	return 0;
++}
++
++/*!
++ * \brief Parameter parsing callback for /wazo/internal/voicemails/record_greeting.
++ * \param get_params GET parameters in the HTTP request.
++ * \param path_vars Path variables extracted from the request.
++ * \param headers HTTP headers.
++ * \param[out] response Response to the HTTP request.
++ */
++static void ast_ari_wazo_rec_voicemail_message_cb(
++	struct ast_tcptls_session_instance *ser,
++	struct ast_variable *get_params, struct ast_variable *path_vars,
++	struct ast_variable *headers, struct ast_json *body, struct ast_ari_response *response)
++{
++	struct ast_ari_wazo_rec_voicemail_message_args args = {};
++#if defined(AST_DEVMODE)
++	int is_valid;
++	int code;
++#endif /* AST_DEVMODE */
++
++	args.body = body;
++	ast_ari_wazo_rec_voicemail_message(headers, &args, response);
++#if defined(AST_DEVMODE)
++	code = response->response_code;
++
++	switch (code) {
++	case 0: /* Implementation is still a stub, or the code wasn't set */
++		is_valid = response->message == NULL;
++		break;
++	case 500: /* Internal Server Error */
++	case 501: /* Not Implemented */
++	case 400: /* Bad request body */
++		is_valid = 1;
++		break;
++	default:
++		if (200 <= code && code <= 299) {
++			is_valid = ast_ari_validate_void(
++				response->message);
++		} else {
++			ast_log(LOG_ERROR, "Invalid error response %d for /wazo/internal/voicemails/record_greeting\n", code);
++			is_valid = 0;
++		}
++	}
++
++	if (!is_valid) {
++		ast_log(LOG_ERROR, "Response validation failed for /wazo/internal/voicemails/record_greeting\n");
++		ast_ari_response_error(response, 500,
++			"Internal Server Error", "Response validation failed");
++	}
++#endif /* AST_DEVMODE */
++
++fin: __attribute__((unused))
++	return;
++}
++int ast_ari_wazo_get_voicemail_message_parse_body(
++	struct ast_json *body,
++	struct ast_ari_wazo_get_voicemail_message_args *args)
++{
++	struct ast_json *field;
++	/* Parse query parameters out of it */
++	field = ast_json_object_get(body, "context");
++	if (field) {
++		args->context = ast_json_string_get(field);
++	}
++	field = ast_json_object_get(body, "voicemail");
++	if (field) {
++		args->voicemail = ast_json_string_get(field);
++	}
++	return 0;
++}
++
++/*!
++ * \brief Parameter parsing callback for /wazo/internal/voicemails/listen_greeting.
++ * \param get_params GET parameters in the HTTP request.
++ * \param path_vars Path variables extracted from the request.
++ * \param headers HTTP headers.
++ * \param[out] response Response to the HTTP request.
++ */
++static void ast_ari_wazo_get_voicemail_message_cb(
++	struct ast_tcptls_session_instance *ser,
++	struct ast_variable *get_params, struct ast_variable *path_vars,
++	struct ast_variable *headers, struct ast_json *body, struct ast_ari_response *response)
++{
++	struct ast_ari_wazo_get_voicemail_message_args args = {};
++	struct ast_variable *i;
++#if defined(AST_DEVMODE)
++	int is_valid;
++	int code;
++#endif /* AST_DEVMODE */
++
++	for (i = get_params; i; i = i->next) {
++		if (strcmp(i->name, "context") == 0) {
++			args.context = (i->value);
++		} else
++		if (strcmp(i->name, "voicemail") == 0) {
++			args.voicemail = (i->value);
++		} else
++		{}
++	}
++	if (ast_ari_wazo_get_voicemail_message_parse_body(body, &args)) {
++		ast_ari_response_alloc_failed(response);
++		goto fin;
++	}
++	ast_ari_wazo_get_voicemail_message(headers, &args, response);
++#if defined(AST_DEVMODE)
++	code = response->response_code;
++
++	switch (code) {
++	case 0: /* Implementation is still a stub, or the code wasn't set */
++		is_valid = response->message == NULL;
++		break;
++	case 500: /* Internal Server Error */
++	case 501: /* Not Implemented */
++	case 400: /* Bad request body */
++		is_valid = 1;
++		break;
++	default:
++		if (200 <= code && code <= 299) {
++			is_valid = ast_ari_validate_void(
++				response->message);
++		} else {
++			ast_log(LOG_ERROR, "Invalid error response %d for /wazo/internal/voicemails/listen_greeting\n", code);
++			is_valid = 0;
++		}
++	}
++
++	if (!is_valid) {
++		ast_log(LOG_ERROR, "Response validation failed for /wazo/internal/voicemails/listen_greeting\n");
++		ast_ari_response_error(response, 500,
++			"Internal Server Error", "Response validation failed");
++	}
++#endif /* AST_DEVMODE */
++
++fin: __attribute__((unused))
++	return;
++}
 +
 +/*! \brief REST handler for /api-docs/wazo.json */
 +static struct stasis_rest_handlers wazo_internal_voicemails_delete_msg = {
@@ -393,12 +677,30 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +	.children = {  }
 +};
 +/*! \brief REST handler for /api-docs/wazo.json */
++static struct stasis_rest_handlers wazo_internal_voicemails_record_greeting = {
++	.path_segment = "record_greeting",
++	.callbacks = {
++		[AST_HTTP_POST] = ast_ari_wazo_rec_voicemail_message_cb,
++	},
++	.num_children = 0,
++	.children = {  }
++};
++/*! \brief REST handler for /api-docs/wazo.json */
++static struct stasis_rest_handlers wazo_internal_voicemails_listen_greeting = {
++	.path_segment = "listen_greeting",
++	.callbacks = {
++		[AST_HTTP_GET] = ast_ari_wazo_get_voicemail_message_cb,
++	},
++	.num_children = 0,
++	.children = {  }
++};
++/*! \brief REST handler for /api-docs/wazo.json */
 +static struct stasis_rest_handlers wazo_internal_voicemails = {
 +	.path_segment = "voicemails",
 +	.callbacks = {
 +	},
-+	.num_children = 2,
-+	.children = { &wazo_internal_voicemails_delete_msg,&wazo_internal_voicemails_move_msg, }
++	.num_children = 4,
++	.children = { &wazo_internal_voicemails_delete_msg,&wazo_internal_voicemails_move_msg,&wazo_internal_voicemails_record_greeting,&wazo_internal_voicemails_listen_greeting, }
 +};
 +/*! \brief REST handler for /api-docs/wazo.json */
 +static struct stasis_rest_handlers wazo_internal = {
@@ -417,24 +719,31 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +	.children = { &wazo_internal, }
 +};
 +
-+static int load_module(void)
-+{
-+	int res = 0;
-+	res |= ast_ari_add_handler(&wazo);
-+	return res;
-+}
-+
 +static int unload_module(void)
 +{
 +	ast_ari_remove_handler(&wazo);
 +	return 0;
 +}
 +
-+AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_DEFAULT, "RESTful API module - Wazo resources",
++static int load_module(void)
++{
++	int res = 0;
++
++
++	res |= ast_ari_add_handler(&wazo);
++	if (res) {
++		unload_module();
++		return AST_MODULE_LOAD_DECLINE;
++	}
++
++	return AST_MODULE_LOAD_SUCCESS;
++}
++
++AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_DEFAULT, "RESTful API module - wazo resources",
 +	.support_level = AST_MODULE_SUPPORT_CORE,
 +	.load = load_module,
 +	.unload = unload_module,
-+	.requires = "res_ari,res_stasis",
++	.requires = "res_ari,res_ari_model,res_stasis",
 +);
 Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 ===================================================================
