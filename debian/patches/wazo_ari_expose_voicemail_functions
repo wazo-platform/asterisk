@@ -11,7 +11,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.3.0/res/ari/resource_wazo.c
-@@ -0,0 +1,216 @@
+@@ -0,0 +1,249 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -128,8 +128,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +	if(n <= 0) {
 +		ast_ari_response_error(response, 10, "Decoding Error", "Unable to decode base64");
 +		ast_log(LOG_ERROR, "Unable to decode data\n");
-+		ast_free(decoded_data);
-+		return;
++		goto data_cleanup;
 +
 +	}
 +
@@ -137,39 +136,47 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +	if(!context) {
 +		ast_ari_response_error(response, 10, "Invalid argument", "Invalid context");
 +		ast_log(LOG_ERROR, "Invalid context");
-+		ast_free(decoded_data);
-+		return;
++		goto data_cleanup;
 +	}
 +
 +	const char* voicemail = args->voicemail;
 +	if(!voicemail) {
 +		ast_ari_response_error(response, 10, "Invalid argument", "Invalid voicemail");
 +		ast_log(LOG_ERROR, "Invalid voicemail");
-+		ast_free(decoded_data);
-+		return;
++		goto data_cleanup;
++	}
++
++	const char* language = args->language;
++	if(!language) {
++		ast_ari_response_error(response, 10, "Invalid argument", "Invalid language");
++		ast_log(LOG_ERROR, "Invalid voicemail");
++		goto data_cleanup;
 +	}
 +
 +	const char* raw_len_str = ast_json_string_get(ast_json_object_get(args->body, "raw-data-length"));
 +	if(!raw_len_str) {
 +		ast_ari_response_error(response, 10, "Invalid argument", "Invalid context");
 +		ast_log(LOG_ERROR, "Invalid context");
-+		ast_free(decoded_data);
-+		return;
++		goto data_cleanup;
 +	}
 +
-+	unsigned long raw_data_len = atoi(raw_len_str);
++//	unsigned long raw_data_len = 0;
++//	raw_data_len = atoi(raw_len_str);
 +
-+	ast_log(AST_LOG_ERROR, "RAW-DATA-LEN %d\n", raw_data_len);
-+
-+
-+	ast_vm_save_greeting((const char*) decoded_data, n, absence, context, voicemail);
++	ast_vm_save_greeting((const char*) decoded_data, n, absence, context, voicemail, language);
 +	ast_ari_response_accepted(response);
-+	ast_free(decoded_data);
++	goto data_cleanup;
++
++	data_cleanup:
++		ast_free(decoded_data);
 +}
 +
 +void ast_ari_wazo_get_voicemail_message(struct ast_variable *headers,
 +										struct ast_ari_wazo_get_voicemail_message_args *args,
 +										struct ast_ari_response *response) {
++
++	char* encoded_data = NULL;
++	char* raw_data = NULL;
 +
 +	const char *absence = args->absence;
 +	if(!absence) {
@@ -192,9 +199,18 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +		return;
 +	}
 +
-+	char* raw_data = NULL;
++
 +	int length = 0;
-+	length = ast_vm_get_greeting(&raw_data, absence, context, voicemail);
++
++	const char* language = args->language;
++
++	if(!language) {
++		ast_ari_response_error(response, 10, "Invalid argument", "Invalid language");
++		ast_log(LOG_ERROR, "Invalid voicemail");
++		return;
++	}
++
++	length = ast_vm_get_greeting(&raw_data, absence, context, voicemail, language);
 +
 +	if(!raw_data) {
 +		ast_ari_response_error(response, 10, "Error", "Unable to read file");
@@ -205,27 +221,44 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +	if(length <= 0){
 +		ast_ari_response_error(response, 10, "Error", "Unable to read file, got length 0");
 +		ast_log(LOG_ERROR, "Unable to read file");
-+		ast_free(raw_data);
-+		return;
++		goto data_cleanup;
 +	}
++
 +	/*formula for getting length of base64 encoded string, each element's size is 3*sizeof(char) */
 +	unsigned long encoded_length = ((3 * length * 4 + 2) / 3) + 1;
-+	char* encoded_data = ast_calloc(encoded_length, sizeof(char));
++
++	encoded_data = ast_calloc(encoded_length, sizeof(char));
++
++
++	if(!encoded_data) {
++		ast_ari_response_error(response, 10, "Error", "Unable to allocate memory");
++		ast_log(LOG_ERROR, "Unable to allocate memory");
++		goto data_cleanup;
++	}
 +
 +	int n = ast_base64encode(encoded_data, (const unsigned char*) raw_data, length, encoded_length);
 +
-+//	ast_log(LOG_ERROR, "N: %d, L: %d, E: %d, '%s'\n", n, length, encoded_length, raw_data);
 +	if(n <= 0) {
 +		ast_ari_response_error(response, 10, "Encoding Error", "Unable to encode base64");
 +		ast_log(LOG_ERROR, "Unable to encode data\n");
-+		ast_free(encoded_data);
-+		return;
++		goto data_cleanup;
 +	}
++
 +	response->message = ast_json_object_create();
 +	ast_json_object_set(response->message, "encoded-data", ast_json_string_create(encoded_data));
 +
-+	ast_free(raw_data);
++
 +	ast_ari_response_ok(response, response->message);
++	goto data_cleanup;
++
++	data_cleanup:
++		if(raw_data) {
++			ast_free(raw_data);
++		}
++		if(encoded_data) {
++			ast_free(encoded_data);
++		}
++
 +
 +}
 \ No newline at end of file
@@ -233,7 +266,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.h
 ===================================================================
 --- /dev/null
 +++ asterisk-16.3.0/res/ari/resource_wazo.h
-@@ -0,0 +1,140 @@
+@@ -0,0 +1,146 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -325,8 +358,11 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.h
 +struct ast_ari_wazo_rec_voicemail_message_args {
 +	const char *context;
 +	const char *voicemail;
++	/*! 'busy' or 'unavailable' */
 +	const char *absence;
 +	struct ast_json *body;
++	/*! 'busy' or 'unavailable' */
++	const char *language;
 +};
 +/*!
 + * \brief Body parsing function for /wazo/internal/voicemails/record_greeting.
@@ -351,7 +387,10 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.h
 +struct ast_ari_wazo_get_voicemail_message_args {
 +	const char *context;
 +	const char *voicemail;
++	/*! 'busy' or 'unavailable' */
 +	const char *absence;
++	/*! 'busy' or 'unavailable' */
++	const char *language;
 +};
 +/*!
 + * \brief Body parsing function for /wazo/internal/voicemails/listen_greeting.
@@ -378,7 +417,7 @@ Index: asterisk-16.3.0/res/res_ari_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.3.0/res/res_ari_wazo.c
-@@ -0,0 +1,435 @@
+@@ -0,0 +1,449 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -569,6 +608,10 @@ Index: asterisk-16.3.0/res/res_ari_wazo.c
 +	if (field) {
 +		args->absence = ast_json_string_get(field);
 +	}
++	field = ast_json_object_get(body, "language");
++	if (field) {
++		args->language = ast_json_string_get(field);
++	}
 +	return 0;
 +}
 +
@@ -600,6 +643,9 @@ Index: asterisk-16.3.0/res/res_ari_wazo.c
 +		} else
 +		if (strcmp(i->name, "absence") == 0) {
 +			args.absence = (i->value);
++		} else
++		if (strcmp(i->name, "language") == 0) {
++			args.language = (i->value);
 +		} else
 +		{}
 +	}
@@ -655,6 +701,10 @@ Index: asterisk-16.3.0/res/res_ari_wazo.c
 +	if (field) {
 +		args->absence = ast_json_string_get(field);
 +	}
++	field = ast_json_object_get(body, "language");
++	if (field) {
++		args->language = ast_json_string_get(field);
++	}
 +	return 0;
 +}
 +
@@ -686,6 +736,9 @@ Index: asterisk-16.3.0/res/res_ari_wazo.c
 +		} else
 +		if (strcmp(i->name, "absence") == 0) {
 +			args.absence = (i->value);
++		} else
++		if (strcmp(i->name, "language") == 0) {
++			args.language = (i->value);
 +		} else
 +		{}
 +	}
@@ -818,7 +871,7 @@ Index: asterisk-16.3.0/rest-api/api-docs/wazo.json
 ===================================================================
 --- /dev/null
 +++ asterisk-16.3.0/rest-api/api-docs/wazo.json
-@@ -0,0 +1,165 @@
+@@ -0,0 +1,181 @@
 +{
 +	"_copyright": "Copyright (C) 2016 Proformatique Inc.",
 +	"_author": "Etienne Lessard",
@@ -924,6 +977,14 @@ Index: asterisk-16.3.0/rest-api/api-docs/wazo.json
 +							"required": true,
 +							"dataType": "containers",
 +							"allowMultiple": false
++						},
++						{
++							"name": "language",
++							"description": "",
++							"paramType": "query",
++							"required": true,
++							"dataType": "string",
++							"allowMultiple": false
 +						}
 +					],
 +					"errorResponses": [
@@ -968,6 +1029,14 @@ Index: asterisk-16.3.0/rest-api/api-docs/wazo.json
 +							"required": true,
 +							"dataType": "string",
 +							"allowMultiple": false
++						},
++						{
++							"name": "language",
++							"description": "",
++							"paramType": "query",
++							"required": true,
++							"dataType": "string",
++							"allowMultiple": false
 +						}
 +					],
 +					"errorResponses": [
@@ -1003,21 +1072,23 @@ Index: asterisk-16.3.0/include/asterisk/app.h
 ===================================================================
 --- asterisk-16.3.0.orig/include/asterisk/app.h
 +++ asterisk-16.3.0/include/asterisk/app.h
-@@ -533,6 +533,13 @@ typedef int (ast_vm_msg_forward_fn)(cons
+@@ -533,6 +533,15 @@ typedef int (ast_vm_msg_forward_fn)(cons
  typedef int (ast_vm_msg_play_fn)(struct ast_channel *chan, const char *mailbox,
  	const char *context, const char *folder, const char *msg_num, ast_vm_msg_play_cb *cb);
  
 +
-+typedef int (ast_vm_save_greeting_fn)(const char *data, unsigned int length, const char* absence, const char* context, const char* voicemail);
++typedef int (ast_vm_save_greeting_fn)(const char *data, unsigned int length, const char* absence, const char* context, const char* voicemail,
++		const char* language);
 +
 +
-+typedef int (ast_vm_get_greeting_fn)(char** data,  const char* absence, const char* context, const char* voicemail);
++typedef int (ast_vm_get_greeting_fn)(char** data,  const char* absence, const char* context, const char* voicemail,
++		const char* language);
 +
 +
  #define VM_MODULE_VERSION 2
  
  /*! \brief Voicemail function table definition. */
-@@ -561,8 +568,11 @@ struct ast_vm_functions {
+@@ -561,8 +570,11 @@ struct ast_vm_functions {
  	ast_vm_msg_remove_fn *msg_remove;
  	ast_vm_msg_forward_fn *msg_forward;
  	ast_vm_msg_play_fn *msg_play;
@@ -1029,7 +1100,7 @@ Index: asterisk-16.3.0/include/asterisk/app.h
  /*!
   * \brief Determine if a voicemail provider is registered.
   * \since 12.0.0
-@@ -584,6 +594,24 @@ int ast_vm_is_registered(void);
+@@ -584,6 +596,25 @@ int ast_vm_is_registered(void);
   */
  int __ast_vm_register(const struct ast_vm_functions *vm_table, struct ast_module *module);
  
@@ -1040,7 +1111,8 @@ Index: asterisk-16.3.0/include/asterisk/app.h
 + * \param data the data to be written
 + * @return -1 on error, 0 on success
 + */
-+int ast_vm_save_greeting(const char* data, unsigned int length,  const char* absence, const char* context, const char* voicemail);
++int ast_vm_save_greeting(const char* data, unsigned int length,  const char* absence, const char* context,
++		const char* voicemail, const char* language);
 +
 +/*!
 + * \brief Retrieve a greeting file
@@ -1049,12 +1121,12 @@ Index: asterisk-16.3.0/include/asterisk/app.h
 + * \param data A buffer where the file's data will be held
 + * @return The length of the data buffer, negative number on error
 + */
-+int ast_vm_get_greeting(char** data, const char* absence, const char* context, const char* voicemail);
++int ast_vm_get_greeting(char** data, const char* absence, const char* context, const char* voicemail, const char* language);
 +
  /*! \brief See \ref __ast_vm_register() */
  #define ast_vm_register(vm_table) __ast_vm_register(vm_table, AST_MODULE_SELF)
  
-@@ -1663,6 +1691,7 @@ struct stasis_message_type *ast_mwi_stat
+@@ -1663,6 +1694,7 @@ struct stasis_message_type *ast_mwi_stat
   */
  struct stasis_message_type *ast_mwi_vm_app_type(void);
  
@@ -1066,23 +1138,25 @@ Index: asterisk-16.3.0/main/app.c
 ===================================================================
 --- asterisk-16.3.0.orig/main/app.c
 +++ asterisk-16.3.0/main/app.c
-@@ -855,6 +855,22 @@ int ast_vm_msg_play(struct ast_channel *
+@@ -855,6 +855,24 @@ int ast_vm_msg_play(struct ast_channel *
  	return res;
  }
  
-+int ast_vm_save_greeting(const char* data, unsigned int length, const char* absence,  const char* context, const char* voicemail) {
++int ast_vm_save_greeting(const char* data, unsigned int length, const char* absence,  const char* context, const char* voicemail,
++		const char* language) {
 +	int res = 0;
 +
-+	VM_API_CALL(res,save_greeting, (data, length, absence, context, voicemail));
++	VM_API_CALL(res,save_greeting, (data, length, absence, context, voicemail, language));
 +
 +	return res;
 +}
 +
 +
-+int ast_vm_get_greeting(char** data, const char* absence, const char* context, const char* voicemail) {
++int ast_vm_get_greeting(char** data, const char* absence, const char* context, const char* voicemail,
++		const char* language) {
 +	int res = 0;
 +
-+	VM_API_CALL(res, get_greeting, (data, absence, context, voicemail));
++	VM_API_CALL(res, get_greeting, (data, absence, context, voicemail, language));
 +
 +	return res;
 +}
@@ -1185,9 +1259,9 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  static int vm_msg_remove(const char *mailbox, const char *context, size_t num_msgs, const char *folder, const char *msgs[]);
  static int vm_msg_play(struct ast_channel *chan, const char *mailbox, const char *context, const char *folder, const char *msg_num, ast_vm_msg_play_cb cb);
 -
-+static int vm_save_greeting(const char* data, unsigned int length, const char* type, const char* context, const char* voicemail);
-+static int vm_get_greeting(char** data, const char* type, const char* context, const char* voicemail);
-+static void setup_vm_greeting_path(char* result_path, const char* abscence , const char* context, const char* voicemail);
++static int vm_save_greeting(const char* data, unsigned int length, const char* absence, const char* context, const char* voicemail, const char* language);
++static int vm_get_greeting(char** data, const char* absence, const char* context, const char* voicemail, const char* language);
++static void setup_vm_greeting_path(char* result_path, const char* absence , const char* context, const char* voicemail, const char* language);
  #ifdef TEST_FRAMEWORK
  static int vm_test_destroy_user(const char *context, const char *mailbox);
  static int vm_test_create_user(const char *context, const char *mailbox);
@@ -2168,22 +2242,17 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 +					ast_stream_and_wait(chan, vm_prepend_timeout, "");
 +					ast_filerename(backup, msgfile, NULL);
 +				}
-+
-+				if (record_gain)
-+					ast_channel_setoption(chan, AST_OPTION_RXGAIN, &zero_gain, sizeof(zero_gain), 0);
  
 -			if (record_gain)
 -				ast_channel_setoption(chan, AST_OPTION_RXGAIN, &zero_gain, sizeof(zero_gain), 0);
++				if (record_gain)
++					ast_channel_setoption(chan, AST_OPTION_RXGAIN, &zero_gain, sizeof(zero_gain), 0);
  
-+				if ((duration_str = ast_variable_retrieve(msg_cfg, "message", "duration")))
-+					*duration = atoi(duration_str);
  
 -			if ((duration_str = ast_variable_retrieve(msg_cfg, "message", "duration")))
 -				*duration = atoi(duration_str);
-+				if (prepend_duration) {
-+					struct ast_category *msg_cat;
-+					/* need enough space for a maximum-length message duration */
-+					char duration_buf[12];
++				if ((duration_str = ast_variable_retrieve(msg_cfg, "message", "duration")))
++					*duration = atoi(duration_str);
  
 -			if (prepend_duration) {
 -				struct ast_category *msg_cat;
@@ -2195,6 +2264,11 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 -				snprintf(duration_buf, sizeof(duration_buf), "%ld", *duration);
 -				if (!ast_variable_update(msg_cat, "duration", duration_buf, NULL, 0)) {
 -					ast_config_text_file_save(textfile, msg_cfg, "app_voicemail");
++				if (prepend_duration) {
++					struct ast_category *msg_cat;
++					/* need enough space for a maximum-length message duration */
++					char duration_buf[12];
++
 +					*duration += prepend_duration;
 +					msg_cat = ast_category_get(msg_cfg, "message", NULL);
 +					snprintf(duration_buf, sizeof(duration_buf), "%ld", *duration);
@@ -3850,7 +3924,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 -				} else {
 -					vms.deleted[vms.curmsg] = 0;
 -					vms.heard[vms.curmsg] = 0;
- 				}
+-				}
 -			}
 -			make_file(vms.fn, sizeof(vms.fn), vms.curdir, vms.curmsg);
 -			if (useadsi)
@@ -3920,7 +3994,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 -				cmd = ast_play_and_wait(chan, "vm-onefor");
 -				if (!strncasecmp(ast_channel_language(chan), "he", 2)) {
 -					cmd = ast_play_and_wait(chan, "vm-for");
--				}
+ 				}
 -				if (!cmd)
 -					cmd = vm_play_folder_name(chan, vms.vmbox);
 -				if (!cmd)
@@ -5425,15 +5499,16 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (vmu && open) {
  		close_mailbox(&vms, vmu);
  	}
-@@ -16785,14 +16792,82 @@ play2_msg_cleanup:
+@@ -16785,14 +16792,69 @@ play2_msg_cleanup:
  	return res;
  }
  
 +
-+static int vm_save_greeting(const char* data, unsigned int length, const char* abscence, const char* context, const char* voicemail) {
++static int vm_save_greeting(const char* data, unsigned int length, const char* absence, const char* context,
++		const char* voicemail, const char* language) {
 +	char path[PATH_MAX];
 +
-+	setup_vm_greeting_path(path, abscence, context, voicemail);
++	setup_vm_greeting_path(path, absence, context, voicemail, language);
 +	ast_log(LOG_WARNING, "PATH: %s\n", path);
 +
 +	FILE *f = fopen(path, "wb");
@@ -5447,10 +5522,11 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 +	return 0;
 +}
 +
-+static int vm_get_greeting(char** data, const char* abscence, const char* context, const char* voicemail) {
++static int vm_get_greeting(char** data, const char* absence, const char* context, const char* voicemail,
++		const char* language) {
 +	char path[PATH_MAX];
 +
-+	setup_vm_greeting_path(path, abscence, context, voicemail);
++	setup_vm_greeting_path(path, absence, context, voicemail, language);
 +
 +	FILE *f = fopen(path, "r");
 +
@@ -5472,26 +5548,11 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 +	return n;
 +}
 +
-+static void setup_vm_greeting_path(char* path, const char* abscence, const char* context, const char* voicemail) {
-+	char language[MAX_LANGUAGE];
-+	struct vm_state vms;
-+	struct ast_vm_user *vmu = NULL, vmus;
-+	memset(&vms, 0, sizeof(vms));
-+	memset(&vmus, 0, sizeof(vmus));
++static void setup_vm_greeting_path(char* path, const char* absence, const char* context, const char* voicemail, const char* language) {
 +
-+	if (!(vmu = find_user(&vmus, context, voicemail))) {
-+		ast_log(LOG_WARNING, "Can't find voicemail user to remove msg from (%s@%s)\n", voicemail, context);
-+	}
-+
-+	if(ast_strlen_zero(vmu->language)) {
-+		strcpy(language, "en");
-+	} else {
-+		strcpy(language, vmu->language);
-+	}
-+
-+	if(!strcmp(abscence, VM_TYPE_BUSY)) {
++	if(!strcmp(absence, VM_TYPE_BUSY)) {
 +		snprintf(path, PATH_MAX, "%s%s/%s/%s/busy.gsm", VM_SPOOL_DIR, context, voicemail, language);
-+	} else if (!strcmp(abscence, VM_TYPE_UNAVAILABLE)) {
++	} else if (!strcmp(absence, VM_TYPE_UNAVAILABLE)) {
 +		snprintf(path, PATH_MAX, "%s%s/%s/%s/unavail.gsm", VM_SPOOL_DIR, context, voicemail, language);
 +	}
 +
