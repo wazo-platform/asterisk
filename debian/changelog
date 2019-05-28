@@ -1,3 +1,9 @@
+asterisk (8:16.3.0-1~wazo7) wazo-dev-stretch; urgency=medium
+
+  * handle the mobility param in the contact header
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 28 May 2019 14:09:23 -0400
+
 asterisk (8:16.3.0-1~wazo6) wazo-dev-stetch; urgency=medium
 
   * update test for the wazo resource
