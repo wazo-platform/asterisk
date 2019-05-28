@@ -147,7 +147,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +
 +	const char* raw_len_str = ast_json_string_get(ast_json_object_get(args->body, "raw-data-length"));
 +	if(!raw_len_str) {
-+		ast_ari_response_error(response, 400, "Invalid argument", "Invalid context");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid raw data length");
 +		goto data_cleanup;
 +	}
 +
@@ -156,7 +156,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +
 +	int result = ast_vm_save_greeting((const char*) decoded_data, n, absence, context, voicemail, language);
 +	if(result == -1) {
-+		ast_ari_response_error(response, 404, "Unable to save greeting", "Unable to write file, invalid path");
++		ast_ari_response_error(response, 400, "Unable to save greeting", "Unable to write file, invalid path");
 +		goto data_cleanup;
 +	} else if (result == -2) {
 +		ast_ari_response_error(response, 404, "Unable to save greeting", "Unable to write file");
