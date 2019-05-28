@@ -113,8 +113,8 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +		return;
 +	}
 +
-+	const char *type = args->type;
-+	if(!type) {
++	const char *absence = args->absence;
++	if(!absence) {
 +		ast_ari_response_error(response, 10, "Invalid argument", "Invalid voicemail type: BUSY or UNAVAILABLE");
 +		ast_log(LOG_ERROR, "Unable to parse data");
 +		return;
@@ -162,7 +162,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	ast_log(AST_LOG_ERROR, "RAW-DATA-LEN %d\n", raw_data_len);
 +
 +
-+	ast_vm_save_greeting((const char*) decoded_data, n, type, context, voicemail);
++	ast_vm_save_greeting((const char*) decoded_data, n, absence, context, voicemail);
 +	ast_ari_response_accepted(response);
 +	ast_free(decoded_data);
 +}
@@ -171,8 +171,8 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +										struct ast_ari_wazo_get_voicemail_message_args *args,
 +										struct ast_ari_response *response) {
 +
-+	const char *type = args->type;
-+	if(!type) {
++	const char *absence = args->absence;
++	if(!absence) {
 +		ast_ari_response_error(response, 10, "Invalid argument", "Invalid voicemail type: BUSY or UNAVAILABLE");
 +		ast_log(LOG_ERROR, "Unable to parse data");
 +		return;
@@ -194,7 +194,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +
 +	char* raw_data = NULL;
 +	int length = 0;
-+	length = ast_vm_get_greeting(&raw_data, type, context, voicemail);
++	length = ast_vm_get_greeting(&raw_data, absence, context, voicemail);
 +
 +	if(!raw_data) {
 +		ast_ari_response_error(response, 10, "Error", "Unable to read file");
@@ -233,7 +233,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.h
 ===================================================================
 --- /dev/null
 +++ asterisk-16.4.0/res/ari/resource_wazo.h
-@@ -0,0 +1,138 @@
+@@ -0,0 +1,140 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -324,8 +324,9 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.h
 +/*! Argument struct for ast_ari_wazo_rec_voicemail_message() */
 +struct ast_ari_wazo_rec_voicemail_message_args {
 +	const char *context;
-+	struct ast_json *body;
 +	const char *voicemail;
++	const char *absence;
++	struct ast_json *body;
 +};
 +/*!
 + * \brief Body parsing function for /wazo/internal/voicemails/record_greeting.
@@ -350,6 +351,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.h
 +struct ast_ari_wazo_get_voicemail_message_args {
 +	const char *context;
 +	const char *voicemail;
++	const char *absence;
 +};
 +/*!
 + * \brief Body parsing function for /wazo/internal/voicemails/listen_greeting.
@@ -563,9 +565,9 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +	if (field) {
 +		args->voicemail = ast_json_string_get(field);
 +	}
-+	field = ast_json_object_get(body, "type");
++	field = ast_json_object_get(body, "absence");
 +	if (field) {
-+		args->type = ast_json_string_get(field);
++		args->absence = ast_json_string_get(field);
 +	}
 +	return 0;
 +}
@@ -596,8 +598,8 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +		if (strcmp(i->name, "voicemail") == 0) {
 +			args.voicemail = (i->value);
 +		} else
-+		if (strcmp(i->name, "type") == 0) {
-+			args.type = (i->value);
++		if (strcmp(i->name, "absence") == 0) {
++			args.absence = (i->value);
 +		} else
 +		{}
 +	}
@@ -649,9 +651,9 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +	if (field) {
 +		args->voicemail = ast_json_string_get(field);
 +	}
-+	field = ast_json_object_get(body, "type");
++	field = ast_json_object_get(body, "absence");
 +	if (field) {
-+		args->type = ast_json_string_get(field);
++		args->absence = ast_json_string_get(field);
 +	}
 +	return 0;
 +}
@@ -682,8 +684,8 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +		if (strcmp(i->name, "voicemail") == 0) {
 +			args.voicemail = (i->value);
 +		} else
-+		if (strcmp(i->name, "type") == 0) {
-+			args.type = (i->value);
++		if (strcmp(i->name, "absence") == 0) {
++			args.absence = (i->value);
 +		} else
 +		{}
 +	}
@@ -908,8 +910,8 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +							"allowMultiple": false
 +						},
 +						{
-+							"name": "type",
-+							"description": "",
++							"name": "absence",
++							"description": "'busy' or 'unavailable'",
 +							"paramType": "query",
 +							"required": true,
 +							"dataType": "string",
@@ -960,8 +962,8 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +							"allowMultiple": false
 +						},
 +						{
-+							"name": "type",
-+							"description": "",
++							"name": "absence",
++							"description": "'busy' or 'unavailable'",
 +							"paramType": "query",
 +							"required": true,
 +							"dataType": "string",
@@ -1006,10 +1008,10 @@ Index: asterisk-16.3.0/include/asterisk/app.h
  	const char *context, const char *folder, const char *msg_num, ast_vm_msg_play_cb *cb);
  
 +
-+typedef int (ast_vm_save_greeting_fn)(const char *data, unsigned int length, const char* type, const char* context, const char* voicemail);
++typedef int (ast_vm_save_greeting_fn)(const char *data, unsigned int length, const char* absence, const char* context, const char* voicemail);
 +
 +
-+typedef int (ast_vm_get_greeting_fn)(char** data,  const char* type, const char* context, const char* voicemail);
++typedef int (ast_vm_get_greeting_fn)(char** data,  const char* absence, const char* context, const char* voicemail);
 +
 +
  #define VM_MODULE_VERSION 2
@@ -1038,7 +1040,7 @@ Index: asterisk-16.3.0/include/asterisk/app.h
 + * \param data the data to be written
 + * @return -1 on error, 0 on success
 + */
-+int ast_vm_save_greeting(const char* data, unsigned int length,  const char* type, const char* context, const char* voicemail);
++int ast_vm_save_greeting(const char* data, unsigned int length,  const char* absence, const char* context, const char* voicemail);
 +
 +/*!
 + * \brief Retrieve a greeting file
@@ -1047,7 +1049,7 @@ Index: asterisk-16.3.0/include/asterisk/app.h
 + * \param data A buffer where the file's data will be held
 + * @return The length of the data buffer, negative number on error
 + */
-+int ast_vm_get_greeting(char** data, const char* type, const char* context, const char* voicemail);
++int ast_vm_get_greeting(char** data, const char* absence, const char* context, const char* voicemail);
 +
  /*! \brief See \ref __ast_vm_register() */
  #define ast_vm_register(vm_table) __ast_vm_register(vm_table, AST_MODULE_SELF)
@@ -1068,19 +1070,19 @@ Index: asterisk-16.3.0/main/app.c
  	return res;
  }
  
-+int ast_vm_save_greeting(const char* data, unsigned int length, const char* type,  const char* context, const char* voicemail) {
++int ast_vm_save_greeting(const char* data, unsigned int length, const char* absence,  const char* context, const char* voicemail) {
 +	int res = 0;
 +
-+	VM_API_CALL(res,save_greeting, (data, length, type, context, voicemail));
++	VM_API_CALL(res,save_greeting, (data, length, absence, context, voicemail));
 +
 +	return res;
 +}
 +
 +
-+int ast_vm_get_greeting(char** data, const char* type, const char* context, const char* voicemail) {
++int ast_vm_get_greeting(char** data, const char* absence, const char* context, const char* voicemail) {
 +	int res = 0;
 +
-+	VM_API_CALL(res, get_greeting, (data, type, context, voicemail));
++	VM_API_CALL(res, get_greeting, (data, absence, context, voicemail));
 +
 +	return res;
 +}
@@ -1178,17 +1180,18 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  static int vm_tempgreeting(struct ast_channel *chan, struct ast_vm_user *vmu, struct vm_state *vms, char *fmtc, signed char record_gain);
  static int vm_play_folder_name(struct ast_channel *chan, char *mbox);
  static int notify_new_message(struct ast_channel *chan, struct ast_vm_user *vmu, struct vm_state *vms, int msgnum, long duration, char *fmt, char *cidnum, char *cidname, const char *flag);
-@@ -1174,7 +1177,8 @@ static int vm_msg_forward(const char *fr
+@@ -1174,7 +1177,9 @@ static int vm_msg_forward(const char *fr
  static int vm_msg_move(const char *mailbox, const char *context, size_t num_msgs, const char *oldfolder, const char *old_msg_ids[], const char *newfolder);
  static int vm_msg_remove(const char *mailbox, const char *context, size_t num_msgs, const char *folder, const char *msgs[]);
  static int vm_msg_play(struct ast_channel *chan, const char *mailbox, const char *context, const char *folder, const char *msg_num, ast_vm_msg_play_cb cb);
 -
 +static int vm_save_greeting(const char* data, unsigned int length, const char* type, const char* context, const char* voicemail);
 +static int vm_get_greeting(char** data, const char* type, const char* context, const char* voicemail);
++static void setup_vm_greeting_path(char* result_path, const char* abscence , const char* context, const char* voicemail);
  #ifdef TEST_FRAMEWORK
  static int vm_test_destroy_user(const char *context, const char *mailbox);
  static int vm_test_create_user(const char *context, const char *mailbox);
-@@ -1372,7 +1376,7 @@ static void apply_option(struct ast_vm_u
+@@ -1372,7 +1377,7 @@ static void apply_option(struct ast_vm_u
  	} else if (!strcasecmp(var, "locale")) {
  		ast_copy_string(vmu->locale, value, sizeof(vmu->locale));
  #ifdef IMAP_STORAGE
@@ -1197,7 +1200,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		ast_copy_string(vmu->imapuser, value, sizeof(vmu->imapuser));
  		vmu->imapversion = imapversion;
  	} else if (!strcasecmp(var, "imapserver")) {
-@@ -1514,7 +1518,7 @@ static char *vm_check_password_shell(cha
+@@ -1514,7 +1519,7 @@ static char *vm_check_password_shell(cha
  		} else {
  			/*  child */
  			AST_DECLARE_APP_ARGS(arg,
@@ -1206,7 +1209,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  			);
  			char *mycmd = ast_strdupa(command);
  
-@@ -1631,7 +1635,7 @@ static void apply_options_full(struct as
+@@ -1631,7 +1636,7 @@ static void apply_options_full(struct as
  			if (ast_strlen_zero(retval->password)) {
  				if (!ast_strlen_zero(var->value) && var->value[0] == '*') {
  					ast_log(LOG_WARNING, "Invalid password detected for mailbox %s.  The password"
@@ -1215,7 +1218,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  				} else {
  					ast_copy_string(retval->password, var->value, sizeof(retval->password));
  				}
-@@ -1654,7 +1658,7 @@ static void apply_options_full(struct as
+@@ -1654,7 +1659,7 @@ static void apply_options_full(struct as
  			ast_free(retval->emailbody);
  			retval->emailbody = ast_strdup(substitute_escapes(var->value));
  #ifdef IMAP_STORAGE
@@ -1224,7 +1227,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  			ast_copy_string(retval->imapuser, var->value, sizeof(retval->imapuser));
  			retval->imapversion = imapversion;
  		} else if (!strcasecmp(var->name, "imapserver")) {
-@@ -1797,9 +1801,9 @@ static struct ast_vm_user *find_user(str
+@@ -1797,9 +1802,9 @@ static struct ast_vm_user *find_user(str
  		char *search_string = ast_alloca(MAX_VM_MAILBOX_LEN);
  
  		snprintf(search_string, MAX_VM_MAILBOX_LEN, "%s%s%s",
@@ -1237,7 +1240,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  
  		mapping = ao2_find(alias_mailbox_mappings, search_string, OBJ_SEARCH_KEY);
  		if (mapping) {
-@@ -1834,7 +1838,7 @@ static int reset_user_pw(const char *con
+@@ -1834,7 +1839,7 @@ static int reset_user_pw(const char *con
  	AST_LIST_TRAVERSE(&users, cur, list) {
  		if ((!context || !strcasecmp(context, cur->context)) &&
  			(!strcasecmp(mailbox, cur->mailbox)))
@@ -1246,7 +1249,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  	if (cur) {
  		ast_copy_string(cur->password, newpass, sizeof(cur->password));
-@@ -1875,95 +1879,95 @@ static void vm_change_password(struct as
+@@ -1875,95 +1880,95 @@ static void vm_change_password(struct as
  
  	/* check if we should store the secret in the spool directory next to the messages */
  	switch (vmu->passwordlocation) {
@@ -1422,7 +1425,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  }
  
-@@ -3819,10 +3823,10 @@ static void check_quota(struct vm_state
+@@ -3819,10 +3824,10 @@ static void check_quota(struct vm_state
  static int vm_lock_path(const char *path)
  {
  	switch (ast_lock_path(path)) {
@@ -1437,7 +1440,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  }
  
-@@ -4913,9 +4917,9 @@ static int ochar(struct baseio *bio, int
+@@ -4913,9 +4918,9 @@ static int ochar(struct baseio *bio, int
  static int base_encode(char *filename, FILE *so)
  {
  	static const unsigned char dtable[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
@@ -1450,7 +1453,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	int i, hiteof = 0;
  	FILE *fi;
  	struct baseio bio;
-@@ -4989,7 +4993,7 @@ static void prep_email_sub_vars(struct a
+@@ -4989,7 +4994,7 @@ static void prep_email_sub_vars(struct a
  	pbx_builtin_setvar_helper(ast, "VM_CONTEXT", context);
  	pbx_builtin_setvar_helper(ast, "VM_MAILBOX", mailbox);
  	pbx_builtin_setvar_helper(ast, "VM_CALLERID", (!ast_strlen_zero(cidname) || !ast_strlen_zero(cidnum)) ?
@@ -1459,7 +1462,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	pbx_builtin_setvar_helper(ast, "VM_CIDNAME", (!ast_strlen_zero(cidname) ? cidname : "an unknown caller"));
  	pbx_builtin_setvar_helper(ast, "VM_CIDNUM", (!ast_strlen_zero(cidnum) ? cidnum : "an unknown caller"));
  	pbx_builtin_setvar_helper(ast, "VM_DATE", date);
-@@ -5161,24 +5165,24 @@ static const char *ast_str_encode_mime(s
+@@ -5161,24 +5166,24 @@ static const char *ast_str_encode_mime(s
   * The email body, and base 64 encoded attachement (if any) are stored to the file identified by *p. This method does not actually send the email.  That is done by invoking the configure 'mailcmd' and piping this generated file into it, or with the sendemail() function.
   */
  static void make_email_file(FILE *p,
@@ -1502,7 +1505,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	char date[256];
  	char host[MAXHOSTNAMELEN] = "";
-@@ -5319,7 +5323,7 @@ static void make_email_file(FILE *p,
+@@ -5319,7 +5324,7 @@ static void make_email_file(FILE *p,
  	}
  
  	fprintf(p, "Message-ID: <Asterisk-%d-%u-%s-%d@%s>" ENDL, msgnum + 1,
@@ -1511,7 +1514,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (imap) {
  		/* additional information needed for IMAP searching */
  		fprintf(p, "X-Asterisk-VM-Message-Num: %d" ENDL, msgnum + 1);
-@@ -5357,7 +5361,7 @@ static void make_email_file(FILE *p,
+@@ -5357,7 +5362,7 @@ static void make_email_file(FILE *p,
  	if (attach_user_voicemail) {
  		/* Something unique. */
  		snprintf(bound, sizeof(bound), "----voicemail_%d%s%d%u", msgnum + 1, mailbox,
@@ -1520,7 +1523,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  
  		fprintf(p, "Content-Type: multipart/mixed; boundary=\"%s\"" ENDL, bound);
  		fprintf(p, ENDL ENDL "This is a multi-part message in MIME format." ENDL ENDL);
-@@ -5366,7 +5370,7 @@ static void make_email_file(FILE *p,
+@@ -5366,7 +5371,7 @@ static void make_email_file(FILE *p,
  	fprintf(p, "Content-Type: text/plain; charset=%s" ENDL "Content-Transfer-Encoding: 8bit" ENDL ENDL, charset);
  	if (msgnum <= -1) {
  		fprintf(p, "This message is to let you know that your greeting '%s' was changed on %s." ENDL
@@ -1529,7 +1532,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  				greeting_attachment, date);
  	} else if (emailbody || vmu->emailbody) {
  		char* e_body = vmu->emailbody ? vmu->emailbody : emailbody;
-@@ -5375,7 +5379,7 @@ static void make_email_file(FILE *p,
+@@ -5375,7 +5380,7 @@ static void make_email_file(FILE *p,
  			prep_email_sub_vars(ast, vmu, msgnum + 1, context, mailbox, fromfolder, cidnum, cidname, dur, date, category, flag);
  			ast_str_substitute_variables(&str1, 0, ast, e_body);
  #ifdef IMAP_STORAGE
@@ -1538,7 +1541,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  					/* Convert body to native line terminators for IMAP backend */
  					char *line = ast_str_buffer(str1), *next;
  					do {
-@@ -5422,22 +5426,22 @@ static void make_email_file(FILE *p,
+@@ -5422,22 +5427,22 @@ static void make_email_file(FILE *p,
  					ast_strftime_locale(origdate, sizeof(origdate), emaildateformat, &tm, S_OR(vmu->locale, NULL));
  				}
  				fprintf(p, "Dear %s:" ENDL ENDL "\tJust wanted to let you know you were just forwarded"
@@ -1571,7 +1574,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		}
  	}
  
-@@ -5554,22 +5558,22 @@ static int add_email_attachment(FILE *p,
+@@ -5554,22 +5559,22 @@ static int add_email_attachment(FILE *p,
  }
  
  static int sendmail(char *srcemail,
@@ -1610,7 +1613,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	FILE *p = NULL;
  	char tmp[80] = "/tmp/astmail-XXXXXX";
-@@ -5738,7 +5742,7 @@ static int sendpage(char *srcemail, char
+@@ -5738,7 +5743,7 @@ static int sendpage(char *srcemail, char
  		}
  	} else {
  		fprintf(p, "New %s long %s msg in box %s\n"
@@ -1619,7 +1622,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  
  	fclose(p);
-@@ -6071,9 +6075,9 @@ static int copy_message(struct ast_chann
+@@ -6071,9 +6076,9 @@ static int copy_message(struct ast_chann
  	if (chan) {
  		struct ast_party_caller *caller = ast_channel_caller(chan);
  		notify_new_message(chan, recip, NULL, recipmsgnum, duration, fmt,
@@ -1632,7 +1635,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  
  	return res;
-@@ -6303,9 +6307,9 @@ static void run_externnotify(char *conte
+@@ -6303,9 +6308,9 @@ static void run_externnotify(char *conte
  			ast_log(AST_LOG_ERROR, "Problem in calculating number of voicemail messages available for extension %s\n", extension);
  		} else {
  			snprintf(arguments, sizeof(arguments), "%s %s %s %d %d %d &",
@@ -1645,7 +1648,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  			ast_debug(1, "Executing %s\n", arguments);
  			ast_safe_system(arguments);
  		}
-@@ -6362,13 +6366,13 @@ static int msg_create_from_file(struct a
+@@ -6362,13 +6367,13 @@ static int msg_create_from_file(struct a
  	char destination[PATH_MAX]; /* destination with msgXXXX.  Basically <dir>/msgXXXX */
  
  	/* stuff that only seems to be needed for IMAP */
@@ -1661,7 +1664,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  
  	/* miscellaneous operational variables */
  	int res = 0; /* Used to store error codes from functions */
-@@ -6413,7 +6417,7 @@ static int msg_create_from_file(struct a
+@@ -6413,7 +6418,7 @@ static int msg_create_from_file(struct a
  	/* If the duration was below the minimum duration for the user, let's just drop the whole thing now */
  	if (duration < recipient->minsecs) {
  		ast_log(LOG_NOTICE, "Copying recording to voicemail %s@%s skipped because duration was shorter than "
@@ -1670,7 +1673,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		return -1;
  	}
  
-@@ -6439,36 +6443,36 @@ static int msg_create_from_file(struct a
+@@ -6439,36 +6444,36 @@ static int msg_create_from_file(struct a
  		generate_msg_id(msg_id);
  		get_date(date, sizeof(date));
  		fprintf(txt,
@@ -1737,7 +1740,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  
  		/* Since we are recording from a file, we shouldn't need to do anything else with
  		 * this txt file */
-@@ -6534,7 +6538,7 @@ static int msg_create_from_file(struct a
+@@ -6534,7 +6539,7 @@ static int msg_create_from_file(struct a
  
  	/* Check to see if the mailbox is full for ODBC/File storage */
  	ast_debug(3, "mailbox = %d : inprocess = %d\n", count_messages(recipient, dir),
@@ -1746,7 +1749,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (count_messages(recipient, dir) > recipient->maxmsg - inprocess_count(recipient->mailbox, recipient->context, +1)) {
  		ast_log(AST_LOG_WARNING, "Didn't copy to voicemail. Mailbox for %s@%s is full.\n", recipient->mailbox, recipient->context);
  		inprocess_count(recipient->mailbox, recipient->context, -1);
-@@ -6599,19 +6603,19 @@ static int msg_create_from_file(struct a
+@@ -6599,19 +6604,19 @@ static int msg_create_from_file(struct a
  		if (ast_check_realtime("voicemail_data")) {
  			get_date(date, sizeof(date));
  			ast_store_realtime("voicemail_data",
@@ -1779,7 +1782,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		}
  
  		STORE(dir, recipient->mailbox, recipient->context, msgnum, NULL, recipient, fmt, 0, vms, "", msg_id);
-@@ -6767,17 +6771,17 @@ static int leave_voicemail(struct ast_ch
+@@ -6767,17 +6772,17 @@ static int leave_voicemail(struct ast_ch
  	if (ast_test_flag(vmu, VM_OPERATOR)) {
  		if (!ast_strlen_zero(vmu->exit)) {
  			if (ast_exists_extension(chan, vmu->exit, "o", 1,
@@ -1801,7 +1804,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  			strncat(ecodes, "0", sizeof(ecodes) - strlen(ecodes) - 1);
  			ousemacro = 1;
  		}
-@@ -6785,15 +6789,15 @@ static int leave_voicemail(struct ast_ch
+@@ -6785,15 +6790,15 @@ static int leave_voicemail(struct ast_ch
  
  	if (!ast_strlen_zero(vmu->exit)) {
  		if (ast_exists_extension(chan, vmu->exit, "a", 1,
@@ -1821,7 +1824,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		strncat(ecodes, "*", sizeof(ecodes) - strlen(ecodes) - 1);
  		ausemacro = 1;
  	}
-@@ -6804,8 +6808,8 @@ static int leave_voicemail(struct ast_ch
+@@ -6804,8 +6809,8 @@ static int leave_voicemail(struct ast_ch
  			e[0] = *code;
  			if (strchr(ecodes, e[0]) == NULL
  				&& ast_canmatch_extension(chan,
@@ -1832,7 +1835,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  				strncat(ecodes, e, sizeof(ecodes) - strlen(ecodes) - 1);
  			}
  		}
-@@ -6816,7 +6820,7 @@ static int leave_voicemail(struct ast_ch
+@@ -6816,7 +6821,7 @@ static int leave_voicemail(struct ast_ch
  #ifdef ODBC_STORAGE
  		int success =
  #endif
@@ -1841,7 +1844,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		if (ast_fileexists(prefile, NULL, NULL) > 0) {
  			if (ast_streamfile(chan, prefile, ast_channel_language(chan)) > -1)
  				res = ast_waitstream(chan, ecodes);
-@@ -6872,7 +6876,7 @@ static int leave_voicemail(struct ast_ch
+@@ -6872,7 +6877,7 @@ static int leave_voicemail(struct ast_ch
  
  	/* Check for a '0' here */
  	if (ast_test_flag(vmu, VM_OPERATOR) && res == '0') {
@@ -1850,7 +1853,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		if (ouseexten || ousemacro) {
  			ast_channel_exten_set(chan, "o");
  			if (!ast_strlen_zero(vmu->exit)) {
-@@ -6990,22 +6994,22 @@ static int leave_voicemail(struct ast_ch
+@@ -6990,22 +6995,22 @@ static int leave_voicemail(struct ast_ch
  			snprintf(origtime, sizeof(origtime), "%ld", (long) time(NULL));
  			get_date(date, sizeof(date));
  			ast_callerid_merge(callerid, sizeof(callerid),
@@ -1888,7 +1891,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		}
  
  		/* Store information */
-@@ -7014,38 +7018,38 @@ static int leave_voicemail(struct ast_ch
+@@ -7014,38 +7019,38 @@ static int leave_voicemail(struct ast_ch
  			generate_msg_id(msg_id);
  			get_date(date, sizeof(date));
  			ast_callerid_merge(callerid, sizeof(callerid),
@@ -1958,7 +1961,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		} else {
  			ast_log(AST_LOG_WARNING, "Error opening text file for output\n");
  			inprocess_count(vmu->mailbox, vmu->context, -1);
-@@ -7165,9 +7169,9 @@ static int leave_voicemail(struct ast_ch
+@@ -7165,9 +7170,9 @@ static int leave_voicemail(struct ast_ch
  							flag);
  #else
  						notify_new_message(chan, vmu, NULL, msgnum, duration, fmt,
@@ -1971,7 +1974,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  #endif
  					}
  
-@@ -7192,7 +7196,7 @@ static int leave_voicemail(struct ast_ch
+@@ -7192,7 +7197,7 @@ static int leave_voicemail(struct ast_ch
  			pbx_builtin_setvar_helper(chan, "VMSTATUS", "SUCCESS");
  	} else
  		ast_log(AST_LOG_WARNING, "No format for saving voicemail?\n");
@@ -1980,7 +1983,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	free_user(vmu);
  
  #ifdef IMAP_STORAGE
-@@ -7668,7 +7672,7 @@ static void adsi_message(struct ast_chan
+@@ -7668,7 +7673,7 @@ static void adsi_message(struct ast_chan
  	/* Except "Exit" */
  	keys[5] = ADSI_KEY_SKT | (ADSI_KEY_APPS + 5);
  	snprintf(buf1, sizeof(buf1), "%s%s", vms->curbox,
@@ -1989,7 +1992,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	snprintf(buf2, sizeof(buf2), "Message %d of %d", vms->curmsg + 1, vms->lastmsg + 1);
  
  	bytes += ast_adsi_display(buf + bytes, ADSI_COMM_PAGE, 1, ADSI_JUST_LEFT, 0, buf1, "");
-@@ -7805,7 +7809,7 @@ static void adsi_status2(struct ast_chan
+@@ -7805,7 +7810,7 @@ static void adsi_status2(struct ast_chan
  		keys[0] = 0;
  
  	snprintf(buf1, sizeof(buf1), "%s%s has", vms->curbox,
@@ -1998,7 +2001,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  
  	if (vms->lastmsg + 1)
  		snprintf(buf2, sizeof(buf2), "%d %s.", vms->lastmsg + 1, mess);
-@@ -7905,29 +7909,29 @@ static int get_folder(struct ast_channel
+@@ -7905,29 +7910,29 @@ static int get_folder(struct ast_channel
  /* Japanese Syntax */
  static int get_folder_ja(struct ast_channel *chan, int start)
  {
@@ -2020,6 +2023,10 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		if (d) {
 -                        return d;
 +			return d;
++		}
++		d = ast_waitfordigit(chan, 500);
++		if (d) {
++			return d;
  		}
 -                d = ast_waitfordigit(chan, 500);
 -                if (d) {
@@ -2029,23 +2036,19 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 -        d = ast_play_and_wait(chan, "vm-tocancel"); /* "or pound to cancel" */
 -        if (d) {
 -                return d;
-+		d = ast_waitfordigit(chan, 500);
-+		if (d) {
-+			return d;
-+		}
-+	}
-+	d = ast_play_and_wait(chan, "vm-tocancel"); /* "or pound to cancel" */
-+	if (d) {
-+		return d;
  	}
 -        d = ast_waitfordigit(chan, 4000);
 -        return d;
++	d = ast_play_and_wait(chan, "vm-tocancel"); /* "or pound to cancel" */
++	if (d) {
++		return d;
++	}
 +	d = ast_waitfordigit(chan, 4000);
 +	return d;
  }
  
  /*!
-@@ -7949,13 +7953,13 @@ static int get_folder2(struct ast_channe
+@@ -7949,13 +7954,13 @@ static int get_folder2(struct ast_channe
  
  	res = ast_play_and_wait(chan, fn);	/* Folder name */
  	while (((res < '0') || (res > '9')) &&
@@ -2066,7 +2069,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		}
  		loops++;
  	}
-@@ -7964,7 +7968,7 @@ static int get_folder2(struct ast_channe
+@@ -7964,7 +7969,7 @@ static int get_folder2(struct ast_channe
  		return '#';
  	}
  	ast_test_suite_event_notify("USERPRESS", "Message: User pressed %c\r\nDTMF: %c",
@@ -2075,7 +2078,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	return res;
  }
  
-@@ -7987,7 +7991,7 @@ static int get_folder2(struct ast_channe
+@@ -7987,7 +7992,7 @@ static int get_folder2(struct ast_channe
   * \return zero on success, -1 on error.
   */
  static int vm_forwardoptions(struct ast_channel *chan, struct ast_vm_user *vmu, char *curdir, int curmsg, char *vm_fmts,
@@ -2084,7 +2087,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	int cmd = 0;
  	int retries = 0, prepend_duration = 0, already_recorded = 0;
-@@ -8021,10 +8025,10 @@ static int vm_forwardoptions(struct ast_
+@@ -8021,10 +8026,10 @@ static int vm_forwardoptions(struct ast_
  		if (cmd)
  			retries = 0;
  		switch (cmd) {
@@ -2097,7 +2100,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  			if (msg_cfg && msg_cfg != CONFIG_STATUS_FILEINVALID) {
  				msg_id = ast_variable_retrieve(msg_cfg, "message", "msg_id");
  			}
-@@ -8039,96 +8043,96 @@ static int vm_forwardoptions(struct ast_
+@@ -8039,96 +8044,96 @@ static int vm_forwardoptions(struct ast_
  			cmd = 't';
  #else
  
@@ -2165,17 +2168,22 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 +					ast_stream_and_wait(chan, vm_prepend_timeout, "");
 +					ast_filerename(backup, msgfile, NULL);
 +				}
- 
--			if (record_gain)
--				ast_channel_setoption(chan, AST_OPTION_RXGAIN, &zero_gain, sizeof(zero_gain), 0);
++
 +				if (record_gain)
 +					ast_channel_setoption(chan, AST_OPTION_RXGAIN, &zero_gain, sizeof(zero_gain), 0);
  
+-			if (record_gain)
+-				ast_channel_setoption(chan, AST_OPTION_RXGAIN, &zero_gain, sizeof(zero_gain), 0);
+ 
++				if ((duration_str = ast_variable_retrieve(msg_cfg, "message", "duration")))
++					*duration = atoi(duration_str);
  
 -			if ((duration_str = ast_variable_retrieve(msg_cfg, "message", "duration")))
 -				*duration = atoi(duration_str);
-+				if ((duration_str = ast_variable_retrieve(msg_cfg, "message", "duration")))
-+					*duration = atoi(duration_str);
++				if (prepend_duration) {
++					struct ast_category *msg_cat;
++					/* need enough space for a maximum-length message duration */
++					char duration_buf[12];
  
 -			if (prepend_duration) {
 -				struct ast_category *msg_cat;
@@ -2187,11 +2195,6 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 -				snprintf(duration_buf, sizeof(duration_buf), "%ld", *duration);
 -				if (!ast_variable_update(msg_cat, "duration", duration_buf, NULL, 0)) {
 -					ast_config_text_file_save(textfile, msg_cfg, "app_voicemail");
-+				if (prepend_duration) {
-+					struct ast_category *msg_cat;
-+					/* need enough space for a maximum-length message duration */
-+					char duration_buf[12];
-+
 +					*duration += prepend_duration;
 +					msg_cat = ast_category_get(msg_cfg, "message", NULL);
 +					snprintf(duration_buf, sizeof(duration_buf), "%ld", *duration);
@@ -2265,7 +2268,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		}
  	}
  
-@@ -8244,13 +8248,13 @@ static int notify_new_message(struct ast
+@@ -8244,13 +8249,13 @@ static int notify_new_message(struct ast
  #endif
  
  		if (attach_user_voicemail)
@@ -2281,7 +2284,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  
  	if (!ast_strlen_zero(vmu->pager)) {
-@@ -8348,33 +8352,33 @@ static int forward_message(struct ast_ch
+@@ -8348,33 +8353,33 @@ static int forward_message(struct ast_ch
  				if (cmd)
  					retries = 0;
  				switch (cmd) {
@@ -2340,7 +2343,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  				}
  			}
  			if (cmd < 0 || cmd == 't')
-@@ -8869,7 +8873,7 @@ static int play_message_duration(struct
+@@ -8869,7 +8874,7 @@ static int play_message_duration(struct
  				res = say_and_wait(chan, durationm, ast_channel_language(chan));
  				res = res ? res : ast_play_and_wait(chan, "vm-minute-t");
  			}
@@ -2349,7 +2352,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		} else {
  			res = ast_say_number(chan, durationm, AST_DIGIT_ANY, ast_channel_language(chan), NULL);
  			res = wait_file2(chan, vms, "vm-minutes");
-@@ -8935,7 +8939,7 @@ static int play_message(struct ast_chann
+@@ -8935,7 +8940,7 @@ static int play_message(struct ast_chann
  			}
  			if (!res)
  				res = wait_file2(chan, vms, "vm-message");
@@ -2358,7 +2361,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		} else if (!strncasecmp(ast_channel_language(chan), "he", 2)) {
  			if (!vms->curmsg) {
  				res = wait_file2(chan, vms, "vm-message");
-@@ -8948,13 +8952,13 @@ static int play_message(struct ast_chann
+@@ -8948,13 +8953,13 @@ static int play_message(struct ast_chann
  				res = wait_file2(chan, vms, "vm-number");
  				res = ast_say_number(chan, vms->curmsg + 1, AST_DIGIT_ANY, ast_channel_language(chan), "f");
  			}
@@ -2374,7 +2377,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		} else if (!strncasecmp(ast_channel_language(chan), "vi", 2)) {
  			if (!vms->curmsg) {
  				res = wait_file2(chan, vms, "vm-message");
-@@ -9040,7 +9044,7 @@ static int play_message(struct ast_chann
+@@ -9040,7 +9045,7 @@ static int play_message(struct ast_chann
  			res = 0;
  		}
  		ast_test_suite_event_notify("USERPRESS", "Message: User pressed %c\r\nDTMF: %c",
@@ -2383,7 +2386,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  	DISPOSE(vms->curdir, vms->curmsg);
  	return res;
-@@ -9276,7 +9280,7 @@ static int close_mailbox(struct vm_state
+@@ -9276,7 +9281,7 @@ static int close_mailbox(struct vm_state
  	}
  #endif
  
@@ -2392,7 +2395,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (vms->deleted) {
  		ast_free(vms->deleted);
  		vms->deleted = NULL;
-@@ -9319,15 +9323,15 @@ static int vm_play_folder_name_gr(struct
+@@ -9319,15 +9324,15 @@ static int vm_play_folder_name_gr(struct
  
  static int vm_play_folder_name_ja(struct ast_channel *chan, char *box)
  {
@@ -2416,7 +2419,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  }
  
  static int vm_play_folder_name_pl(struct ast_channel *chan, char *box)
-@@ -9372,8 +9376,8 @@ static int vm_play_folder_name(struct as
+@@ -9372,8 +9377,8 @@ static int vm_play_folder_name(struct as
  		return vm_play_folder_name_gr(chan, box);
  	} else if (!strncasecmp(ast_channel_language(chan), "he", 2)) {  /* Hebrew syntax */
  		return ast_play_and_wait(chan, box);
@@ -2427,7 +2430,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	} else if (!strncasecmp(ast_channel_language(chan), "pl", 2)) {
  		return vm_play_folder_name_pl(chan, box);
  	} else if (!strncasecmp(ast_channel_language(chan), "ua", 2)) {  /* Ukrainian syntax */
-@@ -9601,40 +9605,40 @@ static int vm_intro_he(struct ast_channe
+@@ -9601,40 +9606,40 @@ static int vm_intro_he(struct ast_channe
  /* Japanese syntax */
  static int vm_intro_ja(struct ast_channel *chan,struct vm_state *vms)
  {
@@ -2502,7 +2505,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  } /* Japanese */
  
  /* Default English syntax */
-@@ -9770,30 +9774,30 @@ static int vm_intro_it(struct ast_channe
+@@ -9770,30 +9775,30 @@ static int vm_intro_it(struct ast_channe
  	int res;
  	if (!vms->oldmessages && !vms->newmessages &&!vms->urgentmessages)
  		res =	ast_play_and_wait(chan, "vm-no") ||
@@ -2548,7 +2551,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  	return res;
  }
-@@ -10056,7 +10060,7 @@ static int vm_intro_es(struct ast_channe
+@@ -10056,7 +10061,7 @@ static int vm_intro_es(struct ast_channe
  			}
  		}
  	}
@@ -2557,7 +2560,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  }
  
  /* BRAZILIAN PORTUGUESE syntax */
-@@ -10506,7 +10510,7 @@ static int vm_instructions_en(struct ast
+@@ -10506,7 +10511,7 @@ static int vm_instructions_en(struct ast
  			 * to the next message
  			 */
  			if (!res && ((vms->curmsg != vms->lastmsg) || (in_urgent && vms->newmessages > 0) ||
@@ -2566,7 +2569,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  				res = ast_play_and_wait(chan, "vm-next");
  			}
  			if (!res) {
-@@ -10548,82 +10552,82 @@ static int vm_instructions_en(struct ast
+@@ -10548,82 +10553,82 @@ static int vm_instructions_en(struct ast
  
  static int vm_instructions_ja(struct ast_channel *chan, struct ast_vm_user *vmu, struct vm_state *vms,  int skipadvanced, int in_urgent)
  {
@@ -2725,7 +2728,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  
  		if (!res) {
  			res = ast_play_and_wait(chan, "vm-helpexit");
-@@ -10639,7 +10643,7 @@ static int vm_instructions_ja(struct ast
+@@ -10639,7 +10644,7 @@ static int vm_instructions_ja(struct ast
  
  	}
  
@@ -2734,7 +2737,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  }
  
  static int vm_instructions_zh(struct ast_channel *chan, struct ast_vm_user *vmu, struct vm_state *vms,  int skipadvanced, int in_urgent)
-@@ -10668,9 +10672,9 @@ static int vm_instructions_zh(struct ast
+@@ -10668,9 +10673,9 @@ static int vm_instructions_zh(struct ast
  
  static int vm_instructions(struct ast_channel *chan, struct ast_vm_user *vmu, struct vm_state *vms, int skipadvanced, int in_urgent)
  {
@@ -2747,7 +2750,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		return vm_instructions_zh(chan, vmu, vms, skipadvanced, in_urgent);
  	} else {					/* Default to ENGLISH */
  		return vm_instructions_en(chan, vmu, vms, skipadvanced, in_urgent);
-@@ -10800,103 +10804,103 @@ static int vm_options(struct ast_channel
+@@ -10800,103 +10805,103 @@ static int vm_options(struct ast_channel
  		if (cmd)
  			retries = 0;
  		switch (cmd) {
@@ -2938,7 +2941,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		}
  	}
  	if (cmd == 't')
-@@ -10952,32 +10956,32 @@ static int vm_tempgreeting(struct ast_ch
+@@ -10952,32 +10957,32 @@ static int vm_tempgreeting(struct ast_ch
  			cmd = 't';
  		} else {
  			switch (cmd) {
@@ -2996,7 +2999,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  			}
  		}
  		DISPOSE(prefile, -1);
-@@ -11103,21 +11107,21 @@ static int vm_browse_messages_it(struct
+@@ -11103,21 +11108,21 @@ static int vm_browse_messages_it(struct
   */
  static int vm_browse_messages_ja(struct ast_channel *chan, struct vm_state *vms, struct ast_vm_user *vmu)
  {
@@ -3032,7 +3035,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  }
  
  /*!
-@@ -11245,8 +11249,8 @@ static int vm_browse_messages(struct ast
+@@ -11245,8 +11250,8 @@ static int vm_browse_messages(struct ast
  		return vm_browse_messages_he(chan, vms, vmu);
  	} else if (!strncasecmp(ast_channel_language(chan), "it", 2)) {  /* ITALIAN */
  		return vm_browse_messages_it(chan, vms, vmu);
@@ -3043,7 +3046,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	} else if (!strncasecmp(ast_channel_language(chan), "pt", 2)) {  /* PORTUGUESE */
  		return vm_browse_messages_pt(chan, vms, vmu);
  	} else if (!strncasecmp(ast_channel_language(chan), "vi", 2)) {  /* VIETNAMESE */
-@@ -11259,8 +11263,8 @@ static int vm_browse_messages(struct ast
+@@ -11259,8 +11264,8 @@ static int vm_browse_messages(struct ast
  }
  
  static int vm_authenticate(struct ast_channel *chan, char *mailbox, int mailbox_size,
@@ -3054,7 +3057,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	int useadsi = 0, valid = 0, logretries = 0;
  	char password[AST_MAX_EXTENSION], *passptr;
-@@ -11294,7 +11298,7 @@ static int vm_authenticate(struct ast_ch
+@@ -11294,7 +11299,7 @@ static int vm_authenticate(struct ast_ch
  			/* user entered '*' */
  			ast_verb(4, "Mailbox begins with '*', attempting jump to extension 'a'\n");
  			if (ast_exists_extension(chan, ast_channel_context(chan), "a", 1,
@@ -3063,7 +3066,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  				return -1;
  			}
  			ast_verb(4, "Jump to extension 'a' failed; setting mailbox to NULL\n");
-@@ -11332,7 +11336,7 @@ static int vm_authenticate(struct ast_ch
+@@ -11332,7 +11337,7 @@ static int vm_authenticate(struct ast_ch
  				/* user entered '*' */
  				ast_verb(4, "Password begins with '*', attempting jump to extension 'a'\n");
  				if (ast_exists_extension(chan, ast_channel_context(chan), "a", 1,
@@ -3072,7 +3075,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  					mailbox[0] = '*';
  					free_user(vmu);
  					return -1;
-@@ -11392,9 +11396,9 @@ static int vm_authenticate(struct ast_ch
+@@ -11392,9 +11397,9 @@ static int vm_authenticate(struct ast_ch
  }
  
  static int play_message_by_id_helper(struct ast_channel *chan,
@@ -3085,7 +3088,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	if (message_range_and_existence_check(vms, &msg_id, 1, &vms->curmsg, vmu)) {
  		return -1;
-@@ -11476,7 +11480,7 @@ static int play_message_by_id(struct ast
+@@ -11476,7 +11481,7 @@ static int play_message_by_id(struct ast
  		open = 0;
  	}
  
@@ -3094,7 +3097,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (!played) {
  		res = -1;
  	}
-@@ -11504,8 +11508,8 @@ static int vm_playmsgexec(struct ast_cha
+@@ -11504,8 +11509,8 @@ static int vm_playmsgexec(struct ast_cha
  	int res;
  
  	AST_DECLARE_APP_ARGS(args,
@@ -3105,7 +3108,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	);
  
  	if (ast_channel_state(chan) != AST_STATE_UP) {
-@@ -11574,8 +11578,8 @@ static int vm_execmain(struct ast_channe
+@@ -11574,8 +11579,8 @@ static int vm_execmain(struct ast_channe
  		char *opts[OPT_ARG_ARRAY_SIZE];
  		char *parse;
  		AST_DECLARE_APP_ARGS(args,
@@ -3116,7 +3119,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		);
  
  		parse = ast_strdupa(data);
-@@ -11614,8 +11618,8 @@ static int vm_execmain(struct ast_channe
+@@ -11614,8 +11619,8 @@ static int vm_execmain(struct ast_channe
  				}
  				if (play_folder > 9 || play_folder < 0) {
  					ast_log(AST_LOG_WARNING,
@@ -3127,7 +3130,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  					play_folder = 0;
  				}
  			}
-@@ -11781,7 +11785,7 @@ static int vm_execmain(struct ast_channe
+@@ -11781,7 +11786,7 @@ static int vm_execmain(struct ast_channe
  		}
  	}
  #ifdef IMAP_STORAGE
@@ -3136,7 +3139,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		if (vms.quota_limit && vms.quota_usage >= vms.quota_limit) {
  			ast_debug(1, "*** QUOTA EXCEEDED!!\n");
  			cmd = ast_play_and_wait(chan, "vm-mailboxfull");
-@@ -11800,260 +11804,375 @@ static int vm_execmain(struct ast_channe
+@@ -11800,260 +11805,375 @@ static int vm_execmain(struct ast_channe
  		cmd = vm_intro(chan, vmu, &vms);
  	}
  	ast_test_suite_event_notify("USERPRESS", "Message: User pressed %c\r\nDTMF: %c",
@@ -3730,7 +3733,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  					if (vms.curmsg < vms.lastmsg) {
  						vms.curmsg++;
  						cmd = play_message(chan, vmu, &vms);
-@@ -12065,7 +12184,7 @@ static int vm_execmain(struct ast_channe
+@@ -12065,7 +12185,7 @@ static int vm_execmain(struct ast_channe
  						   messages.  If so, go to regular new messages
  						   instead of saying "no more messages"
  						*/
@@ -3739,7 +3742,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  							/* Check for new messages */
  							in_urgent = 0;
  							res = close_mailbox(&vms, vmu);
-@@ -12084,168 +12203,53 @@ static int vm_execmain(struct ast_channe
+@@ -12084,168 +12204,53 @@ static int vm_execmain(struct ast_channe
  						}
  					}
  				}
@@ -3847,7 +3850,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 -				} else {
 -					vms.deleted[vms.curmsg] = 0;
 -					vms.heard[vms.curmsg] = 0;
--				}
+ 				}
 -			}
 -			make_file(vms.fn, sizeof(vms.fn), vms.curdir, vms.curmsg);
 -			if (useadsi)
@@ -3917,7 +3920,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 -				cmd = ast_play_and_wait(chan, "vm-onefor");
 -				if (!strncasecmp(ast_channel_language(chan), "he", 2)) {
 -					cmd = ast_play_and_wait(chan, "vm-for");
- 				}
+-				}
 -				if (!cmd)
 -					cmd = vm_play_folder_name(chan, vms.vmbox);
 -				if (!cmd)
@@ -3951,7 +3954,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		}
  	}
  	if ((cmd == 't') || (cmd == '#')) {
-@@ -12256,7 +12260,7 @@ static int vm_execmain(struct ast_channe
+@@ -12256,7 +12261,7 @@ static int vm_execmain(struct ast_channe
  		res = -1;
  	}
  
@@ -3960,7 +3963,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (res > -1) {
  		ast_stopstream(chan);
  		adsi_goodbye(chan);
-@@ -12318,8 +12322,8 @@ static int vm_exec(struct ast_channel *c
+@@ -12318,8 +12323,8 @@ static int vm_exec(struct ast_channel *c
  	struct ast_flags flags = { 0 };
  	char *opts[OPT_ARG_ARRAY_SIZE];
  	AST_DECLARE_APP_ARGS(args,
@@ -3971,7 +3974,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	);
  
  	memset(&leave_options, 0, sizeof(leave_options));
-@@ -12413,9 +12417,9 @@ static struct ast_vm_user *find_or_creat
+@@ -12413,9 +12418,9 @@ static struct ast_vm_user *find_or_creat
  
  	if (!ast_strlen_zero(box) && box[0] == '*') {
  		ast_log(LOG_WARNING, "Mailbox %s in context %s begins with '*' character.  The '*' character,"
@@ -3984,7 +3987,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		return NULL;
  	}
  
-@@ -12469,7 +12473,7 @@ static int append_mailbox(const char *co
+@@ -12469,7 +12474,7 @@ static int append_mailbox(const char *co
  	if ((s = strsep(&stringp, ","))) {
  		if (!ast_strlen_zero(s) && s[0] == '*') {
  			ast_log(LOG_WARNING, "Invalid password detected for mailbox %s.  The password"
@@ -3993,7 +3996,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		}
  		/* assign password regardless of validity to prevent NULL password from being assigned */
  		ast_copy_string(vmu->password, s, sizeof(vmu->password));
-@@ -12488,15 +12492,15 @@ static int append_mailbox(const char *co
+@@ -12488,15 +12493,15 @@ static int append_mailbox(const char *co
  	}
  
  	switch (vmu->passwordlocation) {
@@ -4015,7 +4018,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  
  	inboxcount2(mailbox_full, &urgent, &new, &old);
  #ifdef IMAP_STORAGE
-@@ -12706,8 +12710,8 @@ static int vm_box_exists(struct ast_chan
+@@ -12706,8 +12711,8 @@ static int vm_box_exists(struct ast_chan
  	struct ast_vm_user svm, *vmu;
  	char *context, *box;
  	AST_DECLARE_APP_ARGS(args,
@@ -4026,7 +4029,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	);
  	static int dep_warning = 0;
  
-@@ -12748,8 +12752,8 @@ static int acf_mailbox_exists(struct ast
+@@ -12748,8 +12753,8 @@ static int acf_mailbox_exists(struct ast
  {
  	struct ast_vm_user svm, *vmu;
  	AST_DECLARE_APP_ARGS(arg,
@@ -4037,7 +4040,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	);
  	static int dep_warning = 0;
  
-@@ -12783,9 +12787,9 @@ static int acf_vm_info(struct ast_channe
+@@ -12783,9 +12788,9 @@ static int acf_vm_info(struct ast_channe
  	int res = 0;
  
  	AST_DECLARE_APP_ARGS(arg,
@@ -4050,7 +4053,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	);
  
  	buf[0] = '\0';
-@@ -12855,13 +12859,13 @@ static int acf_vm_info(struct ast_channe
+@@ -12855,13 +12860,13 @@ static int acf_vm_info(struct ast_channe
  }
  
  static struct ast_custom_function mailbox_exists_acf = {
@@ -4068,7 +4071,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  };
  
  static int vmauthenticate(struct ast_channel *chan, const char *data)
-@@ -12911,33 +12915,33 @@ static char *show_users_realtime(int fd,
+@@ -12911,33 +12916,33 @@ static char *show_users_realtime(int fd,
  	const char *cat = NULL;
  
  	if (!(cfg = ast_load_realtime_multientry("voicemail",
@@ -4115,7 +4118,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  
  	ast_config_destroy(cfg);
  
-@@ -12975,14 +12979,14 @@ static char *handle_voicemail_show_users
+@@ -12975,14 +12980,14 @@ static char *handle_voicemail_show_users
  	int users_counter = 0;
  
  	switch (cmd) {
@@ -4138,7 +4141,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  
  	if ((a->argc < 3) || (a->argc > 5) || (a->argc == 4))
-@@ -13050,14 +13054,14 @@ static char *handle_voicemail_show_zones
+@@ -13050,14 +13055,14 @@ static char *handle_voicemail_show_zones
  	char *res = CLI_SUCCESS;
  
  	switch (cmd) {
@@ -4161,7 +4164,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  
  	if (a->argc != 3)
-@@ -13087,14 +13091,14 @@ static char *handle_voicemail_show_alias
+@@ -13087,14 +13092,14 @@ static char *handle_voicemail_show_alias
  	char *res = CLI_SUCCESS;
  
  	switch (cmd) {
@@ -4184,7 +4187,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  
  	if (a->argc != 3)
-@@ -13122,14 +13126,14 @@ static char *handle_voicemail_show_alias
+@@ -13122,14 +13127,14 @@ static char *handle_voicemail_show_alias
  static char *handle_voicemail_reload(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
  {
  	switch (cmd) {
@@ -4207,7 +4210,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  
  	if (a->argc != 2)
-@@ -13142,10 +13146,10 @@ static char *handle_voicemail_reload(str
+@@ -13142,10 +13147,10 @@ static char *handle_voicemail_reload(str
  }
  
  static struct ast_cli_entry cli_voicemail[] = {
@@ -4222,7 +4225,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  };
  
  static void poll_subscribed_mailbox(struct mwi_sub *mwi_sub)
-@@ -13429,7 +13433,7 @@ static int append_vmu_info_astman(
+@@ -13429,7 +13434,7 @@ static int append_vmu_info_astman(
  		struct ast_vm_user *vmu,
  		const char* event_name,
  		const char* actionid
@@ -4231,7 +4234,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	int new;
  	int old;
-@@ -13457,85 +13461,85 @@ static int append_vmu_info_astman(
+@@ -13457,85 +13462,85 @@ static int append_vmu_info_astman(
  	ast_free(mailbox);
  	if (ret == -1) {
  		ast_log(LOG_ERROR, "Could not get mailbox count. user[%s], context[%s]\n",
@@ -4382,7 +4385,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  
  	return 1;
  
-@@ -13553,21 +13557,21 @@ static int manager_voicemail_refresh(str
+@@ -13553,21 +13558,21 @@ static int manager_voicemail_refresh(str
  		if (!ast_strlen_zero(mwi_sub->mailbox)) {
  			if (
  				/* First case: everything matches */
@@ -4419,7 +4422,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  				poll_subscribed_mailbox(mwi_sub);
  			}
  		}
-@@ -13704,26 +13708,26 @@ static const char *substitute_escapes(co
+@@ -13704,26 +13709,26 @@ static const char *substitute_escapes(co
  				break;
  			}
  			switch (*current) {
@@ -4462,7 +4465,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  			}
  		} else {
  			ast_str_append(&str, 0, "%c", *current);
-@@ -14515,9 +14519,9 @@ static int actual_load_config(int reload
+@@ -14515,9 +14520,9 @@ static int actual_load_config(int reload
  					}
  
  					switch (current->passwordlocation) {
@@ -4475,7 +4478,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  					}
  				}
  			}
-@@ -15209,28 +15213,30 @@ AST_TEST_DEFINE(test_voicemail_vm_info)
+@@ -15209,28 +15214,30 @@ AST_TEST_DEFINE(test_voicemail_vm_info)
  #endif /* defined(TEST_FRAMEWORK) */
  
  static const struct ast_vm_functions vm_table = {
@@ -4523,7 +4526,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  };
  
  static int reload(void)
-@@ -15315,13 +15321,13 @@ static int load_module(void)
+@@ -15315,13 +15322,13 @@ static int load_module(void)
  	umask(my_umask);
  
  	inprocess_container = ao2_container_alloc_hash(AO2_ALLOC_OPT_LOCK_MUTEX, 0, 573,
@@ -4539,7 +4542,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (!alias_mailbox_mappings) {
  		ast_log(LOG_ERROR, "Unable to create alias_mailbox_mappings container\n");
  		ao2_cleanup(inprocess_container);
-@@ -15336,7 +15342,7 @@ static int load_module(void)
+@@ -15336,7 +15343,7 @@ static int load_module(void)
  	}
  
  	mailbox_alias_mappings = ao2_container_alloc_hash(AO2_ALLOC_OPT_LOCK_MUTEX, 0, MAPPING_BUCKETS,
@@ -4548,7 +4551,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (!mailbox_alias_mappings) {
  		ast_log(LOG_ERROR, "Unable to create mailbox_alias_mappings container\n");
  		ao2_cleanup(inprocess_container);
-@@ -15454,7 +15460,7 @@ static int dialout(struct ast_channel *c
+@@ -15454,7 +15461,7 @@ static int dialout(struct ast_channel *c
  					cmd = 't';
  			}
  			ast_test_suite_event_notify("USERPRESS", "Message: User pressed %c\r\nDTMF: %c",
@@ -4557,7 +4560,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		}
  		if (retries >= 3) {
  			return 0;
-@@ -15526,154 +15532,154 @@ static int advanced_options(struct ast_c
+@@ -15526,154 +15533,154 @@ static int advanced_options(struct ast_c
  	if (!strncasecmp("macro", context, 5)) /* Macro names in contexts are useless for our needs */
  		context = ast_variable_retrieve(msg_cfg, "message", "macrocontext");
  	switch (option) {
@@ -4843,7 +4846,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	}
  
  	ast_config_destroy(msg_cfg);
-@@ -15689,8 +15695,8 @@ static int advanced_options(struct ast_c
+@@ -15689,8 +15696,8 @@ static int advanced_options(struct ast_c
  }
  
  static int play_record_review(struct ast_channel *chan, char *playfile, char *recordfile, int maxtime, char *fmt,
@@ -4854,7 +4857,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	/* Record message & let caller review or re-record it, or set options if applicable */
  	int res = 0;
-@@ -15722,75 +15728,75 @@ static int play_record_review(struct ast
+@@ -15722,75 +15729,75 @@ static int play_record_review(struct ast
  
  	while ((cmd >= 0) && (cmd != 't')) {
  		switch (cmd) {
@@ -4994,7 +4997,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  				/* Message is too short */
  				ast_verb(3, "Message too short\n");
  				cmd = ast_play_and_wait(chan, "vm-tooshort");
-@@ -15805,42 +15811,42 @@ static int play_record_review(struct ast
+@@ -15805,42 +15812,42 @@ static int play_record_review(struct ast
  					cmd = ast_play_and_wait(chan, "vm-speakup");
  				break;
  #endif
@@ -5069,7 +5072,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
      a message while recording (can put the message numbers out of sync) */
  		case '*':
  			/* Cancel recording, delete message, offer to take another message*/
-@@ -15853,72 +15859,72 @@ static int play_record_review(struct ast
+@@ -15853,72 +15860,72 @@ static int play_record_review(struct ast
  			else
  				return 1;
  #endif
@@ -5198,7 +5201,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		}
  	}
  	if (!outsidecaller && (cmd == -1 || cmd == 't')) {
-@@ -16001,12 +16007,12 @@ static int vm_test_create_user(const cha
+@@ -16001,12 +16008,12 @@ static int vm_test_create_user(const cha
   *       to be made more efficient.
   */
  static int vm_msg_snapshot_create(struct ast_vm_user *vmu,
@@ -5217,7 +5220,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	struct ast_vm_msg_snapshot *msg_snapshot;
  	struct ast_vm_msg_snapshot *msg_snapshot_tmp;
-@@ -16043,7 +16049,7 @@ static int vm_msg_snapshot_create(struct
+@@ -16043,7 +16050,7 @@ static int vm_msg_snapshot_create(struct
  			 */
  			char id[MSG_ID_LEN];
  			if (!(add_message_id(msg_cfg, vms->curdir, vms->curmsg,
@@ -5226,7 +5229,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  				ast_string_field_set(msg_snapshot, msg_id, id);
  			} else {
  				ast_log(LOG_WARNING, "Unable to create a message ID for message %s/%d\n", vms->curdir, vms->curmsg);
-@@ -16075,30 +16081,30 @@ static int vm_msg_snapshot_create(struct
+@@ -16075,30 +16082,30 @@ static int vm_msg_snapshot_create(struct
  
  		/* store msg snapshot in mailbox snapshot */
  		switch (sort_val) {
@@ -5279,7 +5282,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  		}
  
  		if (!inserted) {
-@@ -16116,11 +16122,11 @@ static int vm_msg_snapshot_create(struct
+@@ -16116,11 +16123,11 @@ static int vm_msg_snapshot_create(struct
  }
  
  static struct ast_vm_mailbox_snapshot *vm_mailbox_snapshot_create(const char *mailbox,
@@ -5296,7 +5299,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	struct ast_vm_mailbox_snapshot *mailbox_snapshot;
  	struct vm_state vms;
-@@ -16217,7 +16223,7 @@ static struct ast_vm_mailbox_snapshot *v
+@@ -16217,7 +16224,7 @@ static struct ast_vm_mailbox_snapshot *v
  		open = 0;
  	}
  
@@ -5305,7 +5308,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (vmu && open) {
  		close_mailbox(&vms, vmu);
  	}
-@@ -16311,7 +16317,7 @@ static int message_range_and_existence_c
+@@ -16311,7 +16318,7 @@ static int message_range_and_existence_c
  		}
  	}
  
@@ -5314,7 +5317,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	return res;
  }
  
-@@ -16327,14 +16333,14 @@ static void notify_new_state(struct ast_
+@@ -16327,14 +16334,14 @@ static void notify_new_state(struct ast_
  }
  
  static int vm_msg_forward(const char *from_mailbox,
@@ -5337,7 +5340,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	struct vm_state from_vms;
  	struct ast_vm_user *vmu = NULL, vmus;
-@@ -16450,7 +16456,7 @@ static int vm_msg_forward(const char *fr
+@@ -16450,7 +16457,7 @@ static int vm_msg_forward(const char *fr
  	}
  	open = 0;
  
@@ -5346,7 +5349,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (vmu && open) {
  		close_mailbox(&from_vms, vmu);
  	}
-@@ -16470,11 +16476,11 @@ vm_forward_cleanup:
+@@ -16470,11 +16477,11 @@ vm_forward_cleanup:
  }
  
  static int vm_msg_move(const char *mailbox,
@@ -5363,7 +5366,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	struct vm_state vms;
  	struct ast_vm_user *vmu = NULL, vmus;
-@@ -16555,7 +16561,7 @@ static int vm_msg_move(const char *mailb
+@@ -16555,7 +16562,7 @@ static int vm_msg_move(const char *mailb
  	}
  	open = 0;
  
@@ -5372,7 +5375,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (vmu && open) {
  		close_mailbox(&vms, vmu);
  	}
-@@ -16574,10 +16580,10 @@ vm_move_cleanup:
+@@ -16574,10 +16581,10 @@ vm_move_cleanup:
  }
  
  static int vm_msg_remove(const char *mailbox,
@@ -5387,7 +5390,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	struct vm_state vms;
  	struct ast_vm_user *vmu = NULL, vmus;
-@@ -16653,7 +16659,7 @@ static int vm_msg_remove(const char *mai
+@@ -16653,7 +16660,7 @@ static int vm_msg_remove(const char *mai
  	}
  	open = 0;
  
@@ -5396,7 +5399,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (vmu && open) {
  		close_mailbox(&vms, vmu);
  	}
-@@ -16672,11 +16678,11 @@ vm_remove_cleanup:
+@@ -16672,11 +16679,11 @@ vm_remove_cleanup:
  }
  
  static int vm_msg_play(struct ast_channel *chan,
@@ -5413,7 +5416,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  {
  	struct vm_state vms;
  	struct ast_vm_user *vmu = NULL, vmus;
-@@ -16766,7 +16772,7 @@ static int vm_msg_play(struct ast_channe
+@@ -16766,7 +16773,7 @@ static int vm_msg_play(struct ast_channe
  	/* cleanup configs and msg */
  	DISPOSE(vms.curdir, vms.curmsg);
  
@@ -5422,40 +5425,38 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (vmu && open) {
  		close_mailbox(&vms, vmu);
  	}
-@@ -16785,14 +16791,58 @@ play2_msg_cleanup:
+@@ -16785,14 +16792,81 @@ play2_msg_cleanup:
  	return res;
  }
  
 +
-+static int vm_save_greeting(const char* data, unsigned int length, const char* type, const char* context, const char* voicemail) {
-+	ast_log(LOG_ERROR, "again...");
++static int vm_save_greeting(const char* data, unsigned int length, const char* abscence, const char* context, const char* voicemail) {
 +	char path[PATH_MAX];
-+	if(strcmp(type, VM_TYPE_BUSY) == 0) {
-+		snprintf(path, sizeof(path), "%s%s/%s/en/busy.gsm", VM_SPOOL_DIR, context, voicemail);
-+	} else if (strcmp(type, VM_TYPE_UNAVAILABLE)) {
-+		snprintf(path, sizeof(path), "%s%s/%s/en/unavail.gsm", VM_SPOOL_DIR, context, voicemail);
-+	}
++
++	setup_vm_greeting_path(path, abscence, context, voicemail);
++	ast_log(LOG_WARNING, "PATH: %s\n", path);
 +
 +	FILE *f = fopen(path, "wb");
++	if(!f) {
++		ast_log(LOG_ERROR, "UNABLE TO OPEN FILE AT PATH %s\n", path);
++		return -1;
++	}
 +	fwrite(data, length, sizeof(char), f);
 +	fclose(f);
 +	ast_log(LOG_ERROR, "%s\n", path);
 +	return 0;
 +}
 +
-+static int vm_get_greeting(char** data, const char* type, const char* context, const char* voicemail) {
++static int vm_get_greeting(char** data, const char* abscence, const char* context, const char* voicemail) {
 +	char path[PATH_MAX];
 +
-+	if(strcmp(type, VM_TYPE_BUSY) == 0) {
-+		snprintf(path, sizeof(path), "%s%s/%s/en/busy.gsm", VM_SPOOL_DIR, context, voicemail);
-+	} else if (strcmp(type, VM_TYPE_UNAVAILABLE)) {
-+		snprintf(path, sizeof(path), "%s%s/%s/en/unavail.gsm", VM_SPOOL_DIR, context, voicemail);
-+	}
++	setup_vm_greeting_path(path, abscence, context, voicemail);
 +
 +	FILE *f = fopen(path, "r");
 +//	ast_fileexists("greeting", "gsm", NULL);
 +	if(!f) {
-+		ast_log(LOG_ERROR, "UNABLE TO READ FILE AT PATH\n");
++		ast_log(LOG_ERROR, "UNABLE TO READ FILE AT PATH %s\n", path);
++		return -1;
 +	}
 +	fseek(f, 0, SEEK_END);
 +	long f_size = ftell(f);
@@ -5468,6 +5469,31 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 +	(*data)[n] = 0;
 +	fclose(f);
 +	return n;
++}
++
++static void setup_vm_greeting_path(char* path, const char* abscence, const char* context, const char* voicemail) {
++	char language[MAX_LANGUAGE];
++	struct vm_state vms;
++	struct ast_vm_user *vmu = NULL, vmus;
++	memset(&vms, 0, sizeof(vms));
++	memset(&vmus, 0, sizeof(vmus));
++
++	if (!(vmu = find_user(&vmus, context, voicemail))) {
++		ast_log(LOG_WARNING, "Can't find voicemail user to remove msg from (%s@%s)\n", voicemail, context);
++	}
++
++	if(ast_strlen_zero(vmu->language)) {
++		strcpy(language, "en");
++	} else {
++		strcpy(language, vmu->language);
++	}
++
++	if(strcmp(abscence, VM_TYPE_BUSY) == 0) {
++		snprintf(path, PATH_MAX, "%s%s/%s/%s/busy.gsm", VM_SPOOL_DIR, context, voicemail, language);
++	} else if (strcmp(abscence, VM_TYPE_UNAVAILABLE)) {
++		snprintf(path, PATH_MAX, "%s%s/%s/%s/unavail.gsm", VM_SPOOL_DIR, context, voicemail, language);
++	}
++
 +}
 +
  /* This is a workaround so that menuselect displays a proper description
