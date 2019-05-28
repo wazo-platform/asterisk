@@ -11,7 +11,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.4.0/res/ari/resource_wazo.c
-@@ -0,0 +1,249 @@
+@@ -0,0 +1,244 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -120,8 +120,6 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +		return;
 +	}
 +
-+
-+
 +	int length = strlen(encoded_data);
 +	unsigned char *decoded_data = ast_calloc(length + 2, sizeof(char)); /*account for NULL character*/
 +	int n = ast_base64decode(decoded_data, encoded_data, length - 1);
@@ -200,8 +198,6 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	}
 +
 +
-+	int length = 0;
-+
 +	const char* language = args->language;
 +
 +	if(!language) {
@@ -209,7 +205,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +		ast_log(LOG_ERROR, "Invalid voicemail");
 +		return;
 +	}
-+
++	int length = 0;
 +	length = ast_vm_get_greeting(&raw_data, absence, context, voicemail, language);
 +
 +	if(!raw_data) {
@@ -246,7 +242,6 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +
 +	response->message = ast_json_object_create();
 +	ast_json_object_set(response->message, "encoded-data", ast_json_string_create(encoded_data));
-+
 +
 +	ast_ari_response_ok(response, response->message);
 +	goto data_cleanup;
@@ -5499,7 +5494,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (vmu && open) {
  		close_mailbox(&vms, vmu);
  	}
-@@ -16785,14 +16792,69 @@ play2_msg_cleanup:
+@@ -16785,14 +16792,68 @@ play2_msg_cleanup:
  	return res;
  }
  
@@ -5518,7 +5513,6 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 +	}
 +	fwrite(data, length, sizeof(char), f);
 +	fclose(f);
-+	ast_log(LOG_ERROR, "%s\n", path);
 +	return 0;
 +}
 +
