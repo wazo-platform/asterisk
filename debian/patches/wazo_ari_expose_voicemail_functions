@@ -5425,7 +5425,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (vmu && open) {
  		close_mailbox(&vms, vmu);
  	}
-@@ -16785,14 +16792,81 @@ play2_msg_cleanup:
+@@ -16785,14 +16792,82 @@ play2_msg_cleanup:
  	return res;
  }
  
@@ -5453,11 +5453,12 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 +	setup_vm_greeting_path(path, abscence, context, voicemail);
 +
 +	FILE *f = fopen(path, "r");
-+//	ast_fileexists("greeting", "gsm", NULL);
++
 +	if(!f) {
 +		ast_log(LOG_ERROR, "UNABLE TO READ FILE AT PATH %s\n", path);
 +		return -1;
 +	}
++
 +	fseek(f, 0, SEEK_END);
 +	long f_size = ftell(f);
 +	rewind(f);
@@ -5488,9 +5489,9 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 +		strcpy(language, vmu->language);
 +	}
 +
-+	if(strcmp(abscence, VM_TYPE_BUSY) == 0) {
++	if(!strcmp(abscence, VM_TYPE_BUSY)) {
 +		snprintf(path, PATH_MAX, "%s%s/%s/%s/busy.gsm", VM_SPOOL_DIR, context, voicemail, language);
-+	} else if (strcmp(abscence, VM_TYPE_UNAVAILABLE)) {
++	} else if (!strcmp(abscence, VM_TYPE_UNAVAILABLE)) {
 +		snprintf(path, PATH_MAX, "%s%s/%s/%s/unavail.gsm", VM_SPOOL_DIR, context, voicemail, language);
 +	}
 +
