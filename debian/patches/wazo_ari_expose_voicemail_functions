@@ -108,14 +108,14 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +
 +	const char *encoded_data = ast_json_string_get(ast_json_object_get(args->body, "encoded-data"));
 +	if(!encoded_data) {
-+		ast_ari_response_error(response, 10, "Invalid argument", "Invalid data");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid data");
 +		ast_log(LOG_ERROR, "Unable to parse data");
 +		return;
 +	}
 +
 +	const char *absence = args->absence;
 +	if(!absence) {
-+		ast_ari_response_error(response, 10, "Invalid argument", "Invalid voicemail type: BUSY or UNAVAILABLE");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid voicemail type: BUSY or UNAVAILABLE");
 +		ast_log(LOG_ERROR, "Unable to parse data");
 +		return;
 +	}
@@ -124,7 +124,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +	unsigned char *decoded_data = ast_calloc(length + 2, sizeof(char)); /*account for NULL character*/
 +	int n = ast_base64decode(decoded_data, encoded_data, length - 1);
 +	if(n <= 0) {
-+		ast_ari_response_error(response, 10, "Decoding Error", "Unable to decode base64");
++		ast_ari_response_error(response, 400, "Decoding Error", "Unable to decode base64");
 +		ast_log(LOG_ERROR, "Unable to decode data\n");
 +		goto data_cleanup;
 +
@@ -132,28 +132,28 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +
 +	const char* context = args->context;
 +	if(!context) {
-+		ast_ari_response_error(response, 10, "Invalid argument", "Invalid context");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid context");
 +		ast_log(LOG_ERROR, "Invalid context");
 +		goto data_cleanup;
 +	}
 +
 +	const char* voicemail = args->voicemail;
 +	if(!voicemail) {
-+		ast_ari_response_error(response, 10, "Invalid argument", "Invalid voicemail");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid voicemail");
 +		ast_log(LOG_ERROR, "Invalid voicemail");
 +		goto data_cleanup;
 +	}
 +
 +	const char* language = args->language;
 +	if(!language) {
-+		ast_ari_response_error(response, 10, "Invalid argument", "Invalid language");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid language");
 +		ast_log(LOG_ERROR, "Invalid voicemail");
 +		goto data_cleanup;
 +	}
 +
 +	const char* raw_len_str = ast_json_string_get(ast_json_object_get(args->body, "raw-data-length"));
 +	if(!raw_len_str) {
-+		ast_ari_response_error(response, 10, "Invalid argument", "Invalid context");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid context");
 +		ast_log(LOG_ERROR, "Invalid context");
 +		goto data_cleanup;
 +	}
@@ -178,21 +178,21 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +
 +	const char *absence = args->absence;
 +	if(!absence) {
-+		ast_ari_response_error(response, 10, "Invalid argument", "Invalid voicemail type: BUSY or UNAVAILABLE");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid voicemail type: BUSY or UNAVAILABLE");
 +		ast_log(LOG_ERROR, "Unable to parse data");
 +		return;
 +	}
 +
 +	const char* context = args->context;
 +	if(!context) {
-+		ast_ari_response_error(response, 10, "Invalid argument", "Invalid context");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid context");
 +		ast_log(LOG_ERROR, "Invalid context");
 +		return;
 +	}
 +
 +	const char* voicemail = args->voicemail;
 +	if(!voicemail) {
-+		ast_ari_response_error(response, 10, "Invalid argument", "Invalid voicemail");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid voicemail");
 +		ast_log(LOG_ERROR, "Invalid voicemail");
 +		return;
 +	}
@@ -201,7 +201,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +	const char* language = args->language;
 +
 +	if(!language) {
-+		ast_ari_response_error(response, 10, "Invalid argument", "Invalid language");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid language");
 +		ast_log(LOG_ERROR, "Invalid voicemail");
 +		return;
 +	}
@@ -209,13 +209,13 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +	length = ast_vm_get_greeting(&raw_data, absence, context, voicemail, language);
 +
 +	if(!raw_data) {
-+		ast_ari_response_error(response, 10, "Error", "Unable to read file");
++		ast_ari_response_error(response, 404, "Error", "Unable to read file");
 +		ast_log(LOG_ERROR, "Unable to read file");
 +		return;
 +	}
 +
 +	if(length <= 0){
-+		ast_ari_response_error(response, 10, "Error", "Unable to read file, got length 0");
++		ast_ari_response_error(response, 404, "Error", "Unable to read file, got length 0");
 +		ast_log(LOG_ERROR, "Unable to read file");
 +		goto data_cleanup;
 +	}
@@ -227,7 +227,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +
 +
 +	if(!encoded_data) {
-+		ast_ari_response_error(response, 10, "Error", "Unable to allocate memory");
++		ast_ari_response_error(response, 400, "Error", "Unable to allocate memory");
 +		ast_log(LOG_ERROR, "Unable to allocate memory");
 +		goto data_cleanup;
 +	}
@@ -235,7 +235,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +	int n = ast_base64encode(encoded_data, (const unsigned char*) raw_data, length, encoded_length);
 +
 +	if(n <= 0) {
-+		ast_ari_response_error(response, 10, "Encoding Error", "Unable to encode base64");
++		ast_ari_response_error(response, 400, "Encoding Error", "Unable to encode base64");
 +		ast_log(LOG_ERROR, "Unable to encode data\n");
 +		goto data_cleanup;
 +	}
