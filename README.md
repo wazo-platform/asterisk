@@ -29,5 +29,9 @@ tar xf asterisk-*.tar.gz
 rename 's/asterisk-(.*).tar.gz/asterisk_$1.orig.tar.gz/' asterisk-*.tar.gz
 cd asterisk-*
 mv ../debian .
+apt install devscripts
+mk-build-deps -i
+rm asterisk-build-deps_*.deb 
 dpkg-buildpackage -us -uc
+dpkg -i ../asterisk_*.deb 
 ```
