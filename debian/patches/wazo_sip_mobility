@@ -60,8 +60,8 @@ Index: asterisk-16.3.0/res/res_pjsip_registrar.c
  			}
  
 +			mobility_param = pjsip_param_find(&contact_hdr->other_param, &mobility_str);
-+			if(mobility_param) {
-+				ast_copy_pj_str2(&mobility, &pjsip_param_find(&contact_hdr->other_param, &mobility_str)->value);
++			if (mobility_param) {
++				ast_copy_pj_str2(&mobility, &mobility_param->value);
 +			}
 +
  			prune_on_boot = !ast_sip_will_uri_survive_restart(details.uri, endpoint, rdata);
