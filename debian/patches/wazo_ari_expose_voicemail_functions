@@ -11,7 +11,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.3.0/res/ari/resource_wazo.c
-@@ -0,0 +1,244 @@
+@@ -0,0 +1,252 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -115,8 +115,8 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +
 +	const char *absence = args->absence;
 +	if(!absence) {
-+		ast_ari_response_error(response, 400, "Invalid argument", "Invalid voicemail type: BUSY or UNAVAILABLE");
-+		ast_log(LOG_ERROR, "Unable to parse data");
++		ast_ari_response_error(response, 400, "Invalid argument", "Invalid voicemail absence: BUSY or UNAVAILABLE");
++		ast_log(LOG_ERROR, "Invalid absence");
 +		return;
 +	}
 +
@@ -161,12 +161,20 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +//	unsigned long raw_data_len = 0;
 +//	raw_data_len = atoi(raw_len_str);
 +
-+	ast_vm_save_greeting((const char*) decoded_data, n, absence, context, voicemail, language);
++	int result = ast_vm_save_greeting((const char*) decoded_data, n, absence, context, voicemail, language);
++	if(result != 0) {
++		ast_ari_response_error(response, 404, "Unable to save greeting", "Unable to write file");
++		goto data_cleanup;
++	}
++
 +	ast_ari_response_accepted(response);
 +	goto data_cleanup;
 +
 +	data_cleanup:
++	if(decoded_data) {
 +		ast_free(decoded_data);
++	}
++
 +}
 +
 +void ast_ari_wazo_get_voicemail_message(struct ast_variable *headers,
@@ -215,7 +223,7 @@ Index: asterisk-16.3.0/res/ari/resource_wazo.c
 +	}
 +
 +	if(length <= 0){
-+		ast_ari_response_error(response, 404, "Error", "Unable to read file, got length 0");
++		ast_ari_response_error(response, 404, "Error", "Unable to read file, got invalid length");
 +		ast_log(LOG_ERROR, "Unable to read file");
 +		goto data_cleanup;
 +	}
@@ -5494,7 +5502,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
  	if (vmu && open) {
  		close_mailbox(&vms, vmu);
  	}
-@@ -16785,14 +16792,68 @@ play2_msg_cleanup:
+@@ -16785,14 +16792,67 @@ play2_msg_cleanup:
  	return res;
  }
  
@@ -5504,7 +5512,6 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 +	char path[PATH_MAX];
 +
 +	setup_vm_greeting_path(path, absence, context, voicemail, language);
-+	ast_log(LOG_WARNING, "PATH: %s\n", path);
 +
 +	FILE *f = fopen(path, "wb");
 +	if(!f) {
