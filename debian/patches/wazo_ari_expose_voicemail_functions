@@ -903,7 +903,7 @@ Index: asterisk-16.3.0/rest-api/api-docs/wazo.json
 ===================================================================
 --- /dev/null
 +++ asterisk-16.3.0/rest-api/api-docs/wazo.json
-@@ -0,0 +1,199 @@
+@@ -0,0 +1,202 @@
 +{
 +	"_copyright": "Copyright (C) 2016 Proformatique Inc.",
 +	"_author": "Etienne Lessard",
@@ -977,6 +977,9 @@ Index: asterisk-16.3.0/rest-api/api-docs/wazo.json
 +					"summary": "Record a voicemail's greet message.",
 +					"nickname": "recVoicemailMessage",
 +					"responseClass": "void",
++					"consumes": [
++						"application/octet-stream"
++					],
 +					"parameters": [
 +						{
 +							"name": "context",
@@ -5634,3 +5637,87 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 +.reload = reload,
 +.optional_modules = "res_adsi,res_smdi",
  );
+Index: asterisk-16.3.0/main/http.c
+===================================================================
+--- asterisk-16.3.0.orig/main/http.c
++++ asterisk-16.3.0/main/http.c
+@@ -1176,6 +1176,7 @@ int ast_http_body_discard(struct ast_tcp
+ static char *ast_http_get_contents(int *return_length,
+ 	struct ast_tcptls_session_instance *ser, struct ast_variable *headers)
+ {
++	ast_log(AST_LOG_ERROR, "CALLED\n");
+ 	struct http_worker_private_data *request;
+ 	int content_length;
+ 	int bufsize;
+@@ -1303,9 +1304,11 @@ static char *ast_http_get_contents(int *
+ 
+ 	buf[content_length] = 0;
+ 	*return_length = content_length;
++	ast_log(AST_LOG_ERROR, "BUFFER: %s\n", buf);
+ 	return buf;
+ }
+ 
++
+ struct ast_json *ast_http_get_json(
+ 	struct ast_tcptls_session_instance *ser, struct ast_variable *headers)
+ {
+@@ -1571,6 +1574,7 @@ static struct ast_http_auth *auth_create
+ #define BASIC_PREFIX "Basic "
+ #define BASIC_LEN 6 /*!< strlen(BASIC_PREFIX) */
+ 
++
+ struct ast_http_auth *ast_http_get_auth(struct ast_variable *headers)
+ {
+ 	struct ast_variable *v;
+Index: asterisk-16.3.0/include/asterisk/http.h
+===================================================================
+--- asterisk-16.3.0.orig/include/asterisk/http.h
++++ asterisk-16.3.0/include/asterisk/http.h
+@@ -295,6 +295,7 @@ struct ast_json;
+ struct ast_json *ast_http_get_json(
+ 	struct ast_tcptls_session_instance *ser, struct ast_variable *headers);
+ 
++
+ /*!\brief Parse the http response status line.
+  *
+  * \param buf the http response line information
+Index: asterisk-16.3.0/res/res_ari.c
+===================================================================
+--- asterisk-16.3.0.orig/res/res_ari.c
++++ asterisk-16.3.0/res/res_ari.c
+@@ -855,6 +855,7 @@ static struct ast_ari_conf_user *authent
+ 	return NULL;
+ }
+ 
++
+ /*!
+  * \internal
+  * \brief ARI HTTP handler.
+@@ -907,8 +908,19 @@ static int ast_ari_callback(struct ast_t
+ 		return 0;
+ 	}
+ 
++//	char* type = get_content_type_raw(headers);
++//	if (!strcasecmp(type, "application/octet-stream")) {
++//		/* Content type is not JSON.  Don't read the body. */
++//		ast_log(AST_LOG_ERROR, "CALLED!!!!! for octet-stream%d\n", hello(6));
++//	}
++//	ast_free(type);
++
+ 	process_cors_request(headers, &response);
+ 
++	struct ast_http_auth * p = ast_http_get_auth(headers);
++
++	ast_free(p);
++
+ 	/* Process form data from a POST. It could be mixed with query
+ 	 * parameters, which seems a bit odd. But it's allowed, so that's okay
+ 	 * with us.
+@@ -952,6 +964,7 @@ static int ast_ari_callback(struct ast_t
+ 			}
+ 		}
+ 	}
++
+ 	if (get_params == NULL) {
+ 		get_params = post_vars;
+ 	} else if (get_params && post_vars) {
