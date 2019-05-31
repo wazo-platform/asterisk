@@ -139,7 +139,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +		goto data_cleanup;
 +	}
 +
-+	const char* arg_extension = args->extension;
++	const char* arg_extension = args->format;
 +	char extension[80];
 +	if(!arg_extension) {
 +		strcpy(extension, "wav");
@@ -194,7 +194,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +		return;
 +	}
 +
-+	const char* arg_extension = args->extension;
++	const char* arg_extension = args->format;
 +	char extension[80];
 +	if(!arg_extension) {
 +		strcpy(extension, "wav");
@@ -276,7 +276,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +		return;
 +	}
 +
-+	const char* arg_extension = args->extension;
++	const char* arg_extension = args->format;
 +	char extension[80];
 +	if(!arg_extension) {
 +		strcpy(extension, "wav");
@@ -395,11 +395,11 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.h
 +	/*! 'busy', 'unavailable' or 'name' */
 +	const char *greeting;
 +	/*! File extension, without the leading '.'; ex.: 'wav', 'gsm', etc. (79 characters max). 'wav' by default */
-+	const char *extension;
++	const char *format;
 +	struct ast_json *body;
 +};
 +/*!
-+ * \brief Body parsing function for /wazo/internal/voicemails/record_greeting.
++ * \brief Body parsing function for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}.
 + * \param body The JSON body from which to parse parameters.
 + * \param[out] args The args structure to parse into.
 + * \retval zero on success
@@ -426,10 +426,10 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.h
 +	/*! 'busy', 'unavailable' or 'name' */
 +	const char *greeting;
 +	/*! File extension, without the leading '.'; ex.: 'wav', 'gsm', etc. (79 characters max). 'wav' if unspecified */
-+	const char *extension;
++	const char *format;
 +};
 +/*!
-+ * \brief Body parsing function for /wazo/internal/voicemails/get_greeting.
++ * \brief Body parsing function for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}.
 + * \param body The JSON body from which to parse parameters.
 + * \param[out] args The args structure to parse into.
 + * \retval zero on success
@@ -456,10 +456,10 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.h
 +	/*! 'busy', 'unavailable' or 'name' */
 +	const char *greeting;
 +	/*! File extension, without the leading '.'; ex.: 'wav', 'gsm', etc. (79 characters max). 'wav' if unspecified */
-+	const char *extension;
++	const char *format;
 +};
 +/*!
-+ * \brief Body parsing function for /wazo/internal/voicemails/remove_greeting.
++ * \brief Body parsing function for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}.
 + * \param body The JSON body from which to parse parameters.
 + * \param[out] args The args structure to parse into.
 + * \retval zero on success
@@ -483,7 +483,7 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.4.0/res/res_ari_wazo.c
-@@ -0,0 +1,554 @@
+@@ -0,0 +1,530 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -662,27 +662,15 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +{
 +	struct ast_json *field;
 +	/* Parse query parameters out of it */
-+	field = ast_json_object_get(body, "context");
++	field = ast_json_object_get(body, "format");
 +	if (field) {
-+		args->context = ast_json_string_get(field);
-+	}
-+	field = ast_json_object_get(body, "voicemail");
-+	if (field) {
-+		args->voicemail = ast_json_string_get(field);
-+	}
-+	field = ast_json_object_get(body, "greeting");
-+	if (field) {
-+		args->greeting = ast_json_string_get(field);
-+	}
-+	field = ast_json_object_get(body, "extension");
-+	if (field) {
-+		args->extension = ast_json_string_get(field);
++		args->format = ast_json_string_get(field);
 +	}
 +	return 0;
 +}
 +
 +/*!
-+ * \brief Parameter parsing callback for /wazo/internal/voicemails/record_greeting.
++ * \brief Parameter parsing callback for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}.
 + * \param get_params GET parameters in the HTTP request.
 + * \param path_vars Path variables extracted from the request.
 + * \param headers HTTP headers.
@@ -701,6 +689,12 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +#endif /* AST_DEVMODE */
 +
 +	for (i = get_params; i; i = i->next) {
++		if (strcmp(i->name, "format") == 0) {
++			args.format = (i->value);
++		} else
++		{}
++	}
++	for (i = path_vars; i; i = i->next) {
 +		if (strcmp(i->name, "context") == 0) {
 +			args.context = (i->value);
 +		} else
@@ -709,9 +703,6 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +		} else
 +		if (strcmp(i->name, "greeting") == 0) {
 +			args.greeting = (i->value);
-+		} else
-+		if (strcmp(i->name, "extension") == 0) {
-+			args.extension = (i->value);
 +		} else
 +		{}
 +	}
@@ -734,13 +725,13 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +			is_valid = ast_ari_validate_void(
 +				response->message);
 +		} else {
-+			ast_log(LOG_ERROR, "Invalid error response %d for /wazo/internal/voicemails/record_greeting\n", code);
++			ast_log(LOG_ERROR, "Invalid error response %d for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}\n", code);
 +			is_valid = 0;
 +		}
 +	}
 +
 +	if (!is_valid) {
-+		ast_log(LOG_ERROR, "Response validation failed for /wazo/internal/voicemails/record_greeting\n");
++		ast_log(LOG_ERROR, "Response validation failed for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}\n");
 +		ast_ari_response_error(response, 500,
 +			"Internal Server Error", "Response validation failed");
 +	}
@@ -755,27 +746,15 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +{
 +	struct ast_json *field;
 +	/* Parse query parameters out of it */
-+	field = ast_json_object_get(body, "context");
++	field = ast_json_object_get(body, "format");
 +	if (field) {
-+		args->context = ast_json_string_get(field);
-+	}
-+	field = ast_json_object_get(body, "voicemail");
-+	if (field) {
-+		args->voicemail = ast_json_string_get(field);
-+	}
-+	field = ast_json_object_get(body, "greeting");
-+	if (field) {
-+		args->greeting = ast_json_string_get(field);
-+	}
-+	field = ast_json_object_get(body, "extension");
-+	if (field) {
-+		args->extension = ast_json_string_get(field);
++		args->format = ast_json_string_get(field);
 +	}
 +	return 0;
 +}
 +
 +/*!
-+ * \brief Parameter parsing callback for /wazo/internal/voicemails/get_greeting.
++ * \brief Parameter parsing callback for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}.
 + * \param get_params GET parameters in the HTTP request.
 + * \param path_vars Path variables extracted from the request.
 + * \param headers HTTP headers.
@@ -794,6 +773,12 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +#endif /* AST_DEVMODE */
 +
 +	for (i = get_params; i; i = i->next) {
++		if (strcmp(i->name, "format") == 0) {
++			args.format = (i->value);
++		} else
++		{}
++	}
++	for (i = path_vars; i; i = i->next) {
 +		if (strcmp(i->name, "context") == 0) {
 +			args.context = (i->value);
 +		} else
@@ -802,9 +787,6 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +		} else
 +		if (strcmp(i->name, "greeting") == 0) {
 +			args.greeting = (i->value);
-+		} else
-+		if (strcmp(i->name, "extension") == 0) {
-+			args.extension = (i->value);
 +		} else
 +		{}
 +	}
@@ -830,13 +812,13 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +			is_valid = ast_ari_validate_void(
 +				response->message);
 +		} else {
-+			ast_log(LOG_ERROR, "Invalid error response %d for /wazo/internal/voicemails/get_greeting\n", code);
++			ast_log(LOG_ERROR, "Invalid error response %d for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}\n", code);
 +			is_valid = 0;
 +		}
 +	}
 +
 +	if (!is_valid) {
-+		ast_log(LOG_ERROR, "Response validation failed for /wazo/internal/voicemails/get_greeting\n");
++		ast_log(LOG_ERROR, "Response validation failed for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}\n");
 +		ast_ari_response_error(response, 500,
 +			"Internal Server Error", "Response validation failed");
 +	}
@@ -851,27 +833,15 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +{
 +	struct ast_json *field;
 +	/* Parse query parameters out of it */
-+	field = ast_json_object_get(body, "context");
++	field = ast_json_object_get(body, "format");
 +	if (field) {
-+		args->context = ast_json_string_get(field);
-+	}
-+	field = ast_json_object_get(body, "voicemail");
-+	if (field) {
-+		args->voicemail = ast_json_string_get(field);
-+	}
-+	field = ast_json_object_get(body, "greeting");
-+	if (field) {
-+		args->greeting = ast_json_string_get(field);
-+	}
-+	field = ast_json_object_get(body, "extension");
-+	if (field) {
-+		args->extension = ast_json_string_get(field);
++		args->format = ast_json_string_get(field);
 +	}
 +	return 0;
 +}
 +
 +/*!
-+ * \brief Parameter parsing callback for /wazo/internal/voicemails/remove_greeting.
++ * \brief Parameter parsing callback for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}.
 + * \param get_params GET parameters in the HTTP request.
 + * \param path_vars Path variables extracted from the request.
 + * \param headers HTTP headers.
@@ -890,6 +860,12 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +#endif /* AST_DEVMODE */
 +
 +	for (i = get_params; i; i = i->next) {
++		if (strcmp(i->name, "format") == 0) {
++			args.format = (i->value);
++		} else
++		{}
++	}
++	for (i = path_vars; i; i = i->next) {
 +		if (strcmp(i->name, "context") == 0) {
 +			args.context = (i->value);
 +		} else
@@ -898,9 +874,6 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +		} else
 +		if (strcmp(i->name, "greeting") == 0) {
 +			args.greeting = (i->value);
-+		} else
-+		if (strcmp(i->name, "extension") == 0) {
-+			args.extension = (i->value);
 +		} else
 +		{}
 +	}
@@ -926,13 +899,13 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +			is_valid = ast_ari_validate_void(
 +				response->message);
 +		} else {
-+			ast_log(LOG_ERROR, "Invalid error response %d for /wazo/internal/voicemails/remove_greeting\n", code);
++			ast_log(LOG_ERROR, "Invalid error response %d for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}\n", code);
 +			is_valid = 0;
 +		}
 +	}
 +
 +	if (!is_valid) {
-+		ast_log(LOG_ERROR, "Response validation failed for /wazo/internal/voicemails/remove_greeting\n");
++		ast_log(LOG_ERROR, "Response validation failed for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}\n");
 +		ast_ari_response_error(response, 500,
 +			"Internal Server Error", "Response validation failed");
 +	}
@@ -961,39 +934,42 @@ Index: asterisk-16.4.0/res/res_ari_wazo.c
 +	.children = {  }
 +};
 +/*! \brief REST handler for /api-docs/wazo.json */
-+static struct stasis_rest_handlers wazo_internal_voicemails_record_greeting = {
-+	.path_segment = "record_greeting",
++static struct stasis_rest_handlers wazo_internal_voicemails_context_voicemail_greeting = {
++	.path_segment = "greeting",
++	.is_wildcard = 1,
 +	.callbacks = {
 +		[AST_HTTP_PUT] = ast_ari_wazo_rec_voicemail_message_cb,
-+	},
-+	.num_children = 0,
-+	.children = {  }
-+};
-+/*! \brief REST handler for /api-docs/wazo.json */
-+static struct stasis_rest_handlers wazo_internal_voicemails_get_greeting = {
-+	.path_segment = "get_greeting",
-+	.callbacks = {
 +		[AST_HTTP_GET] = ast_ari_wazo_get_voicemail_message_cb,
-+	},
-+	.num_children = 0,
-+	.children = {  }
-+};
-+/*! \brief REST handler for /api-docs/wazo.json */
-+static struct stasis_rest_handlers wazo_internal_voicemails_remove_greeting = {
-+	.path_segment = "remove_greeting",
-+	.callbacks = {
 +		[AST_HTTP_DELETE] = ast_ari_wazo_remove_voicemail_message_cb,
 +	},
 +	.num_children = 0,
 +	.children = {  }
 +};
 +/*! \brief REST handler for /api-docs/wazo.json */
++static struct stasis_rest_handlers wazo_internal_voicemails_context_voicemail = {
++	.path_segment = "voicemail",
++	.is_wildcard = 1,
++	.callbacks = {
++	},
++	.num_children = 1,
++	.children = { &wazo_internal_voicemails_context_voicemail_greeting, }
++};
++/*! \brief REST handler for /api-docs/wazo.json */
++static struct stasis_rest_handlers wazo_internal_voicemails_context = {
++	.path_segment = "context",
++	.is_wildcard = 1,
++	.callbacks = {
++	},
++	.num_children = 1,
++	.children = { &wazo_internal_voicemails_context_voicemail, }
++};
++/*! \brief REST handler for /api-docs/wazo.json */
 +static struct stasis_rest_handlers wazo_internal_voicemails = {
 +	.path_segment = "voicemails",
 +	.callbacks = {
 +	},
-+	.num_children = 5,
-+	.children = { &wazo_internal_voicemails_delete_msg,&wazo_internal_voicemails_move_msg,&wazo_internal_voicemails_record_greeting,&wazo_internal_voicemails_get_greeting,&wazo_internal_voicemails_remove_greeting, }
++	.num_children = 3,
++	.children = { &wazo_internal_voicemails_delete_msg,&wazo_internal_voicemails_move_msg,&wazo_internal_voicemails_context, }
 +};
 +/*! \brief REST handler for /api-docs/wazo.json */
 +static struct stasis_rest_handlers wazo_internal = {
@@ -1042,7 +1018,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 ===================================================================
 --- /dev/null
 +++ asterisk-16.4.0/rest-api/api-docs/wazo.json
-@@ -0,0 +1,235 @@
+@@ -0,0 +1,223 @@
 +{
 +	"_copyright": "Copyright (C) 2016 Proformatique Inc.",
 +	"_author": "Etienne Lessard",
@@ -1108,7 +1084,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +			]
 +		},
 +		{
-+			"path": "/wazo/internal/voicemails/record_greeting",
++			"path": "/wazo/internal/voicemails/{context}/{voicemail}/{greeting}",
 +			"description": "Record a voicemail's greet message",
 +			"operations": [
 +				{
@@ -1120,7 +1096,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +						{
 +							"name": "context",
 +							"description": "Voicemail context; ex.: 'default'",
-+							"paramType": "query",
++							"paramType": "path",
 +							"required": true,
 +							"dataType": "string",
 +							"allowMultiple": false
@@ -1128,7 +1104,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +						{
 +							"name": "voicemail",
 +							"description": "Name of the voicemail",
-+							"paramType": "query",
++							"paramType": "path",
 +							"required": true,
 +							"dataType": "string",
 +							"allowMultiple": false
@@ -1136,13 +1112,13 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +						{
 +							"name": "greeting",
 +							"description": "'busy', 'unavailable' or 'name'",
-+							"paramType": "query",
++							"paramType": "path",
 +							"required": true,
 +							"dataType": "string",
 +							"allowMultiple": false
 +						},
 +						{
-+							"name": "extension",
++							"name": "format",
 +							"description": "File extension, without the leading '.'; ex.: 'wav', 'gsm', etc. (79 characters max). 'wav' by default",
 +							"paramType": "query",
 +							"required": false,
@@ -1165,13 +1141,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +							"reason": "Bad request body"
 +						}
 +					]
-+				}
-+			]
-+		},
-+		{
-+			"path": "/wazo/internal/voicemails/get_greeting",
-+			"description": "Get a voicemail's greet message",
-+			"operations": [
++				},
 +				{
 +					"httpMethod": "GET",
 +					"summary": "Listen to a voicemail's greet message.",
@@ -1181,7 +1151,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +						{
 +							"name": "context",
 +							"description": "Voicemail context; ex.: 'default'",
-+							"paramType": "query",
++							"paramType": "path",
 +							"required": true,
 +							"dataType": "string",
 +							"allowMultiple": false
@@ -1189,7 +1159,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +						{
 +							"name": "voicemail",
 +							"description": "Name of the voicemail",
-+							"paramType": "query",
++							"paramType": "path",
 +							"required": true,
 +							"dataType": "string",
 +							"allowMultiple": false
@@ -1197,13 +1167,13 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +						{
 +							"name": "greeting",
 +							"description": "'busy', 'unavailable' or 'name'",
-+							"paramType": "query",
++							"paramType": "path",
 +							"required": true,
 +							"dataType": "string",
 +							"allowMultiple": false
 +						},
 +						{
-+							"name": "extension",
++							"name": "format",
 +							"description": "File extension, without the leading '.'; ex.: 'wav', 'gsm', etc. (79 characters max). 'wav' if unspecified",
 +							"paramType": "query",
 +							"required": false,
@@ -1218,13 +1188,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +							"reason": "Bad request body"
 +						}
 +					]
-+				}
-+			]
-+		},
-+		{
-+			"path": "/wazo/internal/voicemails/remove_greeting",
-+			"description": "Record a voicemail's greet message",
-+			"operations": [
++				},
 +				{
 +					"httpMethod": "DELETE",
 +					"summary": "Delete a voicemail's greet message.",
@@ -1234,7 +1198,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +						{
 +							"name": "context",
 +							"description": "Voicemail context; ex.: 'default'",
-+							"paramType": "query",
++							"paramType": "path",
 +							"required": true,
 +							"dataType": "string",
 +							"allowMultiple": false
@@ -1242,7 +1206,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +						{
 +							"name": "voicemail",
 +							"description": "Name of the voicemail",
-+							"paramType": "query",
++							"paramType": "path",
 +							"required": true,
 +							"dataType": "string",
 +							"allowMultiple": false
@@ -1250,13 +1214,13 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +						{
 +							"name": "greeting",
 +							"description": "'busy', 'unavailable' or 'name'",
-+							"paramType": "query",
++							"paramType": "path",
 +							"required": true,
 +							"dataType": "string",
 +							"allowMultiple": false
 +						},
 +						{
-+							"name": "extension",
++							"name": "format",
 +							"description": "File extension, without the leading '.'; ex.: 'wav', 'gsm', etc. (79 characters max). 'wav' if unspecified",
 +							"paramType": "query",
 +							"required": false,
@@ -5817,7 +5781,7 @@ Index: asterisk-16.3.0/apps/app_voicemail.c
 +		return -1;
 +	}
 +
-+	ast_filedelete(path, extension);
++	ast_filedelete(path, NULL);
 +	return 0;
 +}
 +
