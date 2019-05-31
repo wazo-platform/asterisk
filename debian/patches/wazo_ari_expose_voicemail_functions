@@ -1093,47 +1093,47 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +					"nickname": "recVoicemailMessage",
 +					"responseClass": "void",
 +					"parameters": [
-+                      {
-+                        "name": "context",
-+                        "description": "Voicemail context; ex.: 'default'",
-+                        "paramType": "path",
-+                        "required": true,
-+                        "dataType": "string",
-+                        "allowMultiple": false
-+                      },
-+                      {
-+                        "name": "voicemail",
-+                        "description": "Name of the voicemail",
-+                        "paramType": "path",
-+                        "required": true,
-+                        "dataType": "string",
-+                        "allowMultiple": false
-+                      },
-+                      {
-+                        "name": "greeting",
-+                        "description": "'busy', 'unavailable' or 'name'",
-+                        "paramType": "path",
-+                        "required": true,
-+                        "dataType": "string",
-+                        "allowMultiple": false
-+                      },
-+                      {
-+                        "name": "format",
-+                        "description": "File extension, without the leading '.'; ex.: 'wav', 'gsm', etc. (79 characters max). 'wav' by default",
-+                        "paramType": "query",
-+                        "required": false,
-+                        "default": "wav",
-+                        "dataType": "string",
-+                        "allowMultiple": false
-+                      },
-+                      {
-+                        "name": "body",
-+                        "description": "base64 encoded file data with key \"greeting_base64\"",
-+                        "paramType": "body",
-+                        "required": true,
-+                        "dataType": "containers",
-+                        "allowMultiple": false
-+                      }
++                        {
++                          "name": "context",
++                          "description": "Voicemail context; ex.: 'default'",
++                          "paramType": "path",
++                          "required": true,
++                          "dataType": "string",
++                          "allowMultiple": false
++                        },
++                        {
++                          "name": "voicemail",
++                          "description": "Name of the voicemail",
++                          "paramType": "path",
++                          "required": true,
++                          "dataType": "string",
++                          "allowMultiple": false
++                        },
++                        {
++                          "name": "greeting",
++                          "description": "'busy', 'unavailable' or 'name'",
++                          "paramType": "path",
++                          "required": true,
++                          "dataType": "string",
++                          "allowMultiple": false
++                        },
++                        {
++                          "name": "format",
++                          "description": "File extension, without the leading '.'; ex.: 'wav', 'gsm', etc. (79 characters max). 'wav' by default",
++                          "paramType": "query",
++                          "required": false,
++                          "default": "wav",
++                          "dataType": "string",
++                          "allowMultiple": false
++                        },
++                        {
++                          "name": "body",
++                          "description": "base64 encoded file data with key \"greeting_base64\"",
++                          "paramType": "body",
++                          "required": true,
++                          "dataType": "containers",
++                          "allowMultiple": false
++                        }
 +					],
 +					"errorResponses": [
 +                      {
@@ -1147,56 +1147,56 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +					]
 +				},
 +				{
-+                  "httpMethod": "GET",
-+                  "summary": "Listen to a voicemail's greet message.",
-+                  "nickname": "getVoicemailMessage",
-+                  "responseClass": "EncodedFile",
++                    "httpMethod": "GET",
++                    "summary": "Listen to a voicemail's greet message.",
++                    "nickname": "getVoicemailMessage",
++                    "responseClass": "EncodedFile",
 +
-+                  "parameters": [
-+                    {
-+                      "name": "context",
-+                      "description": "Voicemail context; ex.: 'default'",
-+                      "paramType": "path",
-+                      "required": true,
-+                      "dataType": "string",
-+                      "allowMultiple": false
-+                    },
-+                    {
-+                      "name": "voicemail",
-+                      "description": "Name of the voicemail",
-+                      "paramType": "path",
-+                      "required": true,
-+                      "dataType": "string",
-+                      "allowMultiple": false
-+                    },
-+                    {
-+                      "name": "greeting",
-+                      "description": "'busy', 'unavailable' or 'name'",
-+                      "paramType": "path",
-+                      "required": true,
-+                      "dataType": "string",
-+                      "allowMultiple": false
-+                    },
-+                    {
-+                      "name": "format",
-+                      "description": "File extension, without the leading '.'; ex.: 'wav', 'gsm', etc. (79 characters max). 'wav' if unspecified",
-+                      "paramType": "query",
-+                      "required": false,
-+                      "default": "wav",
-+                      "dataType": "string",
-+                      "allowMultiple": false
-+                    }
-+                  ],
-+                  "errorResponses": [
-+                    {
-+                      "code": 400,
-+                      "reason": "Invalid parameters were passed"
-+                    },
-+                    {
-+                      "code": 404,
-+                      "reason": "Requested file was not found"
-+                    }
-+                  ]
++                    "parameters": [
++                        {
++                          "name": "context",
++                          "description": "Voicemail context; ex.: 'default'",
++                          "paramType": "path",
++                          "required": true,
++                          "dataType": "string",
++                          "allowMultiple": false
++                        },
++                        {
++                          "name": "voicemail",
++                          "description": "Name of the voicemail",
++                          "paramType": "path",
++                          "required": true,
++                          "dataType": "string",
++                          "allowMultiple": false
++                        },
++                        {
++                          "name": "greeting",
++                          "description": "'busy', 'unavailable' or 'name'",
++                          "paramType": "path",
++                          "required": true,
++                          "dataType": "string",
++                          "allowMultiple": false
++                        },
++                        {
++                          "name": "format",
++                          "description": "File extension, without the leading '.'; ex.: 'wav', 'gsm', etc. (79 characters max). 'wav' if unspecified",
++                          "paramType": "query",
++                          "required": false,
++                          "default": "wav",
++                          "dataType": "string",
++                          "allowMultiple": false
++                        }
++                    ],
++                    "errorResponses": [
++                      {
++                        "code": 400,
++                        "reason": "Invalid parameters were passed"
++                      },
++                      {
++                        "code": 404,
++                        "reason": "Requested file was not found"
++                      }
++                    ]
 +				},
 +				{
 +                    "httpMethod": "DELETE",
