@@ -1018,7 +1018,7 @@ Index: asterisk-16.3.0/rest-api/api-docs/wazo.json
 ===================================================================
 --- /dev/null
 +++ asterisk-16.3.0/rest-api/api-docs/wazo.json
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,243 @@
 +{
 +	"_copyright": "Copyright (C) 2016 Proformatique Inc.",
 +	"_author": "Etienne Lessard",
@@ -1241,11 +1241,7 @@ Index: asterisk-16.3.0/rest-api/api-docs/wazo.json
 +					"errorResponses": [
 +                      {
 +                        "code": 400,
-+                        "reason": "Bad request body"
-+                      },
-+                      {
-+                        "code": 404,
-+                        "reason": "Target message not found"
++                        "reason": "Could not delete object"
 +                      }
 +					]
 +				}
