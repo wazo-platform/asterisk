@@ -171,7 +171,7 @@ Index: asterisk-16.3.0/res/ari/resource_bridges.c
  
  /*!
   * \brief Finds a bridge, filling the response with an error, if appropriate.
-@@ -1072,3 +1076,131 @@ void ast_ari_bridges_clear_video_source(
+@@ -1072,3 +1076,126 @@ void ast_ari_bridges_clear_video_source(
  	ao2_ref(bridge, -1);
  	ast_ari_response_no_content(response);
  }
@@ -238,8 +238,6 @@ Index: asterisk-16.3.0/res/ari/resource_bridges.c
 +	char *variable_value = NULL;
 +	struct ast_str *final = NULL;
 +
-+	int variable_name_present = 1;
-+
 +	id = args->bridge_id;
 +	if (!id) {
 +		ast_ari_response_error(response, 400, "No bridge ID specified", "A bridge ID must be given");
@@ -248,9 +246,6 @@ Index: asterisk-16.3.0/res/ari/resource_bridges.c
 +	}
 +
 +	variable_name = args->variable;
-+	if (!variable_name) {
-+		variable_name_present = 0;
-+	}
 +
 +	bridge = find_bridge(response, id);
 +	if (!bridge) {
@@ -272,7 +267,7 @@ Index: asterisk-16.3.0/res/ari/resource_bridges.c
 +
 +	response->message = ast_json_object_create();
 +
-+	if (!variable_name_present) {
++	if (!variable_name) {
 +		final = ast_str_create(10);
 +		if (!final) {
 +			ast_ari_response_error(response, 500, "Internal server error", "unable to allocate memory");
