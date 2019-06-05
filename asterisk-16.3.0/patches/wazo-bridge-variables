@@ -98,7 +98,7 @@ Index: asterisk-16.3.0/main/bridge.c
  
  /*! All bridges container. */
  static struct ao2_container *bridges;
-@@ -971,6 +973,33 @@ static int bridge_base_push_peek(struct
+@@ -971,6 +973,28 @@ static int bridge_base_push_peek(struct
  	return 0;
  }
  
@@ -109,30 +109,25 @@ Index: asterisk-16.3.0/main/bridge.c
 +
 +static void bridge_set_variables(struct ast_bridge *bridge, struct ast_variable *vars)
 +{
-+
-+	struct ast_variable *var = NULL;
-+	for (var = vars; var; var = var->next) {
-+		if (!ast_var_find(&bridge->varshead, vars->name)) {
-+			AST_VAR_LIST_INSERT_TAIL(&bridge->varshead, ast_var_assign(vars->name, vars->value));
-+		} else {
-+			struct ast_var_t *cur;
-+			AST_VAR_LIST_TRAVERSE(&bridge->varshead, cur) {
-+				if (!strcmp(vars->name, cur->name)) {
-+					strcpy(cur->value, vars->value);
-+					break;
-+				}
++	if (!ast_var_find(&bridge->varshead, vars->name)) {
++		AST_VAR_LIST_INSERT_TAIL(&bridge->varshead, ast_var_assign(vars->name, vars->value));
++		ast_bridge_publish_varset(bridge, vars->name, vars->value);
++	} else {
++		struct ast_var_t *cur;
++		AST_VAR_LIST_TRAVERSE(&bridge->varshead, cur) {
++			if (!strcmp(vars->name, cur->name)) {
++				strcpy(cur->value, vars->value);
++				ast_bridge_publish_varset(bridge, cur->name, cur->value);
++				break;
 +			}
 +		}
-+
 +	}
-+
-+
 +}
 +
  struct ast_bridge_methods ast_bridge_base_v_table = {
  	.name = "base",
  	.destroy = bridge_base_destroy,
-@@ -980,6 +1009,8 @@ struct ast_bridge_methods ast_bridge_bas
+@@ -980,6 +1004,8 @@ struct ast_bridge_methods ast_bridge_bas
  	.notify_masquerade = bridge_base_notify_masquerade,
  	.get_merge_priority = bridge_base_get_merge_priority,
  	.push_peek = bridge_base_push_peek,
@@ -141,7 +136,7 @@ Index: asterisk-16.3.0/main/bridge.c
  };
  
  struct ast_bridge *ast_bridge_base_new(uint32_t capabilities, unsigned int flags, const char *creator, const char *name, const char *id)
-@@ -5531,6 +5562,14 @@ static int manager_bridge_tech_unsuspend
+@@ -5531,6 +5557,14 @@ static int manager_bridge_tech_unsuspend
  	return handle_manager_bridge_tech_suspend(s, m, 0);
  }
  
@@ -171,7 +166,7 @@ Index: asterisk-16.3.0/res/ari/resource_bridges.c
  
  /*!
   * \brief Finds a bridge, filling the response with an error, if appropriate.
-@@ -1072,3 +1076,123 @@ void ast_ari_bridges_clear_video_source(
+@@ -1072,3 +1076,125 @@ void ast_ari_bridges_clear_video_source(
  	ao2_ref(bridge, -1);
  	ast_ari_response_no_content(response);
  }
@@ -218,9 +213,11 @@ Index: asterisk-16.3.0/res/ari/resource_bridges.c
 +		ast_log(AST_LOG_ERROR, "Cannot create variable string internally\n");
 +	}
 +
++	ast_bridge_lock(bridge);
 +	ast_bridge_set_variables(bridge, variables);
++	ast_bridge_unlock(bridge);
 +
-+	ast_ari_response_accepted(response);
++	ast_ari_response_no_content(response);
 +
 +	set_vars_exit:
 +	if (variables) {
@@ -675,3 +672,135 @@ Index: asterisk-16.3.0/rest-api/api-docs/bridges.json
  		}
  	],
  	"models": {
+Index: asterisk-16.3.0/include/asterisk/stasis_bridges.h
+===================================================================
+--- asterisk-16.3.0.orig/include/asterisk/stasis_bridges.h
++++ asterisk-16.3.0/include/asterisk/stasis_bridges.h
+@@ -156,6 +156,9 @@ struct ast_bridge_merge_message {
+ 	struct ast_bridge_snapshot *to;		/*!< Bridge to which channels will be added during the merge */
+ };
+ 
++
++void ast_bridge_publish_varset(struct ast_bridge *bridge, const char *name, const char *value);
++
+ /*!
+  * \since 12
+  * \brief Message type for \ref ast_bridge_merge_message.
+@@ -177,6 +180,17 @@ void ast_bridge_publish_merge(struct ast
+ 
+ /*!
+  * \since 12
++ * \brief Publish a bridge merge
++ *
++ * \pre Bridges involved are locked
++ *
++ * \param to The bridge to which channels are being added
++ * \param from The bridge from which channels are being removed
++ */
++struct stasis_message_type * ast_bridge_varset_type(void);
++
++/*!
++ * \since 12
+  * \brief Blob of data associated with a bridge.
+  *
+  * The \c blob is actually a JSON object of structured data. It has a "type" field
+Index: asterisk-16.3.0/main/stasis_bridges.c
+===================================================================
+--- asterisk-16.3.0.orig/main/stasis_bridges.c
++++ asterisk-16.3.0/main/stasis_bridges.c
+@@ -37,6 +37,7 @@
+ #include "asterisk/stasis_channels.h"
+ #include "asterisk/bridge.h"
+ #include "asterisk/bridge_technology.h"
++#include "../include/asterisk/strings.h"
+ 
+ /* The container of channel snapshots in a bridge snapshot should always be
+    equivalent to a linked list; otherwise things (like CDRs) that depend on some
+@@ -154,6 +155,9 @@ static struct ast_json *ast_channel_left
+ static struct ast_json *ast_bridge_merge_message_to_json(
+ 	struct stasis_message *msg,
+ 	const struct stasis_message_sanitizer *sanitize);
++struct ast_json *ast_bridge_varset_to_json(
++		struct stasis_message *msg,
++		const struct stasis_message_sanitizer *sanitize);
+ 
+ static struct stasis_cp_all *bridge_cache_all;
+ 
+@@ -167,6 +171,8 @@ STASIS_MESSAGE_TYPE_DEFN(ast_channel_ent
+ 	.to_json = ast_channel_entered_bridge_to_json);
+ STASIS_MESSAGE_TYPE_DEFN(ast_channel_left_bridge_type,
+ 	.to_json = ast_channel_left_bridge_to_json);
++STASIS_MESSAGE_TYPE_DEFN(ast_bridge_varset_type,
++.to_json = ast_bridge_varset_to_json);
+ STASIS_MESSAGE_TYPE_DEFN(ast_blind_transfer_type,
+ 	.to_json = blind_transfer_to_json,
+ 	.to_ami = blind_transfer_to_ami);
+@@ -533,6 +539,35 @@ void ast_bridge_publish_leave(struct ast
+ 	ao2_ref(msg, -1);
+ }
+ 
++void ast_bridge_publish_varset(struct ast_bridge *bridge, const char *name, const char *value)
++{
++	struct stasis_message *msg;
++	struct ast_json *blob;
++
++	ast_assert(name != NULL);
++	ast_assert(value != NULL);
++
++	blob = ast_json_pack("{s: s, s: s}",
++						 "variable", name,
++						 "value", value);
++	if (!blob) {
++		ast_log(LOG_ERROR, "Error creating message\n");
++		return;
++	}
++
++//	stasis_publish(ast_bridge_topic(bridge), blob);
++
++
++	msg = ast_bridge_blob_create(ast_bridge_varset_type(), bridge, NULL, blob);
++	bridge_publish_state_from_blob(bridge, stasis_message_data(msg));
++	stasis_publish(ast_bridge_topic(bridge), msg);
++
++	ao2_ref(msg, -1);
++	ast_json_unref(blob);
++}
++
++
++
+ static struct ast_json *simple_bridge_channel_event(
+ 	const char *type,
+ 	struct ast_bridge_snapshot *bridge_snapshot,
+@@ -577,6 +612,16 @@ struct ast_json *ast_channel_left_bridge
+ 		obj->channel, stasis_message_timestamp(msg), sanitize);
+ }
+ 
++struct ast_json *ast_bridge_varset_to_json(
++	struct stasis_message *msg,
++	const struct stasis_message_sanitizer *sanitize)
++{
++	struct ast_bridge_blob *obj = stasis_message_data(msg);
++
++	return simple_bridge_channel_event("BridgeVarset", obj->bridge,
++		obj->channel, stasis_message_timestamp(msg), sanitize);
++}
++
+ static struct ast_json *container_to_json_array(struct ao2_container *items,
+ 	const struct stasis_message_sanitizer *sanitize)
+ {
+@@ -1302,6 +1347,7 @@ static void stasis_bridging_cleanup(void
+ 	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_left_bridge_type);
+ 	STASIS_MESSAGE_TYPE_CLEANUP(ast_blind_transfer_type);
+ 	STASIS_MESSAGE_TYPE_CLEANUP(ast_attended_transfer_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(ast_bridge_varset_type);
+ 
+ 	ao2_cleanup(bridge_cache_all);
+ 	bridge_cache_all = NULL;
+@@ -1326,6 +1372,7 @@ int ast_stasis_bridging_init(void)
+ 	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_left_bridge_type);
+ 	res |= STASIS_MESSAGE_TYPE_INIT(ast_blind_transfer_type);
+ 	res |= STASIS_MESSAGE_TYPE_INIT(ast_attended_transfer_type);
++	res |= STASIS_MESSAGE_TYPE_INIT(ast_bridge_varset_type);
+ 
+ 	return res;
+ }
