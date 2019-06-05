@@ -171,7 +171,7 @@ Index: asterisk-16.3.0/res/ari/resource_bridges.c
  
  /*!
   * \brief Finds a bridge, filling the response with an error, if appropriate.
-@@ -1072,3 +1076,126 @@ void ast_ari_bridges_clear_video_source(
+@@ -1072,3 +1076,123 @@ void ast_ari_bridges_clear_video_source(
  	ao2_ref(bridge, -1);
  	ast_ari_response_no_content(response);
  }
@@ -288,9 +288,6 @@ Index: asterisk-16.3.0/res/ari/resource_bridges.c
 +		ast_json_object_set(response->message, variable_name, ast_json_string_create(variable_value));
 +	}
 +
-+
-+//	ast_json_object_set(response->message, final == NULL ? variable_name : "variables",
-+//			ast_json_string_create(final == NULL ? variable_value : final->str));
 +	ast_ari_response_ok(response, response->message);
 +
 +	get_vars_exit:
