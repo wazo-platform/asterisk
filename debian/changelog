@@ -1,8 +1,8 @@
-asterisk (8:16.4.0-1~wazo1) wazo-dev-stretch; urgency=medium
+asterisk (8:16.4.0-1~wazo2) wazo-dev-stretch; urgency=medium
 
   * upgrade to asterisk 16.4.0
 
- -- Nicolas <dev@wo>  Thu, 06 Jun 2019 07:56:56 -0400
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 06 Jun 2019 07:56:56 -0400
 
 asterisk (8:16.3.0-1~wazo7) wazo-dev-stretch; urgency=medium
 
