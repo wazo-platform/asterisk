@@ -1431,11 +1431,11 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
  	return res;
  }
 +static int vm_save_greeting(const char* data,
-+							unsigned int length,
-+							const char* context,
-+							const char* voicemail,
-+							const char* absence,
-+							const char* format)
++	unsigned int length,
++	const char* context,
++	const char* voicemail,
++	const char* absence,
++	const char* format)
 +{
 +	char path[PATH_MAX];
 +
@@ -1461,10 +1461,10 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +}
 +
 +static int vm_get_greeting(char** data,
-+						   const char* context,
-+						   const char* voicemail,
-+						   const char* absence,
-+						   const char* format)
++	const char* context,
++	const char* voicemail,
++	const char* absence,
++	const char* format)
 + {
 +	char path[PATH_MAX];
 +
@@ -1495,8 +1495,8 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +}
 +
 +static int vm_remove_greeting(const char* context,
-+							  const char* voicemail,
-+							  const char* absence)
++	const char* voicemail,
++	const char* absence)
 +{
 +	char path[PATH_MAX];
 +
@@ -1519,10 +1519,10 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +}
 +
 +static int get_vm_greeting_path(char* result_path,
-+								const char* context,
-+								const char* voicemail,
-+								const char* absence,
-+								const char* format)
++	const char* context,
++	const char* voicemail,
++	const char* absence,
++	const char* format)
 +{
 +
 +	if(!strcmp(absence, VM_TYPE_BUSY)) {
