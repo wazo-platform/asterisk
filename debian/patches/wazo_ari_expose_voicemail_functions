@@ -1408,10 +1408,10 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
  static int vm_msg_move(const char *mailbox, const char *context, size_t num_msgs, const char *oldfolder, const char *old_msg_ids[], const char *newfolder);
  static int vm_msg_remove(const char *mailbox, const char *context, size_t num_msgs, const char *folder, const char *msgs[]);
  static int vm_msg_play(struct ast_channel *chan, const char *mailbox, const char *context, const char *folder, const char *msg_num, ast_vm_msg_play_cb cb);
-+static int vm_save_greeting(const char* data, unsigned int length, const char* context, const char* voicemail, const char* absence, const char* format);
-+static int vm_get_greeting(char** data, const char* context, const char* voicemail, const char* absence, const char* format);
-+static int get_vm_greeting_path(char* result_path, const char* context, const char* voicemail, const char* absence, const char* format);
-+static int vm_remove_greeting(const char* context, const char* voicemail, const char* absence);
++static int vm_save_greeting(const char* data, unsigned int length, const char* context, const char* voicemail, const char* greeting, const char* format);
++static int vm_get_greeting(char** data, const char* context, const char* voicemail, const char* greeting, const char* format);
++static int get_vm_greeting_path(char* result_path, const char* context, const char* voicemail, const char* greeting, const char* format);
++static int vm_remove_greeting(const char* context, const char* voicemail, const char* greeting);
 +
  
  #ifdef TEST_FRAMEWORK
@@ -1426,20 +1426,20 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
  };
  
  static const struct ast_vm_greeter_functions vm_greeter_table = {
-@@ -16836,6 +16848,114 @@ play2_msg_cleanup:
+@@ -16836,6 +16848,113 @@ play2_msg_cleanup:
  	free_user(vmu);
  	return res;
  }
-+static int vm_save_greeting(const char* data,
++static int vm_save_greeting(const char* raw_greeting_audio,
 +	unsigned int length,
 +	const char* context,
 +	const char* voicemail,
-+	const char* absence,
++	const char* greeting,
 +	const char* format)
 +{
 +	char path[PATH_MAX];
 +
-+	int make_path_success = get_vm_greeting_path(path, absence, context, voicemail, format);
++	int make_path_success = get_vm_greeting_path(path, greeting, context, voicemail, format);
 +	if(make_path_success != 0) {
 +		return -1;
 +	}
@@ -1449,7 +1449,7 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +		ast_log(LOG_ERROR, "unable to open file at path %s\n", path);
 +		return -2;
 +	}
-+	int num_bytes_written = fwrite(data, length, sizeof(char), f);
++	int num_bytes_written = fwrite(raw_greeting_audio, length, sizeof(char), f);
 +
 +	if (num_bytes_written < 0) {
 +		ast_log(LOG_ERROR, "unable to write file at path %s\n", path);
@@ -1460,15 +1460,15 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +	return 0;
 +}
 +
-+static int vm_get_greeting(char** data,
++static int vm_get_greeting(char** raw_greeting_audio,
 +	const char* context,
 +	const char* voicemail,
-+	const char* absence,
++	const char* greeting,
 +	const char* format)
 + {
 +	char path[PATH_MAX];
 +
-+	int make_path_success = get_vm_greeting_path(path, absence, context, voicemail, format);
++	int make_path_success = get_vm_greeting_path(path, greeting, context, voicemail, format);
 +	if(make_path_success != 0) {
 +		return -1;
 +	}
@@ -1483,28 +1483,27 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +	fseek(f, 0, SEEK_END);
 +	long f_size = ftell(f);
 +	rewind(f);
-+	*data = ast_calloc(f_size + 2, sizeof(char));
-+	if(!*data) {
++	*raw_greeting_audio = ast_calloc(f_size + 1, sizeof(char));
++	if(!*raw_greeting_audio) {
 +		ast_log(LOG_ERROR, "unable to allocate memory for data\n");
 +		return -3;
 +	}
-+	int n = fread(*data, sizeof(char), f_size, f);
-+	(*data)[n] = 0;
++	int n = fread(*raw_greeting_audio, sizeof(char), f_size, f);
 +	fclose(f);
 +	return n;
 +}
 +
 +static int vm_remove_greeting(const char* context,
 +	const char* voicemail,
-+	const char* absence)
++	const char* greeting)
 +{
 +	char path[PATH_MAX];
 +
-+	if(!strcmp(absence, VM_TYPE_BUSY)) {
++	if(!strcmp(greeting, VM_TYPE_BUSY)) {
 +		snprintf(path, PATH_MAX, "%s%s/%s/busy", VM_SPOOL_DIR, context, voicemail);
-+	} else if (!strcmp(absence, VM_TYPE_UNAVAILABLE)) {
++	} else if (!strcmp(greeting, VM_TYPE_UNAVAILABLE)) {
 +		snprintf(path, PATH_MAX, "%s%s/%s/unavail", VM_SPOOL_DIR, context, voicemail);
-+	} else if (!strcmp(absence, VM_TYPE_GREET)) {
++	} else if (!strcmp(greeting, VM_TYPE_GREET)) {
 +		snprintf(path, PATH_MAX, "%s%s/%s/greet", VM_SPOOL_DIR, context, voicemail);
 +	} else {
 +		return -1;
@@ -1521,15 +1520,15 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +static int get_vm_greeting_path(char* result_path,
 +	const char* context,
 +	const char* voicemail,
-+	const char* absence,
++	const char* greeting,
 +	const char* format)
 +{
 +
-+	if(!strcmp(absence, VM_TYPE_BUSY)) {
++	if(!strcmp(greeting, VM_TYPE_BUSY)) {
 +		snprintf(result_path, PATH_MAX, "%s%s/%s/busy.%s", VM_SPOOL_DIR, context, voicemail, format);
-+	} else if (!strcmp(absence, VM_TYPE_UNAVAILABLE)) {
++	} else if (!strcmp(greeting, VM_TYPE_UNAVAILABLE)) {
 +		snprintf(result_path, PATH_MAX, "%s%s/%s/unavail.%s", VM_SPOOL_DIR, context, voicemail, format);
-+	} else if (!strcmp(absence, VM_TYPE_GREET)) {
++	} else if (!strcmp(greeting, VM_TYPE_GREET)) {
 +		snprintf(result_path, PATH_MAX, "%s%s/%s/greet.%s", VM_SPOOL_DIR, context, voicemail, format);
 +	} else {
 +		return -1;
@@ -1541,7 +1540,7 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
  
  /* This is a workaround so that menuselect displays a proper description
   * AST_MODULE_INFO(, , "Comedian Mail (Voicemail System)"
-@@ -16847,4 +16967,4 @@ AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MO
+@@ -16847,4 +16966,4 @@ AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MO
  	.unload = unload_module,
  	.reload = reload,
  	.optional_modules = "res_adsi,res_smdi",
