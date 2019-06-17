@@ -61,7 +61,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	if (strcmp(folder, "Deleted") == 0) {
 +		/* ast_vm_msg_remove doesn't handle this case properly */
 +		ast_ari_response_error(response, 400, "Bad request",
-+							   "Deleting a message from the Deleted folder is not supported");
++			"Deleting a message from the Deleted folder is not supported");
 +		return;
 +	}
 +
