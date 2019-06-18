@@ -678,6 +678,18 @@ Index: asterisk-16.4.0/rest-api/api-docs/bridges.json
  		}
  	],
  	"models": {
+@@ -758,6 +847,11 @@
+ 					"required": true,
+ 					"type": "Date",
+ 					"description": "Timestamp when bridge was created"
++				},
++				"bridgevars": {
++					"required": false,
++					"type": "object",
++					"description": "Channel variables"
+ 				}
+ 			}
+ 		}
 Index: asterisk-16.4.0/include/asterisk/stasis_bridges.h
 ===================================================================
 --- asterisk-16.4.0.orig/include/asterisk/stasis_bridges.h
@@ -822,7 +834,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/events.json
  				"BridgeDestroyed",
  				"BridgeMerged",
  				"BridgeBlindTransfer",
-@@ -396,6 +397,27 @@
+@@ -734,6 +735,27 @@
  				}
  			}
  		},
@@ -840,13 +852,33 @@ Index: asterisk-16.4.0/rest-api/api-docs/events.json
 +					"type": "string",
 +					"description": "The new value of the variable."
 +				},
-+				"channel": {
++				"bridge": {
 +					"required": false,
-+					"type": "Channel",
-+					"description": "The channel on which the variable was set.\n\nIf missing, the variable is a global variable."
++					"type": "Bridge",
++					"description": "The bridge on which the variable was set."
 +				}
 +			}
 +		},
- 		"BridgeVideoSourceChanged": {
- 			"id": "BridgeVideoSourceChanged",
- 			"description": "Notification that the source of video in a bridge has changed.",
+ 		"ChannelHold": {
+ 			"id": "ChannelHold",
+ 			"description": "A channel initiated a media hold.",
+Index: asterisk-16.4.0/res/stasis/app.c
+===================================================================
+--- asterisk-16.4.0.orig/res/stasis/app.c
++++ asterisk-16.4.0/res/stasis/app.c
+@@ -743,7 +743,15 @@ static void sub_bridge_update_handler(vo
+ 			ast_json_object_set(json, "old_video_source_id",
+ 				ast_json_string_create(old_snapshot->video_source_id));
+ 		}
++		ast_log(AST_LOG_ERROR, "INSIDE CONDITION...\n");
++
++	}
++
++	if (json) {
++		app_send(app, json);
++		ast_json_unref(json);
+ 	}
++	json = simple_bridge_event("BridgeVarset", new_snapshot, tv);
+ 
+ 	if (json) {
+ 		app_send(app, json);
