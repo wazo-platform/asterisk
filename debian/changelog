@@ -1,3 +1,9 @@
+asterisk (8:16.4.0-1~wazo5) wazo-dev; urgency=medium
+
+  * remove the voicemail greeting API
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 19 Jun 2019 07:23:47 -0400
+
 asterisk (8:16.4.0-1~wazo4) wazo-dev-stretch; urgency=medium
 
   * force rebuild for the vanilla and debug packages
