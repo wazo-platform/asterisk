@@ -694,16 +694,7 @@ Index: asterisk-16.4.0/include/asterisk/stasis_bridges.h
 ===================================================================
 --- asterisk-16.4.0.orig/include/asterisk/stasis_bridges.h
 +++ asterisk-16.4.0/include/asterisk/stasis_bridges.h
-@@ -64,6 +64,8 @@ struct ast_bridge_snapshot {
- 	enum ast_bridge_video_mode_type video_mode;
- 	/*! The time of bridge creation */
- 	struct timeval creationtime;
-+	/*!< A linked list for bridge variables. See \ref AstChanVar */
-+	struct varshead *varshead;
- };
- 
- /*!
-@@ -156,6 +158,9 @@ struct ast_bridge_merge_message {
+@@ -156,6 +156,9 @@ struct ast_bridge_merge_message {
  	struct ast_bridge_snapshot *to;		/*!< Bridge to which channels will be added during the merge */
  };
  
@@ -713,7 +704,7 @@ Index: asterisk-16.4.0/include/asterisk/stasis_bridges.h
  /*!
   * \since 12
   * \brief Message type for \ref ast_bridge_merge_message.
-@@ -177,6 +182,17 @@ void ast_bridge_publish_merge(struct ast
+@@ -177,6 +180,17 @@ void ast_bridge_publish_merge(struct ast
  
  /*!
   * \since 12
@@ -762,42 +753,52 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  STASIS_MESSAGE_TYPE_DEFN(ast_blind_transfer_type,
  	.to_json = blind_transfer_to_json,
  	.to_ami = blind_transfer_to_ami);
-@@ -290,6 +296,7 @@ struct ast_bridge_snapshot *ast_bridge_s
- 	snapshot->num_active = bridge->num_active;
- 	snapshot->creationtime = bridge->creationtime;
- 	snapshot->video_mode = bridge->softmix.video_mode.mode;
-+	snapshot->varshead = ast_var_list_clone(&bridge->varshead); // todo: look into this possible memory leak
- 	if (snapshot->video_mode == AST_BRIDGE_VIDEO_MODE_SINGLE_SRC
- 		&& bridge->softmix.video_mode.mode_data.single_src_data.chan_vsrc) {
- 		ast_string_field_set(snapshot, video_source_id,
-@@ -532,6 +539,34 @@ void ast_bridge_publish_leave(struct ast
+@@ -532,6 +538,52 @@ void ast_bridge_publish_leave(struct ast
  	ao2_ref(msg, -1);
  }
  
++static struct stasis_message *bridge_varset_msg_create(struct ast_bridge* bridge, const char *varname,
++	const char *varvalue)
++{
++	struct stasis_message *msg;
++	struct ast_json *json_blob;
++
++	json_blob = ast_json_pack("{s: s, s: s}",
++						 "variable", varname,
++						 "value", varvalue);
++
++	if (!json_blob) {
++		ast_log(LOG_ERROR, "Error creating message\n");
++		return NULL;
++	}
++
++	msg = ast_bridge_blob_create(ast_bridge_varset_type(), bridge, NULL, json_blob);
++
++//	ast_json_unref(json_blob);
++
++
++	return msg;
++}
++
++
 +void ast_bridge_publish_varset(struct ast_bridge *bridge, const char *name, const char *value)
 +{
-+ast_log(AST_LOG_ERROR, "Publishing varset...\n");
 +	struct stasis_message *msg;
-+	struct ast_json *blob;
++
 +
 +	ast_assert(name != NULL);
 +	ast_assert(value != NULL);
 +
-+	blob = ast_json_pack("{s: s, s: s}",
-+						 "variable", name,
-+						 "value", value);
-+	if (!blob) {
-+		ast_log(LOG_ERROR, "Error creating message\n");
++
++	msg = bridge_varset_msg_create(bridge, name, value);
++	if (!msg) {
++		ast_log(AST_LOG_ERROR, "Message is NULL!\n");
 +		return;
 +	}
 +
-+	msg = ast_bridge_blob_create(ast_bridge_varset_type(), bridge, NULL, blob);
 +	stasis_publish(ast_bridge_topic(bridge), msg);
-+	bridge_publish_state_from_blob(bridge, stasis_message_data(msg));
-+
-+
 +	ao2_ref(msg, -1);
-+	ast_json_unref(blob);
++
 +}
 +
 +
@@ -805,7 +806,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  static struct ast_json *simple_bridge_channel_event(
  	const char *type,
  	struct ast_bridge_snapshot *bridge_snapshot,
-@@ -576,6 +611,21 @@ struct ast_json *ast_channel_left_bridge
+@@ -576,6 +628,33 @@ struct ast_json *ast_channel_left_bridge
  		obj->channel, stasis_message_timestamp(msg), sanitize);
  }
  
@@ -813,56 +814,33 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
 +	struct stasis_message *msg,
 +	const struct stasis_message_sanitizer *sanitize)
 +{
++	int res = 0;
++	struct ast_json *to_json;
 +	struct ast_bridge_blob *obj = stasis_message_data(msg);
 +	struct ast_json *json_bridge = ast_bridge_snapshot_to_json(obj->bridge, sanitize);
 +
-+	struct ast_json *json = ast_json_pack("{s: s, s: o, s: o}",
-+			                               "type", "BridgeVarset", "timestamp",
-+			                               ast_json_timeval(*stasis_message_timestamp(msg), NULL),
-+			                               "bridge", json_bridge);
++	to_json = obj->blob;
++	if (!to_json || ast_json_is_null(to_json)) {
++		to_json = ast_json_object_create();
++	} else {
++		to_json = ast_json_copy(obj->blob);
++	}
 +
-+	return json;
++	res |= ast_json_object_set(to_json, "type", ast_json_string_create("BridgeVarset"));
++	res |= ast_json_object_set(to_json, "timestamp", ast_json_timeval(*stasis_message_timestamp(msg), NULL));
++	res |= ast_json_object_set(to_json, "bridge", json_bridge);
++
++	if (res != 0) {
++		ast_log(AST_LOG_ERROR, "VARSET TO JSON TO JSON ERROR\n");
++		return NULL;
++	}
++	return to_json;
 +}
 +
  static struct ast_json *container_to_json_array(struct ao2_container *items,
  	const struct stasis_message_sanitizer *sanitize)
  {
-@@ -621,6 +671,7 @@ struct ast_json *ast_bridge_snapshot_to_
- {
- 	struct ast_json *json_bridge;
- 	struct ast_json *json_channels;
-+	struct ast_json *json_variables;
- 
- 	if (snapshot == NULL) {
- 		return NULL;
-@@ -631,7 +682,15 @@ struct ast_json *ast_bridge_snapshot_to_
- 		return NULL;
- 	}
- 
--	json_bridge = ast_json_pack("{s: s, s: s, s: s, s: s, s: s, s: s, s: o, s: o, s: s}",
-+	json_variables = ast_json_bridge_vars(snapshot->varshead);
-+
-+	if (!json_variables) {
-+		ast_log(AST_LOG_ERROR, "JSON VARIABLES NULL!!!!\n");
-+		return NULL;
-+
-+	}
-+
-+	json_bridge = ast_json_pack("{s: s, s: s, s: s, s: s, s: s, s: s, s: o, s: o, s: s, s: o}",
- 		"id", snapshot->uniqueid,
- 		"technology", snapshot->technology,
- 		"bridge_type", capability2str(snapshot->capabilities),
-@@ -640,7 +699,8 @@ struct ast_json *ast_bridge_snapshot_to_
- 		"name", snapshot->name,
- 		"channels", json_channels,
- 		"creationtime", ast_json_timeval(snapshot->creationtime, NULL),
--		"video_mode", ast_bridge_video_mode_to_string(snapshot->video_mode));
-+		"video_mode", ast_bridge_video_mode_to_string(snapshot->video_mode),
-+		"variables", json_variables);
- 	if (!json_bridge) {
- 		return NULL;
- 	}
-@@ -1301,6 +1361,7 @@ static void stasis_bridging_cleanup(void
+@@ -1301,6 +1380,7 @@ static void stasis_bridging_cleanup(void
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_left_bridge_type);
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_blind_transfer_type);
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_attended_transfer_type);
@@ -870,7 +848,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  
  	ao2_cleanup(bridge_cache_all);
  	bridge_cache_all = NULL;
-@@ -1325,6 +1386,7 @@ int ast_stasis_bridging_init(void)
+@@ -1325,6 +1405,7 @@ int ast_stasis_bridging_init(void)
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_left_bridge_type);
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_blind_transfer_type);
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_attended_transfer_type);
