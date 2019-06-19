@@ -780,7 +780,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
 +}
 +
 +
-+void ast_bridge_publish_varset(struct ast_bridge *bridge, const char *name, const char *value)
++void ast_bridge_publish_varset(struct ast_bridge *bridge, const char *varname, const char *varvalue)
 +{
 +	struct stasis_message *msg;
 +
@@ -789,7 +789,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
 +	ast_assert(value != NULL);
 +
 +
-+	msg = bridge_varset_msg_create(bridge, name, value);
++	msg = bridge_varset_msg_create(bridge, varname, varvalue);
 +	if (!msg) {
 +		ast_log(AST_LOG_ERROR, "Message is NULL!\n");
 +		return;
