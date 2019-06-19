@@ -753,7 +753,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  STASIS_MESSAGE_TYPE_DEFN(ast_blind_transfer_type,
  	.to_json = blind_transfer_to_json,
  	.to_ami = blind_transfer_to_ami);
-@@ -532,6 +538,52 @@ void ast_bridge_publish_leave(struct ast
+@@ -532,6 +538,51 @@ void ast_bridge_publish_leave(struct ast
  	ao2_ref(msg, -1);
  }
  
@@ -774,8 +774,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
 +
 +	msg = ast_bridge_blob_create(ast_bridge_varset_type(), bridge, NULL, json_blob);
 +
-+//	ast_json_unref(json_blob);
-+
++	ast_json_unref(json_blob);
 +
 +	return msg;
 +}
@@ -806,7 +805,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  static struct ast_json *simple_bridge_channel_event(
  	const char *type,
  	struct ast_bridge_snapshot *bridge_snapshot,
-@@ -576,6 +628,33 @@ struct ast_json *ast_channel_left_bridge
+@@ -576,6 +627,33 @@ struct ast_json *ast_channel_left_bridge
  		obj->channel, stasis_message_timestamp(msg), sanitize);
  }
  
@@ -840,7 +839,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  static struct ast_json *container_to_json_array(struct ao2_container *items,
  	const struct stasis_message_sanitizer *sanitize)
  {
-@@ -1301,6 +1380,7 @@ static void stasis_bridging_cleanup(void
+@@ -1301,6 +1379,7 @@ static void stasis_bridging_cleanup(void
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_left_bridge_type);
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_blind_transfer_type);
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_attended_transfer_type);
@@ -848,7 +847,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  
  	ao2_cleanup(bridge_cache_all);
  	bridge_cache_all = NULL;
-@@ -1325,6 +1405,7 @@ int ast_stasis_bridging_init(void)
+@@ -1325,6 +1404,7 @@ int ast_stasis_bridging_init(void)
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_left_bridge_type);
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_blind_transfer_type);
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_attended_transfer_type);
