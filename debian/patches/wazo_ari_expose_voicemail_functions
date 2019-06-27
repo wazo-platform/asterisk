@@ -11,7 +11,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.4.0/res/ari/resource_wazo.c
-@@ -0,0 +1,295 @@
+@@ -0,0 +1,324 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -38,6 +38,8 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +#include "resource_wazo.h"
 +
 +#define MAX_FORMAT_LEN 80
++
++static int validate_greeting(const char *greeting);
 +
 +
 +void ast_ari_wazo_delete_voicemail_message(struct ast_variable *headers,
@@ -116,17 +118,26 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +
 +	unsigned char *decoded_greeting = NULL;
 +
-+	if(!encoded_greeting) {
++	if (!encoded_greeting) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid encoded greeting");
 +		return;
 +	}
 +
 +	const char *greeting = args->greeting;
-+	if(!greeting) {
++	if (!greeting) {
++		ast_ari_response_error(response, 400, "Invalid argument", "No greeting specified");
++		return;
++	}
++
++	if (!validate_greeting(greeting)) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid greeting");
 +		return;
 +	}
 +
++	/* The ratio of output bytes to input bytes is 4:3
++	 * +10 is only there to cover fringe cases and possible padding
++	 * for more details, see: https://en.wikipedia.org/wiki/Base64
++	 */
 +	long decoded_length = (3 * strlen(encoded_greeting) / 4) + 10;
 +
 +	if (decoded_length == 0L) {
@@ -141,29 +152,29 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	}
 +
 +	int num_bytes_decoded = ast_base64decode(decoded_greeting, encoded_greeting, decoded_length - 1);
-+	if(num_bytes_decoded <= 0) {
++	if (num_bytes_decoded <= 0) {
 +		ast_ari_response_error(response, 400, "Decoding Error", "Unable to decode base64");
 +		goto data_cleanup;
 +
 +	}
 +
-+	const char* context = args->context;
-+	if(!context) {
++	const char *context = args->context;
++	if (!context) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid context");
 +		goto data_cleanup;
 +	}
 +
-+	const char* voicemail = args->voicemail;
-+	if(!voicemail) {
++	const char *voicemail = args->voicemail;
++	if (!voicemail) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid voicemail");
 +		goto data_cleanup;
 +	}
 +
-+	const char* arg_format = args->format;
++	const char *arg_format = args->format;
 +	char format[MAX_FORMAT_LEN];
-+	if(!arg_format) {
++	if (!arg_format) {
 +		strcpy(format, "wav");
-+	} else if(ast_strlen_zero(arg_format) || strlen(arg_format) >= 79) {
++	} else if (ast_strlen_zero(arg_format) || strlen(arg_format) >= MAX_FORMAT_LEN - 1) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid format");
 +		goto data_cleanup;
 +	} else {
@@ -171,7 +182,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	}
 +
 +	int result = ast_vm_save_greeting((const char*) decoded_greeting, num_bytes_decoded, context, voicemail, greeting, format);
-+	if(result == -1) {
++	if (result == -1) {
 +		ast_ari_response_error(response, 400, "Unable to save greeting", "Unable to write file, invalid path");
 +		goto data_cleanup;
 +	} else if (result == -2) {
@@ -181,8 +192,8 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +
 +	ast_ari_response_no_content(response);
 +
-+	data_cleanup:
-+	if(decoded_greeting) {
++data_cleanup:
++	if (decoded_greeting) {
 +		ast_free(decoded_greeting);
 +	}
 +
@@ -193,32 +204,37 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	struct ast_ari_response *response)
 +{
 +
-+	char* encoded_greeting = NULL;
-+	char* raw_greeting = NULL;
++	char *encoded_greeting = NULL;
++	char *raw_greeting = NULL;
 +
 +	const char *greeting = args->greeting;
-+	if(!greeting) {
++	if (!greeting) {
++		ast_ari_response_error(response, 400, "Invalid argument", "No greeting specified");
++		return;
++	}
++
++	if (!validate_greeting(greeting)) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid greeting");
 +		return;
 +	}
 +
-+	const char* context = args->context;
-+	if(!context) {
++	const char *context = args->context;
++	if (!context) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid context");
 +		return;
 +	}
 +
 +	const char* voicemail = args->voicemail;
-+	if(!voicemail) {
++	if (!voicemail) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid voicemail");
 +		return;
 +	}
 +
-+	const char* arg_format = args->format;
++	const char *arg_format = args->format;
 +	char format[MAX_FORMAT_LEN];
-+	if(!arg_format) {
++	if (!arg_format) {
 +		strcpy(format, "wav");
-+	} else if(ast_strlen_zero(arg_format) || strlen(arg_format) >= 79) {
++	} else if (ast_strlen_zero(arg_format) || strlen(arg_format) >= 79) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid format");
 +		goto data_cleanup;
 +	} else {
@@ -235,19 +251,21 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +		goto data_cleanup;
 +	}
 +
-+	if(!raw_greeting) {
++	if (!raw_greeting) {
 +		ast_ari_response_error(response, 404, "Error", "Unable to read greeting file");
 +		ast_log(LOG_ERROR, "Unable to read file");
 +		return;
 +	}
 +
-+
-+	/*formula for getting length of base64 encoded string; '+ 1' is meant to simulate ceil() */
++	/* the ratio of output bytes to input bytes is 4:3
++	 * formula for getting length of base64 encoded string; '+ 1' is meant to simulate ceil()
++	 * for more details, see: https://en.wikipedia.org/wiki/Base64
++	 */
 +	unsigned long encoded_length = 4 * ((raw_length / 3) + 1);
 +
 +	encoded_greeting = ast_calloc(encoded_length, sizeof(char));
 +
-+	if(!encoded_greeting) {
++	if (!encoded_greeting) {
 +		ast_ari_response_error(response, 500, "Error", "Unable to allocate memory");
 +		goto data_cleanup;
 +	}
@@ -255,7 +273,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	int num_bytes_encoded = ast_base64encode(encoded_greeting, (const unsigned char*) raw_greeting, raw_length,
 +	                                             encoded_length + 1); /* allow space for null character */
 +
-+	if(num_bytes_encoded <= 0) {
++	if (num_bytes_encoded <= 0) {
 +		ast_ari_response_error(response, 400, "Encoding Error", "Unable to encode base64");
 +		goto data_cleanup;
 +	}
@@ -264,15 +282,14 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	ast_json_object_set(response->message, "greeting_base64", ast_json_string_create(encoded_greeting));
 +
 +	ast_ari_response_ok(response, response->message);
-+	goto data_cleanup;
 +
-+	data_cleanup:
-+		if(raw_greeting) {
-+			ast_free(raw_greeting);
-+		}
-+		if(encoded_greeting) {
-+			ast_free(encoded_greeting);
-+		}
++data_cleanup:
++	if (raw_greeting) {
++		ast_free(raw_greeting);
++	}
++	if (encoded_greeting) {
++		ast_free(encoded_greeting);
++	}
 +}
 +
 +void ast_ari_wazo_remove_voicemail_greeting(struct ast_variable *headers,
@@ -280,19 +297,24 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +{
 +
 +	const char *greeting = args->greeting;
-+	if(!greeting) {
++	if (!greeting) {
++		ast_ari_response_error(response, 400, "Invalid argument", "No greeting specified");
++		return;
++	}
++
++	if (!validate_greeting(greeting)) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid greeting");
 +		return;
 +	}
 +
-+	const char* context = args->context;
-+	if(!context) {
++	const char *context = args->context;
++	if (!context) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid context");
 +		return;
 +	}
 +
-+	const char* voicemail = args->voicemail;
-+	if(!voicemail) {
++	const char *voicemail = args->voicemail;
++	if (!voicemail) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid voicemail");
 +		return;
 +	}
@@ -306,6 +328,13 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	} else {
 +		ast_ari_response_no_content(response);
 +	}
++}
++
++/*
++ * Check if given greeting string is valid
++ */
++static int validate_greeting(const char *greeting) {
++	return !strcmp(greeting, "unavailable") || !strcmp(greeting, "busy") || !strcmp(greeting, "name");
 +}
 \ No newline at end of file
 Index: asterisk-16.4.0/res/ari/resource_wazo.h
@@ -1009,7 +1038,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 ===================================================================
 --- /dev/null
 +++ asterisk-16.4.0/rest-api/api-docs/wazo.json
-@@ -0,0 +1,242 @@
+@@ -0,0 +1,237 @@
 +{
 +	"_copyright": "Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)",
 +	"_author": "Etienne Lessard",
@@ -1242,11 +1271,6 @@ Index: asterisk-16.4.0/rest-api/api-docs/wazo.json
 +					"type": "string",
 +					"description": "The file data encoded as base64",
 +					"required": true
-+				},
-+				"greeting_size": {
-+					"type": "string",
-+					"description": "The size of the original file (in bytes)",
-+					"required": true
 +				}
 +			}
 +		}
@@ -1420,7 +1444,7 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
  };
  
  static const struct ast_vm_greeter_functions vm_greeter_table = {
-@@ -16836,6 +16848,113 @@ play2_msg_cleanup:
+@@ -16836,6 +16848,114 @@ play2_msg_cleanup:
  	free_user(vmu);
  	return res;
  }
@@ -1447,6 +1471,7 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +
 +	if (num_bytes_written < 0) {
 +		ast_log(LOG_ERROR, "unable to write file at path %s\n", path);
++		fclose(f);
 +		return -3;
 +	}
 +
@@ -1463,14 +1488,13 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +	char path[PATH_MAX];
 +
 +	int make_path_success = get_vm_greeting_path(path, context, voicemail, greeting, format);
-+	if(make_path_success != 0) {
++	if (make_path_success != 0) {
 +		return -1;
 +	}
 +
 +	FILE *f = fopen(path, "r");
-+
-+	if(!f) {
-+		ast_log(LOG_ERROR, "unable to read file at path %s\n", path);
++	if (!f) {
++		ast_log(LOG_ERROR, "unable to read open at path %s\n", path);
 +		return -2;
 +	}
 +
@@ -1478,8 +1502,9 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +	long f_size = ftell(f);
 +	rewind(f);
 +	*raw_greeting_audio = ast_calloc(f_size + 1, sizeof(char));
-+	if(!*raw_greeting_audio) {
++	if (!*raw_greeting_audio) {
 +		ast_log(LOG_ERROR, "unable to allocate memory for data\n");
++		fclose(f);
 +		return -3;
 +	}
 +	int n = fread(*raw_greeting_audio, sizeof(char), f_size, f);
@@ -1494,7 +1519,7 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +	char path[PATH_MAX];
 +
 +	/* special case: get_vm_greeting_path() is cannot be used here */
-+	if(!strcmp(greeting, VM_TYPE_BUSY)) {
++	if (!strcmp(greeting, VM_TYPE_BUSY)) {
 +		snprintf(path, PATH_MAX, "%s%s/%s/busy", VM_SPOOL_DIR, context, voicemail);
 +	} else if (!strcmp(greeting, VM_TYPE_UNAVAILABLE)) {
 +		snprintf(path, PATH_MAX, "%s%s/%s/unavail", VM_SPOOL_DIR, context, voicemail);
@@ -1518,7 +1543,7 @@ Index: asterisk-16.4.0/apps/app_voicemail.c
 +	const char* format)
 +{
 +
-+	if(!strcmp(greeting, VM_TYPE_BUSY)) {
++	if (!strcmp(greeting, VM_TYPE_BUSY)) {
 +		snprintf(result_path, PATH_MAX, "%s%s/%s/busy.%s", VM_SPOOL_DIR, context, voicemail, format);
 +	} else if (!strcmp(greeting, VM_TYPE_UNAVAILABLE)) {
 +		snprintf(result_path, PATH_MAX, "%s%s/%s/unavail.%s", VM_SPOOL_DIR, context, voicemail, format);
