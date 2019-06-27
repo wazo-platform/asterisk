@@ -11,7 +11,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.4.0/res/ari/resource_wazo.c
-@@ -0,0 +1,324 @@
+@@ -0,0 +1,317 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -193,10 +193,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	ast_ari_response_no_content(response);
 +
 +data_cleanup:
-+	if (decoded_greeting) {
-+		ast_free(decoded_greeting);
-+	}
-+
++	ast_free(decoded_greeting);
 +}
 +
 +void ast_ari_wazo_get_voicemail_greeting(struct ast_variable *headers,
@@ -284,12 +281,8 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	ast_ari_response_ok(response, response->message);
 +
 +data_cleanup:
-+	if (raw_greeting) {
-+		ast_free(raw_greeting);
-+	}
-+	if (encoded_greeting) {
-+		ast_free(encoded_greeting);
-+	}
++	ast_free(raw_greeting);
++	ast_free(encoded_greeting);
 +}
 +
 +void ast_ari_wazo_remove_voicemail_greeting(struct ast_variable *headers,
