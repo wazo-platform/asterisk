@@ -98,3 +98,20 @@ Index: asterisk-16.4.0/include/asterisk/res_pjsip.h
  
  /*!
   * \brief Update a contact
+Index: asterisk-16.4.0/res/res_pjsip.c
+===================================================================
+--- asterisk-16.4.0.orig/res/res_pjsip.c
++++ asterisk-16.4.0/res/res_pjsip.c
+@@ -1493,6 +1493,12 @@
+ 						on a reliable transport and is not intended to be configured manually.
+ 					</para></description>
+ 				</configOption>
++				<configOption name="mobility">
++					<synopsis>If a contact is 'mobile' or 'fixed'.</synopsis>
++					<description><para>
++						Can take values 'mobile' or 'fixed' depending on the type of contact.
++					</para></description>
++				</configOption>
+ 			</configObject>
+ 			<configObject name="aor">
+ 				<synopsis>The configuration for a location of an endpoint</synopsis>
