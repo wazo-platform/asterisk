@@ -1,3 +1,9 @@
+asterisk (8:16.4.0-1~wazo6) wazo-dev-stretch; urgency=medium
+
+  * fix the documentation of the pjsip_aor mobility function parameter
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 27 Jun 2019 08:06:09 -0400
+
 asterisk (8:16.4.0-1~wazo5) wazo-dev; urgency=medium
 
   * remove the voicemail greeting API
