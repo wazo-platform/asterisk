@@ -11,7 +11,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-16.4.0/res/ari/resource_wazo.c
-@@ -0,0 +1,290 @@
+@@ -0,0 +1,295 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -135,6 +135,11 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	}
 +
 +	decoded_greeting = ast_calloc(decoded_length, sizeof(char));
++	if (!decoded_greeting) {
++		ast_ari_response_error(response, 500, "Internal Server Error", "Allocating memory");
++		return;
++	}
++
 +	int num_bytes_decoded = ast_base64decode(decoded_greeting, encoded_greeting, decoded_length - 1);
 +	if(num_bytes_decoded <= 0) {
 +		ast_ari_response_error(response, 400, "Decoding Error", "Unable to decode base64");
