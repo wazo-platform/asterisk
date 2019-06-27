@@ -231,7 +231,7 @@ Index: asterisk-16.4.0/res/ari/resource_wazo.c
 +	char format[MAX_FORMAT_LEN];
 +	if (!arg_format) {
 +		strcpy(format, "wav");
-+	} else if (ast_strlen_zero(arg_format) || strlen(arg_format) >= 79) {
++	} else if (ast_strlen_zero(arg_format) || strlen(arg_format) >= MAX_FORMAT_LEN - 1) {
 +		ast_ari_response_error(response, 400, "Invalid argument", "Invalid format");
 +		goto data_cleanup;
 +	} else {
