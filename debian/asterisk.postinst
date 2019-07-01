@@ -29,7 +29,7 @@ case "$1" in
 	     /var/lib/asterisk \
 	     -type d | while read dir; do
 		if ! dpkg-statoverride --list "$dir" > /dev/null ; then
-			chown asterisk: $dir
+			chown asterisk: "$dir"
 		fi
 	done 
 	
@@ -45,8 +45,8 @@ case "$1" in
 	# spool holds some sensitive information (e.g. monitor, voicemail etc.)
 	find /var/spool/asterisk -type d | while read dir; do
 		if ! dpkg-statoverride --list "$dir" > /dev/null ; then
-			chown asterisk: $dir
-			chmod 750 $dir
+			chown asterisk: "$dir"
+			chmod 750 "$dir"
 		fi
 	done
 
