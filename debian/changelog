@@ -1,3 +1,9 @@
+asterisk (8:16.4.0-1~wazo7) wazo-dev-stretch; urgency=medium
+
+  * add the voicemail greeting API
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 02 Jul 2019 16:22:02 -0400
+
 asterisk (8:16.4.0-1~wazo6) wazo-dev-stretch; urgency=medium
 
   * fix the documentation of the pjsip_aor mobility function parameter
