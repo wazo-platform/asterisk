@@ -1,4 +1,4 @@
-version: "3"
+version: "3.7"
 services:
   sync:
     image: wazopbx/wait
@@ -12,3 +12,19 @@ services:
     volumes:
       - "./etc/asterisk:/etc/asterisk"
     command: "asterisk -fTvvv"
+
+  ari_amqp:
+    image: asterisk_amqp
+    ports:
+      - "5039"
+    volumes:
+      - "./etc/asterisk:/etc/asterisk"
+    command: "asterisk -fTvvv"
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - 5672
+    volumes:
+      - type: tmpfs
+        target: "/var/lib/rabbitmq"

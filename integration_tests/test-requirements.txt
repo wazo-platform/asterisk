@@ -2,5 +2,6 @@ https://github.com/digium/swagger-py/archive/master.zip  # the release 0.2.1 has
 https://github.com/wazo-pbx/ari-py/archive/0.2.2.zip
 https://github.com/wazo-pbx/xivo-test-helpers/archive/master.zip
 docker-compose
+kombu
 pyhamcrest
 pytest
