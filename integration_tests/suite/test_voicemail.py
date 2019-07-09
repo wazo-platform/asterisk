@@ -27,6 +27,11 @@ class AssetLauncher(AssetLaunchingTestCase):
     asset = 'base'
     service = 'asterisk'
 
+greeting_args = {'context': 'default', 'voicemail': 6001, 'greeting': 'name'}
+
+def _reset_test(ari):
+    ari.wazo.removeVoicemailGreeting(**greeting_args)
+
 @pytest.fixture()
 def ari():
     AssetLauncher.kill_containers()
@@ -38,3 +43,13 @@ def ari():
     yield ari
 
     AssetLauncher.kill_containers()
+
+
+def test_delete_voicemail_message_without_body(ari):
+    assert_that(calling(ari.wazo.deleteVoicemailMessage).with_args(body={'wrong_key': 'wrong_value'}),
+                raises(HTTPError).matching(has_property('response', has_property('status_code', 400))))
+
+
+def test_move_voicemail_message_without_body(ari):
+    assert_that(calling(ari.wazo.moveVoicemailMessage).with_args(body={'wrong_key': 'wrong_value'}),
+                raises(HTTPError).matching(has_property('response', has_property('status_code', 400))))
