@@ -27,10 +27,6 @@ class AssetLauncher(AssetLaunchingTestCase):
     asset = 'base'
     service = 'asterisk'
 
-greeting_args = {'context': 'default', 'voicemail': 6001, 'greeting': 'name'}
-
-def _reset_test(ari):
-    ari.wazo.removeVoicemailGreeting(**greeting_args)
 
 @pytest.fixture()
 def ari():
