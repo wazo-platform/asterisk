@@ -10,6 +10,7 @@ import pytest
 from hamcrest import assert_that
 from hamcrest import calling
 from hamcrest import has_property
+from hamcrest import not_
 from requests.exceptions import HTTPError
 from xivo_test_helpers import until
 from xivo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
@@ -47,3 +48,51 @@ def test_delete_voicemail_message_without_body(ari):
 def test_move_voicemail_message_without_body(ari):
     assert_that(calling(ari.wazo.moveVoicemailMessage).with_args(body={'wrong_key': 'wrong_value'}),
                 raises(HTTPError).matching(has_property('response', has_property('status_code', 400))))
+
+greeting_args = {'context': 'default', 'voicemail': 6001, 'greeting': 'name'}
+voicemail_base64_data_path = os.path.join(os.path.dirname(__file__), 'voicemail_data_base64')
+
+def _reset_test(ari):
+    ari.wazo.removeVoicemailGreeting(**greeting_args)
+
+def test_delete_voicemail_greeting(ari):
+    assert_that(
+        calling(ari.wazo.removeVoicemailGreeting).with_args(**greeting_args),
+        not_(raises(Exception))
+    )
+    _reset_test(ari)
+
+def test_post_voicemail_greeting(ari):
+    with open(voicemail_base64_data_path) as file:
+        greeting_base64 = file.read()
+
+    assert_that(
+        calling(ari.wazo.createVoicemailGreeting).with_args(body={"greeting_base64": greeting_base64}, **greeting_args),
+        not_(raises(Exception))
+    )
+    _reset_test(ari)
+
+def test_put_voicemail_greeting(ari):
+    with open(voicemail_base64_data_path) as file:
+        greeting_base64 = file.read()
+
+    ari.wazo.createVoicemailGreeting(body={"greeting_base64": greeting_base64}, **greeting_args)
+
+    assert_that(
+        calling(ari.wazo.changeVoicemailGreeting).with_args(body={"greeting_base64": greeting_base64}, **greeting_args),
+        not_(raises(Exception))
+    )
+
+    assert_thatari.wazo.getVoicemailGreeting(**greeting_args)
+    _reset_test(ari)
+
+def test_get_voicemail_greeting(ari):
+    with open(voicemail_base64_data_path) as file:
+        greeting_base64 = file.read()
+    #
+    ari.wazo.createVoicemailGreeting(body={"greeting_base64": greeting_base64}, **greeting_args)
+
+    assert_that(
+        calling(ari.wazo.getVoicemailGreeting).with_args(**greeting_args), not_(raises(Exception))
+    )
+    _reset_test(ari)
