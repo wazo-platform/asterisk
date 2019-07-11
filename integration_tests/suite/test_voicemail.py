@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0+
 
 import ari as ari_client
+from ari.exceptions import ARINotFound
+from ari.exceptions import ARINotInStasis
 import logging
 import os
 import pytest
@@ -10,7 +12,11 @@ import pytest
 from hamcrest import assert_that
 from hamcrest import calling
 from hamcrest import has_property
+from hamcrest import has_properties
+from hamcrest import equal_to
 from hamcrest import not_
+from hamcrest import has_key
+from hamcrest import has_entries
 from requests.exceptions import HTTPError
 from xivo_test_helpers import until
 from xivo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
@@ -42,7 +48,8 @@ def ari():
 
 def test_delete_voicemail_message_without_body(ari):
     assert_that(calling(ari.wazo.deleteVoicemailMessage).with_args(body={'wrong_key': 'wrong_value'}),
-                raises(HTTPError).matching(has_property('response', has_property('status_code', 400))))
+                raises(HTTPError).matching(has_property('response',
+                has_property('status_code', 400))))
 
 
 def test_move_voicemail_message_without_body(ari):
@@ -51,48 +58,104 @@ def test_move_voicemail_message_without_body(ari):
 
 greeting_args = {'context': 'default', 'voicemail': 6001, 'greeting': 'name'}
 voicemail_base64_data_path = os.path.join(os.path.dirname(__file__), 'voicemail_data_base64')
+greeting_data_key = "greeting_base64"
 
-def _reset_test(ari):
-    ari.wazo.removeVoicemailGreeting(**greeting_args)
 
+def _validate_get_body(body):
+    with open(voicemail_base64_data_path) as file:
+        greeting_base64 = file.read()
+
+    assert_that(
+        body,
+        has_entries({greeting_data_key: equal_to(greeting_base64)})
+    )
+
+# Tests expecting success
 def test_delete_voicemail_greeting(ari):
     assert_that(
         calling(ari.wazo.removeVoicemailGreeting).with_args(**greeting_args),
         not_(raises(Exception))
     )
-    _reset_test(ari)
+
+    assert_that(
+        calling(ari.wazo.getVoicemailGreeting).with_args(**greeting_args),
+            raises(ARINotFound).matching(has_property('original_error',
+                has_property('response', has_property('status_code', 404)))
+                )
+    )
 
 def test_post_voicemail_greeting(ari):
     with open(voicemail_base64_data_path) as file:
         greeting_base64 = file.read()
 
     assert_that(
-        calling(ari.wazo.createVoicemailGreeting).with_args(body={"greeting_base64": greeting_base64}, **greeting_args),
+        calling(ari.wazo.createVoicemailGreeting).with_args(body={greeting_data_key: greeting_base64}, **greeting_args),
         not_(raises(Exception))
     )
-    _reset_test(ari)
+
+    body = ari.wazo.getVoicemailGreeting(**greeting_args)
+
+    assert_that(
+        body,
+        has_key(greeting_data_key)
+    )
+
+    _validate_get_body(body)
 
 def test_put_voicemail_greeting(ari):
     with open(voicemail_base64_data_path) as file:
         greeting_base64 = file.read()
 
-    ari.wazo.createVoicemailGreeting(body={"greeting_base64": greeting_base64}, **greeting_args)
+    ari.wazo.createVoicemailGreeting(body={greeting_data_key: greeting_base64}, **greeting_args)
 
     assert_that(
-        calling(ari.wazo.changeVoicemailGreeting).with_args(body={"greeting_base64": greeting_base64}, **greeting_args),
+        calling(ari.wazo.changeVoicemailGreeting).with_args(body={greeting_data_key: greeting_base64}, **greeting_args),
         not_(raises(Exception))
     )
 
-    assert_thatari.wazo.getVoicemailGreeting(**greeting_args)
-    _reset_test(ari)
+    body = ari.wazo.getVoicemailGreeting(**greeting_args)
+
+    _validate_get_body(body)
 
 def test_get_voicemail_greeting(ari):
     with open(voicemail_base64_data_path) as file:
         greeting_base64 = file.read()
-    #
-    ari.wazo.createVoicemailGreeting(body={"greeting_base64": greeting_base64}, **greeting_args)
+
+    ari.wazo.createVoicemailGreeting(body={greeting_data_key: greeting_base64}, **greeting_args)
 
     assert_that(
         calling(ari.wazo.getVoicemailGreeting).with_args(**greeting_args), not_(raises(Exception))
     )
-    _reset_test(ari)
+
+# Tests expecting failure
+def test_double_post_voicemail_greeting_fail(ari):
+    with open(voicemail_base64_data_path) as file:
+        greeting_base64 = file.read()
+
+    ari.wazo.createVoicemailGreeting(body={greeting_data_key: greeting_base64}, **greeting_args)
+
+    assert_that(
+        calling(ari.wazo.createVoicemailGreeting).with_args(body={greeting_data_key: greeting_base64}, **greeting_args),
+            raises(ARINotInStasis).matching(
+                has_property('original_error',has_property('response', has_property('status_code', 409)))
+            )
+    )
+
+def test_put_voicemail_greeting_fail(ari):
+    with open(voicemail_base64_data_path) as file:
+        greeting_base64 = file.read()
+
+    assert_that(
+        calling(ari.wazo.changeVoicemailGreeting).with_args(body={greeting_data_key: greeting_base64}, **greeting_args),
+            raises(ARINotFound).matching(has_property('original_error',
+                has_property('response', has_property('status_code', 404)))
+            )
+    )
+
+def test_get_voicemail_greeting_fail(ari):
+    assert_that(
+        calling(ari.wazo.getVoicemailGreeting).with_args(**greeting_args),
+            raises(ARINotFound).matching(has_property('original_error',
+                has_property('response', has_property('status_code', 404)))
+            )
+    )
