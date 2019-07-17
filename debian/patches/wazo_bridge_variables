@@ -63,7 +63,7 @@ Index: asterisk-16.4.0/include/asterisk/bridge.h
 + *
 + * The returned variable list is an AO2 object, so ao2_cleanup() to free it.
 + *
-+ * \param chan Bridge to get variables for
++ * \param bridge Bridge to get variables for
 + * \return List of bridge variables.
 + * \return \c NULL on error
 + */
@@ -161,12 +161,12 @@ Index: asterisk-16.4.0/res/ari/resource_bridges.c
  #include "asterisk/format_cache.h"
 +#include "../../include/asterisk/config.h"
 +#include "../../include/asterisk/chanvars.h"
-+#include "../../include/asterisk/strings.h"
++#include "asterisk/strings.h"
 +#include "resource_sounds.h"
  
  /*!
   * \brief Finds a bridge, filling the response with an error, if appropriate.
-@@ -1072,3 +1076,125 @@ void ast_ari_bridges_clear_video_source(
+@@ -1072,3 +1076,120 @@ void ast_ari_bridges_clear_video_source(
  	ao2_ref(bridge, -1);
  	ast_ari_response_no_content(response);
  }
@@ -193,6 +193,12 @@ Index: asterisk-16.4.0/res/ari/resource_bridges.c
 +		goto set_vars_exit;
 +	}
 +
++	if (ast_strlen_zero(variable_name)) {
++		ast_ari_response_error(response, 400, "No bridge variable specified", "A non-empty bridge variable must be given");
++		ast_log(AST_LOG_ERROR, "Variable not specified.\n");
++		goto set_vars_exit;
++	}
++
 +	variable_value = args->value;
 +	if (!variable_value) {
 +		ast_ari_response_error(response, 400, "No value specified for variable", "A value needs to be specified");
@@ -211,6 +217,7 @@ Index: asterisk-16.4.0/res/ari/resource_bridges.c
 +	if (!variables) {
 +		ast_ari_response_error(response, 500, "Internal server error", "Unable to create variable string internally");
 +		ast_log(AST_LOG_ERROR, "Cannot create variable string internally\n");
++		goto set_vars_exit;
 +	}
 +
 +	ast_bridge_lock(bridge);
@@ -219,10 +226,8 @@ Index: asterisk-16.4.0/res/ari/resource_bridges.c
 +
 +	ast_ari_response_no_content(response);
 +
-+	set_vars_exit:
-+	if (variables) {
-+		ast_free(variables);
-+	}
++set_vars_exit:
++	ast_free(variables);
 +}
 +
 +void ast_ari_bridges_get_bridge_var(struct ast_variable *headers, struct ast_ari_bridges_get_bridge_var_args *args,
@@ -233,64 +238,54 @@ Index: asterisk-16.4.0/res/ari/resource_bridges.c
 +	struct ast_bridge *bridge = NULL;
 +	struct varshead *vars = NULL;
 +	char *variable_value = NULL;
-+	struct ast_str *final = NULL;
 +
 +	id = args->bridge_id;
 +	if (!id) {
 +		ast_ari_response_error(response, 400, "No bridge ID specified", "A bridge ID must be given");
 +		ast_log(AST_LOG_ERROR, "Bridge not specified.\n");
-+		goto get_vars_exit;
++		return;
 +	}
-+
-+	variable_name = args->variable;
 +
 +	bridge = find_bridge(response, id);
 +	if (!bridge) {
 +		ast_ari_response_error(response, 404, "No bridge such bridge", "Found no bridge with the given ID: %s", id);
 +		ast_log(AST_LOG_ERROR, "Bridge not found.\n");
-+		goto get_vars_exit;
++		return;
 +	}
 +	ast_bridge_lock(bridge);
 +	vars = ast_bridge_get_vars(bridge);
 +	ast_bridge_unlock(bridge);
 +
++	response->message = ast_json_object_create();
++	if (!response->message) {
++		ast_ari_response_alloc_failed(response);
++		return;
++	}
++
 +	if (!vars) {
 +		response->message = ast_json_object_create();
 +		ast_json_object_set(response->message, "variables", ast_json_string_create(""));
 +		ast_log(AST_LOG_ERROR, "Unable to get variables; returning empty string\n");
-+		goto get_vars_exit;
++		return;
 +	}
 +
-+
-+	response->message = ast_json_object_create();
-+
++	variable_name = args->variable;
 +	if (!variable_name) {
-+		final = ast_str_create(10);
-+		if (!final) {
-+			ast_ari_response_error(response, 500, "Internal server error", "unable to allocate memory");
-+			goto get_vars_exit;
-+		}
-+
 +		struct ast_var_t *cur;
 +		AST_VAR_LIST_TRAVERSE(&bridge->varshead, cur) {
 +			ast_json_object_set(response->message, cur->name, ast_json_string_create(cur->value));
 +		}
-+
 +	} else {
 +		variable_value = ast_var_find(vars, variable_name);
 +		if (!variable_value) {
 +			ast_log(AST_LOG_ERROR, "unable to find value for %s\n", variable_name);
 +			ast_ari_response_error(response, 404, "unable to find value", "Unable to find value for variable: %s", variable_name);
++			return;
 +		}
 +		ast_json_object_set(response->message, variable_name, ast_json_string_create(variable_value));
 +	}
 +
 +	ast_ari_response_ok(response, response->message);
-+
-+	get_vars_exit:
-+	if (final) {
-+		ast_free(final);
-+	}
 +}
 \ No newline at end of file
 Index: asterisk-16.4.0/res/ari/resource_bridges.h
@@ -608,7 +603,7 @@ Index: asterisk-16.4.0/rest-api/api-docs/bridges.json
 +							"name": "variable",
 +							"description": "The bridge variable or function to get",
 +							"paramType": "query",
-+							"required": false,
++							"required": true,
 +							"allowMultiple": false,
 +							"dataType": "string"
 +						}
@@ -739,8 +734,8 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  	struct stasis_message *msg,
  	const struct stasis_message_sanitizer *sanitize);
 +struct ast_json *ast_bridge_varset_to_json(
-+		struct stasis_message *msg,
-+		const struct stasis_message_sanitizer *sanitize);
++	struct stasis_message *msg,
++	const struct stasis_message_sanitizer *sanitize);
  
  static struct stasis_cp_all *bridge_cache_all;
  
@@ -749,11 +744,11 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_left_bridge_type,
  	.to_json = ast_channel_left_bridge_to_json);
 +STASIS_MESSAGE_TYPE_DEFN(ast_bridge_varset_type,
-+.to_json = ast_bridge_varset_to_json);
++	.to_json = ast_bridge_varset_to_json);
  STASIS_MESSAGE_TYPE_DEFN(ast_blind_transfer_type,
  	.to_json = blind_transfer_to_json,
  	.to_ami = blind_transfer_to_ami);
-@@ -532,6 +538,51 @@ void ast_bridge_publish_leave(struct ast
+@@ -532,6 +538,49 @@ void ast_bridge_publish_leave(struct ast
  	ao2_ref(msg, -1);
  }
  
@@ -784,10 +779,8 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
 +{
 +	struct stasis_message *msg;
 +
-+
 +	ast_assert(name != NULL);
 +	ast_assert(value != NULL);
-+
 +
 +	msg = bridge_varset_msg_create(bridge, varname, varvalue);
 +	if (!msg) {
@@ -805,7 +798,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  static struct ast_json *simple_bridge_channel_event(
  	const char *type,
  	struct ast_bridge_snapshot *bridge_snapshot,
-@@ -576,6 +627,33 @@ struct ast_json *ast_channel_left_bridge
+@@ -576,6 +625,46 @@ struct ast_json *ast_channel_left_bridge
  		obj->channel, stasis_message_timestamp(msg), sanitize);
  }
  
@@ -815,8 +808,16 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
 +{
 +	int res = 0;
 +	struct ast_json *to_json;
-+	struct ast_bridge_blob *obj = stasis_message_data(msg);
-+	struct ast_json *json_bridge = ast_bridge_snapshot_to_json(obj->bridge, sanitize);
++	struct ast_bridge_blob *obj = NULL;
++	struct ast_json *json_bridge = NULL;
++
++	obj = stasis_message_data(msg);
++	if (!obj) {
++		ast_log(AST_LOG_ERROR, "bridge_varset_to_json error: no message data\n");
++		return NULL;
++	}
++
++	json_bridge = ast_bridge_snapshot_to_json(obj->bridge, sanitize);
 +
 +	to_json = obj->blob;
 +	if (!to_json || ast_json_is_null(to_json)) {
@@ -825,12 +826,17 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
 +		to_json = ast_json_copy(obj->blob);
 +	}
 +
++	if (!to_json) {
++		ast_log(AST_LOG_ERROR, "bridge_varset_to_json error: unable to create json\n");
++		return NULL;
++	}
++
 +	res |= ast_json_object_set(to_json, "type", ast_json_string_create("BridgeVarset"));
 +	res |= ast_json_object_set(to_json, "timestamp", ast_json_timeval(*stasis_message_timestamp(msg), NULL));
 +	res |= ast_json_object_set(to_json, "bridge", json_bridge);
 +
 +	if (res != 0) {
-+		ast_log(AST_LOG_ERROR, "VARSET TO JSON TO JSON ERROR\n");
++		ast_log(AST_LOG_ERROR, "bridge_varset_to_json error\n");
 +		return NULL;
 +	}
 +	return to_json;
@@ -839,7 +845,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  static struct ast_json *container_to_json_array(struct ao2_container *items,
  	const struct stasis_message_sanitizer *sanitize)
  {
-@@ -1301,6 +1379,7 @@ static void stasis_bridging_cleanup(void
+@@ -1301,6 +1390,7 @@ static void stasis_bridging_cleanup(void
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_left_bridge_type);
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_blind_transfer_type);
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_attended_transfer_type);
@@ -847,7 +853,7 @@ Index: asterisk-16.4.0/main/stasis_bridges.c
  
  	ao2_cleanup(bridge_cache_all);
  	bridge_cache_all = NULL;
-@@ -1325,6 +1404,7 @@ int ast_stasis_bridging_init(void)
+@@ -1325,6 +1415,7 @@ int ast_stasis_bridging_init(void)
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_left_bridge_type);
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_blind_transfer_type);
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_attended_transfer_type);
