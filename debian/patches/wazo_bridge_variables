@@ -1,0 +1,903 @@
+Index: asterisk-16.4.0/include/asterisk/bridge.h
+===================================================================
+--- asterisk-16.4.0.orig/include/asterisk/bridge.h
++++ asterisk-16.4.0/include/asterisk/bridge.h
+@@ -252,6 +252,31 @@ typedef void (*ast_bridge_notify_masquer
+ typedef int (*ast_bridge_merge_priority_fn)(struct ast_bridge *self);
+ 
+ /*!
++ * \brief Get a list of variables contained in this bridge.
++ *
++ * \param self Bridge to operate upon.
++ *
++ * \note On entry, self is already locked.
++ *
++ * \return Merge priority
++ */
++typedef struct varshead *(*ast_bridge_get_vars_fn)(struct ast_bridge *self);
++
++/*!
++ * \brief Set the list of variables contained in this bridge.
++ *
++ * \param self Bridge to operate upon.
++ *
++ * \param vars the list of variables; to be set or updated
++ *
++ * \note On entry, self is already locked.
++ *
++ * \return Merge priority
++ */
++typedef void (*ast_bridge_set_vars_fn)(struct ast_bridge *self, struct ast_variable *vars);
++
++
++/*!
+  * \brief Bridge virtual methods table definition.
+  *
+  * \note Any changes to this struct must be reflected in
+@@ -274,6 +299,10 @@ struct ast_bridge_methods {
+ 	ast_bridge_merge_priority_fn get_merge_priority;
+ 	/*! Peek at swap channel before it can hang up, prior to push. */
+ 	ast_bridge_push_channel_fn push_peek;
++	/*! Get a list of variables associated with this bridge */
++	ast_bridge_get_vars_fn get_vars;
++	/*! Set the list of variables associated with this bridge */
++	ast_bridge_set_vars_fn set_vars;
+ };
+ 
+ /*! Softmix technology parameters. */
+@@ -366,6 +395,8 @@ struct ast_bridge {
+ 	struct ast_vector_int media_types;
+ 	/*! The time of bridge creation */
+ 	struct timeval creationtime;
++	/*!< A linked list for bridge variables. See \ref AstChanVar */
++	struct varshead varshead;
+ };
+ 
+ /*! \brief Bridge base class virtual method table. */
+@@ -1211,6 +1242,30 @@ void ast_bridge_features_remove(struct a
+  */
+ struct ast_bridge *ast_bridge_find_by_id(const char *bridge_id);
+ 
++/*!
++ * \brief Gets the variables for a given bridge.
++ *
++ * The returned variable list is an AO2 object, so ao2_cleanup() to free it.
++ *
++ * \param bridge Bridge to get variables for
++ * \return List of bridge variables.
++ * \return \c NULL on error
++ */
++struct varshead *ast_bridge_get_vars(struct ast_bridge *bridge);
++
++/*!
++ * \brief adds a list of channel variables to a bridge
++ * \param bridge the bridge
++ * \param vars a linked list of variables
++ *
++ * \pre bridge is locked
++ *
++ * \details
++ * Variable names can be for a regular bridge variable or a dialplan function
++ * that has the ability to be written to.
++ */
++void ast_bridge_set_variables(struct ast_bridge *bridge, struct ast_variable *vars);
++
+ #if defined(__cplusplus) || defined(c_plusplus)
+ }
+ #endif
+Index: asterisk-16.4.0/main/bridge.c
+===================================================================
+--- asterisk-16.4.0.orig/main/bridge.c
++++ asterisk-16.4.0/main/bridge.c
+@@ -118,6 +118,8 @@
+ #include "asterisk/core_local.h"
+ #include "asterisk/core_unreal.h"
+ #include "asterisk/causes.h"
++#include "../include/asterisk/config.h"
++#include "../include/asterisk/chanvars.h"
+ 
+ /*! All bridges container. */
+ static struct ao2_container *bridges;
+@@ -971,6 +973,28 @@ static int bridge_base_push_peek(struct
+ 	return 0;
+ }
+ 
++static struct varshead *bridge_get_vars(struct ast_bridge *bridge)
++{
++	return &bridge->varshead;
++}
++
++static void bridge_set_variables(struct ast_bridge *bridge, struct ast_variable *vars)
++{
++	if (!ast_var_find(&bridge->varshead, vars->name)) {
++		AST_VAR_LIST_INSERT_TAIL(&bridge->varshead, ast_var_assign(vars->name, vars->value));
++		ast_bridge_publish_varset(bridge, vars->name, vars->value);
++	} else {
++		struct ast_var_t *cur;
++		AST_VAR_LIST_TRAVERSE(&bridge->varshead, cur) {
++			if (!strcmp(vars->name, cur->name)) {
++				strcpy(cur->value, vars->value);
++				ast_bridge_publish_varset(bridge, cur->name, cur->value);
++				break;
++			}
++		}
++	}
++}
++
+ struct ast_bridge_methods ast_bridge_base_v_table = {
+ 	.name = "base",
+ 	.destroy = bridge_base_destroy,
+@@ -980,6 +1004,8 @@ struct ast_bridge_methods ast_bridge_bas
+ 	.notify_masquerade = bridge_base_notify_masquerade,
+ 	.get_merge_priority = bridge_base_get_merge_priority,
+ 	.push_peek = bridge_base_push_peek,
++	.get_vars = bridge_get_vars,
++	.set_vars = bridge_set_variables
+ };
+ 
+ struct ast_bridge *ast_bridge_base_new(uint32_t capabilities, unsigned int flags, const char *creator, const char *name, const char *id)
+@@ -5532,6 +5558,14 @@ static int manager_bridge_tech_unsuspend
+ 	return handle_manager_bridge_tech_suspend(s, m, 0);
+ }
+ 
++struct varshead *ast_bridge_get_vars(struct ast_bridge *bridge) {
++	return bridge_get_vars(bridge);
++}
++
++void ast_bridge_set_variables(struct ast_bridge *bridge, struct ast_variable *vars) {
++	bridge_set_variables(bridge, vars);
++}
++
+ static int manager_bridge_tech_list(struct mansession *s, const struct message *m)
+ {
+ 	const char *id = astman_get_header(m, "ActionID");
+Index: asterisk-16.4.0/res/ari/resource_bridges.c
+===================================================================
+--- asterisk-16.4.0.orig/res/ari/resource_bridges.c
++++ asterisk-16.4.0/res/ari/resource_bridges.c
+@@ -44,6 +44,10 @@
+ #include "asterisk/file.h"
+ #include "asterisk/musiconhold.h"
+ #include "asterisk/format_cache.h"
++#include "../../include/asterisk/config.h"
++#include "../../include/asterisk/chanvars.h"
++#include "asterisk/strings.h"
++#include "resource_sounds.h"
+ 
+ /*!
+  * \brief Finds a bridge, filling the response with an error, if appropriate.
+@@ -1072,3 +1076,120 @@ void ast_ari_bridges_clear_video_source(
+ 	ao2_ref(bridge, -1);
+ 	ast_ari_response_no_content(response);
+ }
++
++void ast_ari_bridges_set_bridge_var(struct ast_variable *headers, struct ast_ari_bridges_set_bridge_var_args *args,
++		struct ast_ari_response *response) {
++	const char *id = NULL;
++	const char *variable_name = NULL;
++	const char *variable_value = NULL;
++	struct ast_bridge *bridge = NULL;
++	struct ast_variable *variables = NULL;
++
++	id = args->bridge_id;
++	if (!id) {
++		ast_ari_response_error(response, 400, "No bridge ID specified", "A bridge ID must be given");
++		ast_log(AST_LOG_ERROR, "Bridge not specified.\n");
++		goto set_vars_exit;
++	}
++
++	variable_name = args->variable;
++	if (!variable_name) {
++		ast_ari_response_error(response, 400, "No bridge variable specified", "A bridge variable must be given");
++		ast_log(AST_LOG_ERROR, "Variable not specified.\n");
++		goto set_vars_exit;
++	}
++
++	if (ast_strlen_zero(variable_name)) {
++		ast_ari_response_error(response, 400, "No bridge variable specified", "A non-empty bridge variable must be given");
++		ast_log(AST_LOG_ERROR, "Variable not specified.\n");
++		goto set_vars_exit;
++	}
++
++	variable_value = args->value;
++	if (!variable_value) {
++		ast_ari_response_error(response, 400, "No value specified for variable", "A value needs to be specified");
++		ast_log(AST_LOG_ERROR, "Value not specified.\n");
++		goto set_vars_exit;
++	}
++
++	bridge = find_bridge(response, id);
++	if (!bridge) {
++		ast_ari_response_error(response, 404, "No bridge such bridge", "Found no bridge with the given ID: %s", id);
++		ast_log(AST_LOG_ERROR, "Bridge not found.\n");
++		goto set_vars_exit;
++	}
++
++	variables = ast_variable_new(variable_name, variable_value, __FILE__);
++	if (!variables) {
++		ast_ari_response_error(response, 500, "Internal server error", "Unable to create variable string internally");
++		ast_log(AST_LOG_ERROR, "Cannot create variable string internally\n");
++		goto set_vars_exit;
++	}
++
++	ast_bridge_lock(bridge);
++	ast_bridge_set_variables(bridge, variables);
++	ast_bridge_unlock(bridge);
++
++	ast_ari_response_no_content(response);
++
++set_vars_exit:
++	ast_free(variables);
++}
++
++void ast_ari_bridges_get_bridge_var(struct ast_variable *headers, struct ast_ari_bridges_get_bridge_var_args *args,
++		struct ast_ari_response *response) {
++
++	const char *id = NULL;
++	const char *variable_name = NULL;
++	struct ast_bridge *bridge = NULL;
++	struct varshead *vars = NULL;
++	char *variable_value = NULL;
++
++	id = args->bridge_id;
++	if (!id) {
++		ast_ari_response_error(response, 400, "No bridge ID specified", "A bridge ID must be given");
++		ast_log(AST_LOG_ERROR, "Bridge not specified.\n");
++		return;
++	}
++
++	bridge = find_bridge(response, id);
++	if (!bridge) {
++		ast_ari_response_error(response, 404, "No bridge such bridge", "Found no bridge with the given ID: %s", id);
++		ast_log(AST_LOG_ERROR, "Bridge not found.\n");
++		return;
++	}
++	ast_bridge_lock(bridge);
++	vars = ast_bridge_get_vars(bridge);
++	ast_bridge_unlock(bridge);
++
++	response->message = ast_json_object_create();
++	if (!response->message) {
++		ast_ari_response_alloc_failed(response);
++		return;
++	}
++
++	if (!vars) {
++		response->message = ast_json_object_create();
++		ast_json_object_set(response->message, "variables", ast_json_string_create(""));
++		ast_log(AST_LOG_ERROR, "Unable to get variables; returning empty string\n");
++		return;
++	}
++
++	variable_name = args->variable;
++	if (!variable_name) {
++		struct ast_var_t *cur;
++		AST_VAR_LIST_TRAVERSE(&bridge->varshead, cur) {
++			ast_json_object_set(response->message, cur->name, ast_json_string_create(cur->value));
++		}
++	} else {
++		variable_value = ast_var_find(vars, variable_name);
++		if (!variable_value) {
++			ast_log(AST_LOG_ERROR, "unable to find value for %s\n", variable_name);
++			ast_ari_response_error(response, 404, "unable to find value", "Unable to find value for variable: %s", variable_name);
++			return;
++		}
++		ast_json_object_set(response->message, variable_name, ast_json_string_create(variable_value));
++	}
++
++	ast_ari_response_ok(response, response->message);
++}
+\ No newline at end of file
+Index: asterisk-16.4.0/res/ari/resource_bridges.h
+===================================================================
+--- asterisk-16.4.0.orig/res/ari/resource_bridges.h
++++ asterisk-16.4.0/res/ari/resource_bridges.h
+@@ -393,5 +393,59 @@ int ast_ari_bridges_record_parse_body(
+  * \param[out] response HTTP response
+  */
+ void ast_ari_bridges_record(struct ast_variable *headers, struct ast_ari_bridges_record_args *args, struct ast_ari_response *response);
++/*! Argument struct for ast_ari_bridges_get_bridge_var() */
++struct ast_ari_bridges_get_bridge_var_args {
++	/*! Bridge's id */
++	const char *bridge_id;
++	/*! The bridge variable or function to get */
++	const char *variable;
++};
++/*!
++ * \brief Body parsing function for /bridges/{bridgeId}/variable.
++ * \param body The JSON body from which to parse parameters.
++ * \param[out] args The args structure to parse into.
++ * \retval zero on success
++ * \retval non-zero on failure
++ */
++int ast_ari_bridges_get_bridge_var_parse_body(
++	struct ast_json *body,
++	struct ast_ari_bridges_get_bridge_var_args *args);
++
++/*!
++ * \brief Get the value of a bridge variable or function.
++ *
++ * \param headers HTTP headers
++ * \param args Swagger parameters
++ * \param[out] response HTTP response
++ */
++void ast_ari_bridges_get_bridge_var(struct ast_variable *headers, struct ast_ari_bridges_get_bridge_var_args *args, struct ast_ari_response *response);
++/*! Argument struct for ast_ari_bridges_set_bridge_var() */
++struct ast_ari_bridges_set_bridge_var_args {
++	/*! Bridge's id */
++	const char *bridge_id;
++	/*! The bridge variable or function to set */
++	const char *variable;
++	/*! The value to set the variable to */
++	const char *value;
++};
++/*!
++ * \brief Body parsing function for /bridges/{bridgeId}/variable.
++ * \param body The JSON body from which to parse parameters.
++ * \param[out] args The args structure to parse into.
++ * \retval zero on success
++ * \retval non-zero on failure
++ */
++int ast_ari_bridges_set_bridge_var_parse_body(
++	struct ast_json *body,
++	struct ast_ari_bridges_set_bridge_var_args *args);
++
++/*!
++ * \brief Set the value of a bridge variable or function.
++ *
++ * \param headers HTTP headers
++ * \param args Swagger parameters
++ * \param[out] response HTTP response
++ */
++void ast_ari_bridges_set_bridge_var(struct ast_variable *headers, struct ast_ari_bridges_set_bridge_var_args *args, struct ast_ari_response *response);
+ 
+ #endif /* _ASTERISK_RESOURCE_BRIDGES_H */
+Index: asterisk-16.4.0/res/res_ari_bridges.c
+===================================================================
+--- asterisk-16.4.0.orig/res/res_ari_bridges.c
++++ asterisk-16.4.0/res/res_ari_bridges.c
+@@ -1454,6 +1454,179 @@ static void ast_ari_bridges_record_cb(
+ fin: __attribute__((unused))
+ 	return;
+ }
++int ast_ari_bridges_get_bridge_var_parse_body(
++	struct ast_json *body,
++	struct ast_ari_bridges_get_bridge_var_args *args)
++{
++	struct ast_json *field;
++	/* Parse query parameters out of it */
++	field = ast_json_object_get(body, "variable");
++	if (field) {
++		args->variable = ast_json_string_get(field);
++	}
++	return 0;
++}
++
++/*!
++ * \brief Parameter parsing callback for /bridges/{bridgeId}/variable.
++ * \param get_params GET parameters in the HTTP request.
++ * \param path_vars Path variables extracted from the request.
++ * \param headers HTTP headers.
++ * \param[out] response Response to the HTTP request.
++ */
++static void ast_ari_bridges_get_bridge_var_cb(
++	struct ast_tcptls_session_instance *ser,
++	struct ast_variable *get_params, struct ast_variable *path_vars,
++	struct ast_variable *headers, struct ast_json *body, struct ast_ari_response *response)
++{
++	struct ast_ari_bridges_get_bridge_var_args args = {};
++	struct ast_variable *i;
++#if defined(AST_DEVMODE)
++	int is_valid;
++	int code;
++#endif /* AST_DEVMODE */
++
++	for (i = get_params; i; i = i->next) {
++		if (strcmp(i->name, "variable") == 0) {
++			args.variable = (i->value);
++		} else
++		{}
++	}
++	for (i = path_vars; i; i = i->next) {
++		if (strcmp(i->name, "bridgeId") == 0) {
++			args.bridge_id = (i->value);
++		} else
++		{}
++	}
++	if (ast_ari_bridges_get_bridge_var_parse_body(body, &args)) {
++		ast_ari_response_alloc_failed(response);
++		goto fin;
++	}
++	ast_ari_bridges_get_bridge_var(headers, &args, response);
++#if defined(AST_DEVMODE)
++	code = response->response_code;
++
++	switch (code) {
++	case 0: /* Implementation is still a stub, or the code wasn't set */
++		is_valid = response->message == NULL;
++		break;
++	case 500: /* Internal Server Error */
++	case 501: /* Not Implemented */
++	case 400: /* Missing variable parameter. */
++	case 404: /* Bridge or variable not found */
++	case 409: /* Bridge not in a Stasis application */
++		is_valid = 1;
++		break;
++	default:
++		if (200 <= code && code <= 299) {
++			is_valid = ast_ari_validate_variable(
++				response->message);
++		} else {
++			ast_log(LOG_ERROR, "Invalid error response %d for /bridges/{bridgeId}/variable\n", code);
++			is_valid = 0;
++		}
++	}
++
++	if (!is_valid) {
++		ast_log(LOG_ERROR, "Response validation failed for /bridges/{bridgeId}/variable\n");
++		ast_ari_response_error(response, 500,
++			"Internal Server Error", "Response validation failed");
++	}
++#endif /* AST_DEVMODE */
++
++fin: __attribute__((unused))
++	return;
++}
++int ast_ari_bridges_set_bridge_var_parse_body(
++	struct ast_json *body,
++	struct ast_ari_bridges_set_bridge_var_args *args)
++{
++	struct ast_json *field;
++	/* Parse query parameters out of it */
++	field = ast_json_object_get(body, "variable");
++	if (field) {
++		args->variable = ast_json_string_get(field);
++	}
++	field = ast_json_object_get(body, "value");
++	if (field) {
++		args->value = ast_json_string_get(field);
++	}
++	return 0;
++}
++
++/*!
++ * \brief Parameter parsing callback for /bridges/{bridgeId}/variable.
++ * \param get_params GET parameters in the HTTP request.
++ * \param path_vars Path variables extracted from the request.
++ * \param headers HTTP headers.
++ * \param[out] response Response to the HTTP request.
++ */
++static void ast_ari_bridges_set_bridge_var_cb(
++	struct ast_tcptls_session_instance *ser,
++	struct ast_variable *get_params, struct ast_variable *path_vars,
++	struct ast_variable *headers, struct ast_json *body, struct ast_ari_response *response)
++{
++	struct ast_ari_bridges_set_bridge_var_args args = {};
++	struct ast_variable *i;
++#if defined(AST_DEVMODE)
++	int is_valid;
++	int code;
++#endif /* AST_DEVMODE */
++
++	for (i = get_params; i; i = i->next) {
++		if (strcmp(i->name, "variable") == 0) {
++			args.variable = (i->value);
++		} else
++		if (strcmp(i->name, "value") == 0) {
++			args.value = (i->value);
++		} else
++		{}
++	}
++	for (i = path_vars; i; i = i->next) {
++		if (strcmp(i->name, "bridgeId") == 0) {
++			args.bridge_id = (i->value);
++		} else
++		{}
++	}
++	if (ast_ari_bridges_set_bridge_var_parse_body(body, &args)) {
++		ast_ari_response_alloc_failed(response);
++		goto fin;
++	}
++	ast_ari_bridges_set_bridge_var(headers, &args, response);
++#if defined(AST_DEVMODE)
++	code = response->response_code;
++
++	switch (code) {
++	case 0: /* Implementation is still a stub, or the code wasn't set */
++		is_valid = response->message == NULL;
++		break;
++	case 500: /* Internal Server Error */
++	case 501: /* Not Implemented */
++	case 400: /* Missing variable parameter. */
++	case 404: /* Bridge not found */
++	case 409: /* Bridge not in a Stasis application */
++		is_valid = 1;
++		break;
++	default:
++		if (200 <= code && code <= 299) {
++			is_valid = ast_ari_validate_void(
++				response->message);
++		} else {
++			ast_log(LOG_ERROR, "Invalid error response %d for /bridges/{bridgeId}/variable\n", code);
++			is_valid = 0;
++		}
++	}
++
++	if (!is_valid) {
++		ast_log(LOG_ERROR, "Response validation failed for /bridges/{bridgeId}/variable\n");
++		ast_ari_response_error(response, 500,
++			"Internal Server Error", "Response validation failed");
++	}
++#endif /* AST_DEVMODE */
++
++fin: __attribute__((unused))
++	return;
++}
+ 
+ /*! \brief REST handler for /api-docs/bridges.json */
+ static struct stasis_rest_handlers bridges_bridgeId_addChannel = {
+@@ -1531,6 +1704,16 @@ static struct stasis_rest_handlers bridg
+ 	.children = {  }
+ };
+ /*! \brief REST handler for /api-docs/bridges.json */
++static struct stasis_rest_handlers bridges_bridgeId_variable = {
++	.path_segment = "variable",
++	.callbacks = {
++		[AST_HTTP_GET] = ast_ari_bridges_get_bridge_var_cb,
++		[AST_HTTP_POST] = ast_ari_bridges_set_bridge_var_cb,
++	},
++	.num_children = 0,
++	.children = {  }
++};
++/*! \brief REST handler for /api-docs/bridges.json */
+ static struct stasis_rest_handlers bridges_bridgeId = {
+ 	.path_segment = "bridgeId",
+ 	.is_wildcard = 1,
+@@ -1539,8 +1722,8 @@ static struct stasis_rest_handlers bridg
+ 		[AST_HTTP_GET] = ast_ari_bridges_get_cb,
+ 		[AST_HTTP_DELETE] = ast_ari_bridges_destroy_cb,
+ 	},
+-	.num_children = 6,
+-	.children = { &bridges_bridgeId_addChannel,&bridges_bridgeId_removeChannel,&bridges_bridgeId_videoSource,&bridges_bridgeId_moh,&bridges_bridgeId_play,&bridges_bridgeId_record, }
++	.num_children = 7,
++	.children = { &bridges_bridgeId_addChannel,&bridges_bridgeId_removeChannel,&bridges_bridgeId_videoSource,&bridges_bridgeId_moh,&bridges_bridgeId_play,&bridges_bridgeId_record,&bridges_bridgeId_variable, }
+ };
+ /*! \brief REST handler for /api-docs/bridges.json */
+ static struct stasis_rest_handlers bridges = {
+Index: asterisk-16.4.0/rest-api/api-docs/bridges.json
+===================================================================
+--- asterisk-16.4.0.orig/rest-api/api-docs/bridges.json
++++ asterisk-16.4.0/rest-api/api-docs/bridges.json
+@@ -565,7 +565,6 @@
+ 							"reason": "Bridge not in a Stasis application"
+ 						}
+ 					]
+-
+ 				}
+ 			]
+ 		},
+@@ -695,6 +694,96 @@
+                     ]
+ 				}
+ 			]
++		},
++		{
++			"path": "/bridges/{bridgeId}/variable",
++			"description": "Variables on a bridge",
++			"operations": [
++				{
++					"httpMethod": "GET",
++					"summary": "Get the value of a bridge variable or function.",
++					"nickname": "getBridgeVar",
++					"responseClass": "Variable",
++					"parameters": [
++						{
++							"name": "bridgeId",
++							"description": "Bridge's id",
++							"paramType": "path",
++							"required": true,
++							"allowMultiple": false,
++							"dataType": "string"
++						},
++						{
++							"name": "variable",
++							"description": "The bridge variable or function to get",
++							"paramType": "query",
++							"required": true,
++							"allowMultiple": false,
++							"dataType": "string"
++						}
++					],
++					"errorResponses": [
++						{
++							"code": 400,
++							"reason": "Missing variable parameter."
++						},
++						{
++							"code": 404,
++							"reason": "Bridge or variable not found"
++						},
++						{
++							"code": 409,
++							"reason": "Bridge not in a Stasis application"
++						}
++					]
++				},
++				{
++					"httpMethod": "POST",
++					"summary": "Set the value of a bridge variable or function.",
++					"nickname": "setBridgeVar",
++					"responseClass": "void",
++					"parameters": [
++						{
++							"name": "bridgeId",
++							"description": "Bridge's id",
++							"paramType": "path",
++							"required": true,
++							"allowMultiple": false,
++							"dataType": "string"
++						},
++						{
++							"name": "variable",
++							"description": "The bridge variable or function to set",
++							"paramType": "query",
++							"required": true,
++							"allowMultiple": false,
++							"dataType": "string"
++						},
++						{
++							"name": "value",
++							"description": "The value to set the variable to",
++							"paramType": "query",
++							"required": false,
++							"allowMultiple": false,
++							"dataType": "string"
++						}
++					],
++					"errorResponses": [
++						{
++							"code": 400,
++							"reason": "Missing variable parameter."
++						},
++						{
++							"code": 404,
++							"reason": "Bridge not found"
++						},
++						{
++							"code": 409,
++							"reason": "Bridge not in a Stasis application"
++						}
++					]
++				}
++			]
+ 		}
+ 	],
+ 	"models": {
+@@ -758,6 +847,11 @@
+ 					"required": true,
+ 					"type": "Date",
+ 					"description": "Timestamp when bridge was created"
++				},
++				"bridgevars": {
++					"required": false,
++					"type": "object",
++					"description": "Channel variables"
+ 				}
+ 			}
+ 		}
+Index: asterisk-16.4.0/include/asterisk/stasis_bridges.h
+===================================================================
+--- asterisk-16.4.0.orig/include/asterisk/stasis_bridges.h
++++ asterisk-16.4.0/include/asterisk/stasis_bridges.h
+@@ -156,6 +156,9 @@ struct ast_bridge_merge_message {
+ 	struct ast_bridge_snapshot *to;		/*!< Bridge to which channels will be added during the merge */
+ };
+ 
++
++void ast_bridge_publish_varset(struct ast_bridge *bridge, const char *name, const char *value);
++
+ /*!
+  * \since 12
+  * \brief Message type for \ref ast_bridge_merge_message.
+@@ -177,6 +180,17 @@ void ast_bridge_publish_merge(struct ast
+ 
+ /*!
+  * \since 12
++ * \brief Publish a bridge merge
++ *
++ * \pre Bridges involved are locked
++ *
++ * \param to The bridge to which channels are being added
++ * \param from The bridge from which channels are being removed
++ */
++struct stasis_message_type * ast_bridge_varset_type(void);
++
++/*!
++ * \since 12
+  * \brief Blob of data associated with a bridge.
+  *
+  * The \c blob is actually a JSON object of structured data. It has a "type" field
+Index: asterisk-16.4.0/main/stasis_bridges.c
+===================================================================
+--- asterisk-16.4.0.orig/main/stasis_bridges.c
++++ asterisk-16.4.0/main/stasis_bridges.c
+@@ -37,6 +37,7 @@
+ #include "asterisk/stasis_channels.h"
+ #include "asterisk/bridge.h"
+ #include "asterisk/bridge_technology.h"
++#include "../include/asterisk/strings.h"
+ 
+ /* The container of channel snapshots in a bridge snapshot should always be
+    equivalent to a linked list; otherwise things (like CDRs) that depend on some
+@@ -154,6 +155,9 @@ static struct ast_json *ast_channel_left
+ static struct ast_json *ast_bridge_merge_message_to_json(
+ 	struct stasis_message *msg,
+ 	const struct stasis_message_sanitizer *sanitize);
++struct ast_json *ast_bridge_varset_to_json(
++	struct stasis_message *msg,
++	const struct stasis_message_sanitizer *sanitize);
+ 
+ static struct stasis_cp_all *bridge_cache_all;
+ 
+@@ -167,6 +171,8 @@ STASIS_MESSAGE_TYPE_DEFN(ast_channel_ent
+ 	.to_json = ast_channel_entered_bridge_to_json);
+ STASIS_MESSAGE_TYPE_DEFN(ast_channel_left_bridge_type,
+ 	.to_json = ast_channel_left_bridge_to_json);
++STASIS_MESSAGE_TYPE_DEFN(ast_bridge_varset_type,
++	.to_json = ast_bridge_varset_to_json);
+ STASIS_MESSAGE_TYPE_DEFN(ast_blind_transfer_type,
+ 	.to_json = blind_transfer_to_json,
+ 	.to_ami = blind_transfer_to_ami);
+@@ -532,6 +538,49 @@ void ast_bridge_publish_leave(struct ast
+ 	ao2_ref(msg, -1);
+ }
+ 
++static struct stasis_message *bridge_varset_msg_create(struct ast_bridge* bridge, const char *varname,
++	const char *varvalue)
++{
++	struct stasis_message *msg;
++	struct ast_json *json_blob;
++
++	json_blob = ast_json_pack("{s: s, s: s}",
++						 "variable", varname,
++						 "value", varvalue);
++
++	if (!json_blob) {
++		ast_log(LOG_ERROR, "Error creating message\n");
++		return NULL;
++	}
++
++	msg = ast_bridge_blob_create(ast_bridge_varset_type(), bridge, NULL, json_blob);
++
++	ast_json_unref(json_blob);
++
++	return msg;
++}
++
++
++void ast_bridge_publish_varset(struct ast_bridge *bridge, const char *varname, const char *varvalue)
++{
++	struct stasis_message *msg;
++
++	ast_assert(name != NULL);
++	ast_assert(value != NULL);
++
++	msg = bridge_varset_msg_create(bridge, varname, varvalue);
++	if (!msg) {
++		ast_log(AST_LOG_ERROR, "Message is NULL!\n");
++		return;
++	}
++
++	stasis_publish(ast_bridge_topic(bridge), msg);
++	ao2_ref(msg, -1);
++
++}
++
++
++
+ static struct ast_json *simple_bridge_channel_event(
+ 	const char *type,
+ 	struct ast_bridge_snapshot *bridge_snapshot,
+@@ -576,6 +625,46 @@ struct ast_json *ast_channel_left_bridge
+ 		obj->channel, stasis_message_timestamp(msg), sanitize);
+ }
+ 
++struct ast_json *ast_bridge_varset_to_json(
++	struct stasis_message *msg,
++	const struct stasis_message_sanitizer *sanitize)
++{
++	int res = 0;
++	struct ast_json *to_json;
++	struct ast_bridge_blob *obj = NULL;
++	struct ast_json *json_bridge = NULL;
++
++	obj = stasis_message_data(msg);
++	if (!obj) {
++		ast_log(AST_LOG_ERROR, "bridge_varset_to_json error: no message data\n");
++		return NULL;
++	}
++
++	json_bridge = ast_bridge_snapshot_to_json(obj->bridge, sanitize);
++
++	to_json = obj->blob;
++	if (!to_json || ast_json_is_null(to_json)) {
++		to_json = ast_json_object_create();
++	} else {
++		to_json = ast_json_copy(obj->blob);
++	}
++
++	if (!to_json) {
++		ast_log(AST_LOG_ERROR, "bridge_varset_to_json error: unable to create json\n");
++		return NULL;
++	}
++
++	res |= ast_json_object_set(to_json, "type", ast_json_string_create("BridgeVarset"));
++	res |= ast_json_object_set(to_json, "timestamp", ast_json_timeval(*stasis_message_timestamp(msg), NULL));
++	res |= ast_json_object_set(to_json, "bridge", json_bridge);
++
++	if (res != 0) {
++		ast_log(AST_LOG_ERROR, "bridge_varset_to_json error\n");
++		return NULL;
++	}
++	return to_json;
++}
++
+ static struct ast_json *container_to_json_array(struct ao2_container *items,
+ 	const struct stasis_message_sanitizer *sanitize)
+ {
+@@ -1301,6 +1390,7 @@ static void stasis_bridging_cleanup(void
+ 	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_left_bridge_type);
+ 	STASIS_MESSAGE_TYPE_CLEANUP(ast_blind_transfer_type);
+ 	STASIS_MESSAGE_TYPE_CLEANUP(ast_attended_transfer_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(ast_bridge_varset_type);
+ 
+ 	ao2_cleanup(bridge_cache_all);
+ 	bridge_cache_all = NULL;
+@@ -1325,6 +1415,7 @@ int ast_stasis_bridging_init(void)
+ 	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_left_bridge_type);
+ 	res |= STASIS_MESSAGE_TYPE_INIT(ast_blind_transfer_type);
+ 	res |= STASIS_MESSAGE_TYPE_INIT(ast_attended_transfer_type);
++	res |= STASIS_MESSAGE_TYPE_INIT(ast_bridge_varset_type);
+ 
+ 	return res;
+ }
+Index: asterisk-16.4.0/rest-api/api-docs/events.json
+===================================================================
+--- asterisk-16.4.0.orig/rest-api/api-docs/events.json
++++ asterisk-16.4.0/rest-api/api-docs/events.json
+@@ -162,6 +162,7 @@
+ 				"ApplicationMoveFailed",
+ 				"ApplicationReplaced",
+ 				"BridgeCreated",
++				"BridgeVarset",
+ 				"BridgeDestroyed",
+ 				"BridgeMerged",
+ 				"BridgeBlindTransfer",
+@@ -734,6 +735,27 @@
+ 				}
+ 			}
+ 		},
++		"BridgeVarset": {
++			"id": "BridgeVarset",
++			"description": "Bridge variable changed.",
++			"properties": {
++				"variable": {
++					"required": true,
++					"type": "string",
++					"description": "The variable that changed."
++				},
++				"value": {
++					"required": true,
++					"type": "string",
++					"description": "The new value of the variable."
++				},
++				"bridge": {
++					"required": false,
++					"type": "Bridge",
++					"description": "The bridge on which the variable was set."
++				}
++			}
++		},
+ 		"ChannelHold": {
+ 			"id": "ChannelHold",
+ 			"description": "A channel initiated a media hold.",
