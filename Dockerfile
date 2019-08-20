@@ -1,4 +1,4 @@
-FROM debian:stretch
+FROM debian:buster
 MAINTAINER Wazo Maintainers <dev@wazo.community>
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -7,7 +7,7 @@ RUN apt-get -q update && apt-get -q -y install \
     apt-utils \
     gnupg \
     wget
-RUN echo "deb http://mirror.wazo.community/debian/ wazo-dev-stretch main" > /etc/apt/sources.list.d/wazo-dist.list
+RUN echo "deb http://mirror.wazo.community/debian/ wazo-dev-buster main" > /etc/apt/sources.list.d/wazo-dist.list
 RUN wget http://mirror.wazo.community/wazo_current.key -O - | apt-key add -
 RUN apt-get -q update && apt-get -q -y install \
     asterisk \

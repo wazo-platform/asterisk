@@ -1,6 +1,12 @@
+asterisk (8:16.5.0-1~wazo5) wazo-dev-buster; urgency=medium
+
+  * Rebuild
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 20 Aug 2019 09:07:04 +0200
+
 asterisk (8:16.5.0-1~wazo4) wazo-dev-buster; urgency=medium
 
-  * Rebuild 
+  * Rebuild
 
  -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 20 Aug 2019 08:17:22 +0200
 

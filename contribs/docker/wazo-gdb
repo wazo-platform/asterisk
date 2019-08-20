@@ -20,8 +20,10 @@ debian_distribution() {
     local wazo_version=$1
     if [ "${wazo_version}" \< "18.01" ] ; then
         echo "jessie"
-    else
+    elif [ "${wazo_version}" \< "19.12" ] ; then
         echo "stretch"
+    else
+        echo "buster"
     fi
 }
 
