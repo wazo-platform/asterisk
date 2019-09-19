@@ -14,8 +14,8 @@
 # Provides:          asterisk
 # Required-Start:    $remote_fs $syslog $network 
 # Required-Stop:     $remote_fs $syslog $network 
-# Should-Start:      $named postgresql xivo-confgend wazo-agid
-# Should-Stop:       $named postgresql xivo-confgend wazo-agid
+# Should-Start:      $named postgresql wazo-confgend wazo-agid
+# Should-Stop:       $named postgresql wazo-confgend wazo-agid
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Asterisk PBX
