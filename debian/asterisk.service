@@ -1,7 +1,7 @@
 [Unit]
 Description=Asterisk PBX
 ConditionPathExists=!/var/lib/wazo/disabled
-After=network-online.target postgresql.service wazo-agid.service xivo-confgend.service
+After=network-online.target postgresql.service wazo-agid.service wazo-confgend.service
 Before=monit.service
 
 [Service]
