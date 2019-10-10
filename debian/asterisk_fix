@@ -3,7 +3,7 @@
 if getent passwd asterisk >/dev/null ;then
 	# Some halfbaked Sarge versions needed their home dir fixed:
         if [ "`getent passwd asterisk|awk -F: '{print $6}'`" = \
-		"/var/run/asterisk" ];then
+		"/run/asterisk" ];then
 		usermod -d /var/lib/asterisk asterisk
         fi
 else
@@ -39,14 +39,14 @@ fi
 
 # Make sure all (possibly) used dirs exist and is owned by asterisk
 
-# /var/run/asterisk is not yet handled by init.d :-(
-# (/var/run/asterisk is handled in sysV script /etc/init.d/asterisk)
+# /run/asterisk is not yet handled by init.d :-(
+# (/run/asterisk is handled in sysV script /etc/init.d/asterisk)
 
 dirs="
         /var/log/asterisk
         /var/spool/asterisk
         /var/lib/asterisk
-        /var/run/asterisk
+        /run/asterisk
         /etc/asterisk
 "
 
@@ -84,7 +84,7 @@ done
 # If asterisk in running, reload it
 # otherwise start it
 if [ -x "/etc/init.d/asterisk" ];then
-	if [ -f /var/run/asterisk/asterisk.pid ];then
+	if [ -f /run/asterisk/asterisk.pid ];then
 	    invoke-rc.d asterisk reload || exit $?
 	else
 	    invoke-rc.d asterisk restart || exit $?
