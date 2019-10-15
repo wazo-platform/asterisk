@@ -29,8 +29,8 @@ GROUP=$USER
 DAEMON=/usr/sbin/$NAME
 CANARY=/usr/sbin/astcanary
 DESC="Asterisk PBX"
-PIDFILE="/var/run/asterisk/asterisk.pid"
-ASTSAFE_PIDFILE="/var/run/asterisk/asterisk_safe.pid"
+PIDFILE="/run/asterisk/asterisk.pid"
+ASTSAFE_PIDFILE="/run/asterisk/asterisk_safe.pid"
 UMASK=007 # by default
 MAXFILES=8192
 
@@ -98,7 +98,7 @@ fi
 
 test -x $DAEMON || exit 0
 
-for dir in /var/run/asterisk /var/log/asterisk /var/log/asterisk/cdr-csv /var/log/asterisk/cdr-custom; do
+for dir in /run/asterisk /var/log/asterisk /var/log/asterisk/cdr-csv /var/log/asterisk/cdr-custom; do
 	[ -d $dir ] || install -d -o $USER -g $GROUP $dir
 done
 

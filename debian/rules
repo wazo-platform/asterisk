@@ -28,7 +28,7 @@ DEB_MAKE_INVOKE += NOISY_BUILD=yes
 # Force music files selection:
 DEB_MAKE_INVOKE += MENUSELECT_MOH= \
   ASTDATADIR=/usr/share/asterisk \
-  ASTVARRUNDIR=/var/run/asterisk \
+  ASTVARRUNDIR=/run/asterisk \
 
 # Debian needs
 DEB_DH_INSTALLINIT_ARGS = --name asterisk -- defaults 30 70
