@@ -1,0 +1,42 @@
+Index: asterisk-16.5.1/res/res_pjsip_transport_websocket.c
+===================================================================
+--- asterisk-16.5.1.orig/res/res_pjsip_transport_websocket.c
++++ asterisk-16.5.1/res/res_pjsip_transport_websocket.c
+@@ -288,21 +288,29 @@
+ 	pj_str_t buf;
+ 	int pjsip_pkt_len;
+ 
++	ast_log(LOG_DEBUG, "GHOST 002 transport read start\n");
++	ast_log(LOG_DEBUG, "GHOST 003 gettimeofday start\n");
+ 	pj_gettimeofday(&rdata->pkt_info.timestamp);
+ 
+ 	pjsip_pkt_len = PJSIP_MAX_PKT_LEN < read_data->payload_len ? PJSIP_MAX_PKT_LEN : read_data->payload_len;
++	ast_log(LOG_DEBUG, "GHOST 004 pj_memcpy start\n");
+ 	pj_memcpy(rdata->pkt_info.packet, read_data->payload, pjsip_pkt_len);
+ 	rdata->pkt_info.len = pjsip_pkt_len;
+ 	rdata->pkt_info.zero = 0;
+ 
++	ast_log(LOG_DEBUG, "GHOST 005 pj_sockaddr_parse start\n");
+ 	pj_sockaddr_parse(pj_AF_UNSPEC(), 0, pj_cstr(&buf, ast_sockaddr_stringify(ast_websocket_remote_address(session))), &rdata->pkt_info.src_addr);
+ 	rdata->pkt_info.src_addr_len = sizeof(rdata->pkt_info.src_addr);
+ 
++	ast_log(LOG_DEBUG, "GHOST 006 strcpy start \n");
+ 	pj_ansi_strcpy(rdata->pkt_info.src_name, ast_sockaddr_stringify_addr(ast_websocket_remote_address(session)));
++	ast_log(LOG_DEBUG, "GHOST 007 sockaddr_port start \n");
+ 	rdata->pkt_info.src_port = ast_sockaddr_port(ast_websocket_remote_address(session));
+ 
++	ast_log(LOG_DEBUG, "GHOST 008 pjsip_tpmgr_receive_packet start \n");
+ 	recvd = pjsip_tpmgr_receive_packet(rdata->tp_info.transport->tpmgr, rdata);
+ 
++	ast_log(LOG_DEBUG, "GHOST 009 pj_pool_reset start \n");
+ 	pj_pool_reset(rdata->tp_info.pool);
+ 
+ 	return (read_data->payload_len == recvd) ? 0 : -1;
+@@ -382,6 +390,7 @@
+ 
+ 	create_data.ws_session = session;
+ 
++	ast_log(LOG_DEBUG, "GHOST 001 before serializer\n");
+ 	if (ast_sip_push_task_wait_serializer(serializer, transport_create, &create_data)) {
+ 		ast_log(LOG_ERROR, "Could not create WebSocket transport.\n");
+ 		ast_taskprocessor_unreference(serializer);
