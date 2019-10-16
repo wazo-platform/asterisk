@@ -9,6 +9,8 @@ RUN true && \
     apt-get -q -y install apt-utils \
                           gnupg \
                           wget && \
+    echo "deb http://deb.debian.org/debian-debug ${DEBIAN_DISTRIBUTION}-debug main" >> /etc/apt/sources.list.d/dbgsym.list && \
+    echo "deb http://deb.debian.org/debian-debug ${DEBIAN_DISTRIBUTION}-proposed-updates-debug main" >> /etc/apt/sources.list.d/dbgsym.list && \
     echo "deb http://mirror.wazo.community/archive/ wazo-${WAZO_VERSION} main" >> /etc/apt/sources.list.d/wazo-dist.list && \
     echo "deb-src http://mirror.wazo.community/archive/ wazo-${WAZO_VERSION} main" >> /etc/apt/sources.list.d/wazo-dist.list && \
     wget http://mirror.wazo.community/wazo_current.key -O - | apt-key add - && \
