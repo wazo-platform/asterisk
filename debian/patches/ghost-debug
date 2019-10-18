@@ -1,8 +1,8 @@
-Index: asterisk-16.5.1/res/res_pjsip_transport_websocket.c
+Index: asterisk-16.6.0/res/res_pjsip_transport_websocket.c
 ===================================================================
---- asterisk-16.5.1.orig/res/res_pjsip_transport_websocket.c
-+++ asterisk-16.5.1/res/res_pjsip_transport_websocket.c
-@@ -288,21 +288,29 @@
+--- asterisk-16.6.0.orig/res/res_pjsip_transport_websocket.c
++++ asterisk-16.6.0/res/res_pjsip_transport_websocket.c
+@@ -288,21 +288,29 @@ static int transport_read(void *data)
  	pj_str_t buf;
  	int pjsip_pkt_len;
  
@@ -32,7 +32,7 @@ Index: asterisk-16.5.1/res/res_pjsip_transport_websocket.c
  	pj_pool_reset(rdata->tp_info.pool);
  
  	return (read_data->payload_len == recvd) ? 0 : -1;
-@@ -382,6 +390,7 @@
+@@ -382,6 +390,7 @@ static void websocket_cb(struct ast_webs
  
  	create_data.ws_session = session;
  
@@ -40,3 +40,94 @@ Index: asterisk-16.5.1/res/res_pjsip_transport_websocket.c
  	if (ast_sip_push_task_wait_serializer(serializer, transport_create, &create_data)) {
  		ast_log(LOG_ERROR, "Could not create WebSocket transport.\n");
  		ast_taskprocessor_unreference(serializer);
+Index: asterisk-16.6.0/res/res_http_websocket.c
+===================================================================
+--- asterisk-16.6.0.orig/res/res_http_websocket.c
++++ asterisk-16.6.0/res/res_http_websocket.c
+@@ -558,6 +558,7 @@ static inline int ws_safe_read(struct as
+ 	return 0;
+ }
+ 
++/* GHOST going to try to find it its blocking in here */
+ int AST_OPTIONAL_API_NAME(ast_websocket_read)(struct ast_websocket *session, char **payload, uint64_t *payload_len, enum ast_websocket_opcode *opcode, int *fragmented)
+ {
+ 	char buf[MAXIMUM_FRAME_SIZE] = "";
+@@ -570,6 +571,7 @@ int AST_OPTIONAL_API_NAME(ast_websocket_
+ 	*payload_len = 0;
+ 	*fragmented = 0;
+ 
++	ast_log(LOG_DEBUG, "GHOST ast_websocket_read 001 before ws_safe_read\n");
+ 	if (ws_safe_read(session, &buf[0], MIN_WS_HDR_SZ, opcode)) {
+ 		return -1;
+ 	}
+@@ -587,6 +589,7 @@ int AST_OPTIONAL_API_NAME(ast_websocket_
+ 		options_len += mask_present ? 4 : 0;
+ 		options_len += (*payload_len == 126) ? 2 : (*payload_len == 127) ? 8 : 0;
+ 		if (options_len) {
++      ast_log(LOG_DEBUG, "GHOST ast_websocket_read 002 before ws_safe_read for headers\n");
+ 			/* read the rest of the header options */
+ 			if (ws_safe_read(session, &buf[frame_size], options_len, opcode)) {
+ 				return -1;
+@@ -617,6 +620,7 @@ int AST_OPTIONAL_API_NAME(ast_websocket_
+ 			return -1;
+ 		}
+ 
++    ast_log(LOG_DEBUG, "GHOST ast_websocket_read 003 before ws_safe_read reading the payload\n");
+ 		if (*payload_len) {
+ 			if (ws_safe_read(session, *payload, *payload_len, opcode)) {
+ 				return -1;
+@@ -633,6 +637,7 @@ int AST_OPTIONAL_API_NAME(ast_websocket_
+ 
+ 		/* Per the RFC for PING we need to send back an opcode with the application data as received */
+ 		if (*opcode == AST_WEBSOCKET_OPCODE_PING) {
++      ast_log(LOG_DEBUG, "GHOST ast_websocket_read 004 before sending a PONG\n");
+ 			if (ast_websocket_write(session, AST_WEBSOCKET_OPCODE_PONG, *payload, *payload_len)) {
+ 				ast_websocket_close(session, 1009);
+ 			}
+@@ -642,12 +647,14 @@ int AST_OPTIONAL_API_NAME(ast_websocket_
+ 
+ 		/* Stop PONG processing here */
+ 		if (*opcode == AST_WEBSOCKET_OPCODE_PONG) {
++      ast_log(LOG_DEBUG, "GHOST ast_websocket_read 005 stop its a pong\n");
+ 			*payload_len = 0;
+ 			return 0;
+ 		}
+ 
+ 		/* Save the CLOSE status code which will be sent in our own CLOSE in the destructor */
+ 		if (*opcode == AST_WEBSOCKET_OPCODE_CLOSE) {
++      ast_log(LOG_DEBUG, "GHOST ast_websocket_read 006 closing\n");
+ 			session->closing = 1;
+ 			if (*payload_len >= 2) {
+ 				session->close_status_code = ntohs(get_unaligned_uint16(*payload));
+@@ -657,6 +664,7 @@ int AST_OPTIONAL_API_NAME(ast_websocket_
+ 		}
+ 
+ 		/* Below this point we are handling TEXT, BINARY or CONTINUATION opcodes */
++    ast_log(LOG_DEBUG, "GHOST ast_websocket_read 007 handling text, binary or continuation\n");
+ 		if (*payload_len) {
+ 			if (!(new_payload = ast_realloc(session->payload, (session->payload_len + *payload_len)))) {
+ 				ast_log(LOG_WARNING, "Failed allocation: %p, %zu, %"PRIu64"\n",
+@@ -675,6 +683,7 @@ int AST_OPTIONAL_API_NAME(ast_websocket_
+ 		}
+ 
+ 		if (!fin && session->reconstruct && (session->payload_len < session->reconstruct)) {
++      ast_log(LOG_DEBUG, "GHOST ast_websocket_read 008\n");
+ 			/* If this is not a final message we need to defer returning it until later */
+ 			if (*opcode != AST_WEBSOCKET_OPCODE_CONTINUATION) {
+ 				session->opcode = *opcode;
+@@ -683,6 +692,7 @@ int AST_OPTIONAL_API_NAME(ast_websocket_
+ 			*payload_len = 0;
+ 			*payload = NULL;
+ 		} else {
++      ast_log(LOG_DEBUG, "GHOST ast_websocket_read 009\n");
+ 			if (*opcode == AST_WEBSOCKET_OPCODE_CONTINUATION) {
+ 				if (!fin) {
+ 					/* If this was not actually the final message tell the user it is fragmented so they can deal with it accordingly */
+@@ -703,6 +713,7 @@ int AST_OPTIONAL_API_NAME(ast_websocket_
+ 		ast_websocket_close(session, 1003);
+ 	}
+ 
++  ast_log(LOG_DEBUG, "GHOST ast_websocket_read 010 DONE\n");
+ 	return 0;
+ }
+ 
