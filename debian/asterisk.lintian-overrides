@@ -1,0 +1,4 @@
+# astcanary is not supposed to be invoked manually
+asterisk: binary-without-manpage usr/sbin/astcanary
+# private copy of pjproject
+asterisk: non-dev-pkg-with-shlib-symlink usr/lib/libasteriskpj.so.2 usr/lib/libasteriskpj.so
