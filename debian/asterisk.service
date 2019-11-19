@@ -6,6 +6,7 @@ Before=monit.service
 
 [Service]
 Type=forking
+RuntimeDirectory=asterisk
 ExecStart=/usr/sbin/asterisk -g -U asterisk
 ExecStartPost=/bin/bash -c 'for i in {1..10}; do /usr/sbin/asterisk -rx "core waitfullybooted" &>/dev/null && exit 0; sleep 1; done; exit 1'
 ExecReload=/usr/sbin/asterisk -rx 'core reload'
