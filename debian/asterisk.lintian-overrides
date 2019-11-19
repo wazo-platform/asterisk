@@ -2,3 +2,5 @@
 asterisk: binary-without-manpage usr/sbin/astcanary
 # private copy of pjproject
 asterisk: non-dev-pkg-with-shlib-symlink usr/lib/libasteriskpj.so.2 usr/lib/libasteriskpj.so
+# Ignore the included jquery in mantest.html
+asterisk: privacy-breach-uses-embedded-file var/lib/asterisk/static-http/mantest.html You may use the libjs-jquery package. (http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js)
