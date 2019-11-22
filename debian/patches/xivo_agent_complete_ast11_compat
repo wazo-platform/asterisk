@@ -1,7 +1,7 @@
-Index: asterisk-16.6.1/apps/app_queue.c
+Index: asterisk-16.6.2/apps/app_queue.c
 ===================================================================
---- asterisk-16.6.1.orig/apps/app_queue.c
-+++ asterisk-16.6.1/apps/app_queue.c
+--- asterisk-16.6.2.orig/apps/app_queue.c
++++ asterisk-16.6.2/apps/app_queue.c
 @@ -2235,6 +2235,18 @@ static struct ast_manager_event_blob *qu
  			ast_log(LOG_NOTICE, "No caller event string, bailing\n");
  			return NULL;

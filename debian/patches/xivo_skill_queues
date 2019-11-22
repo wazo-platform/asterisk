@@ -1,7 +1,7 @@
-Index: asterisk-16.6.1/apps/app_queue.c
+Index: asterisk-16.6.2/apps/app_queue.c
 ===================================================================
---- asterisk-16.6.1.orig/apps/app_queue.c
-+++ asterisk-16.6.1/apps/app_queue.c
+--- asterisk-16.6.2.orig/apps/app_queue.c
++++ asterisk-16.6.2/apps/app_queue.c
 @@ -1403,6 +1403,8 @@ enum queue_reload_mask {
  	QUEUE_RELOAD_MEMBER = (1 << 1),
  	QUEUE_RELOAD_RULES = (1 << 2),
@@ -2219,10 +2219,10 @@ Index: asterisk-16.6.1/apps/app_queue.c
  AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_LOAD_ORDER, "True Call Queueing",
  	.support_level = AST_MODULE_SUPPORT_CORE,
  	.load = load_module,
-Index: asterisk-16.6.1/configs/samples/queueskillrules.conf.sample
+Index: asterisk-16.6.2/configs/samples/queueskillrules.conf.sample
 ===================================================================
 --- /dev/null
-+++ asterisk-16.6.1/configs/samples/queueskillrules.conf.sample
++++ asterisk-16.6.2/configs/samples/queueskillrules.conf.sample
 @@ -0,0 +1,63 @@
 +; This file describes skill routing rules. The Queue() application can get the
 +; 'skill_ruleset' argument which is the name of one skill routing ruleset. If
@@ -2287,10 +2287,10 @@ Index: asterisk-16.6.1/configs/samples/queueskillrules.conf.sample
 +; [client-cool]
 +; rule => EWT < 120, technic = 0 & (sympathy > 60)
 +; rule => technic = 0
-Index: asterisk-16.6.1/configs/samples/queueskills.conf.sample
+Index: asterisk-16.6.2/configs/samples/queueskills.conf.sample
 ===================================================================
 --- /dev/null
-+++ asterisk-16.6.1/configs/samples/queueskills.conf.sample
++++ asterisk-16.6.2/configs/samples/queueskills.conf.sample
 @@ -0,0 +1,46 @@
 +; Describe skills groups here to assign them to queue members. You can set
 +; weight to each skills. It'll be used by skill rules to know if a queue member

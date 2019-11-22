@@ -1,7 +1,7 @@
-Index: asterisk-16.6.1/main/ccss.c
+Index: asterisk-16.6.2/main/ccss.c
 ===================================================================
---- asterisk-16.6.1.orig/main/ccss.c
-+++ asterisk-16.6.1/main/ccss.c
+--- asterisk-16.6.2.orig/main/ccss.c
++++ asterisk-16.6.2/main/ccss.c
 @@ -2669,6 +2669,8 @@ struct cc_generic_agent_pvt {
  static int cc_generic_agent_init(struct ast_cc_agent *agent, struct ast_channel *chan)
  {

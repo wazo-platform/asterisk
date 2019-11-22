@@ -1,7 +1,7 @@
-Index: asterisk-16.6.1/apps/app_queue.c
+Index: asterisk-16.6.2/apps/app_queue.c
 ===================================================================
---- asterisk-16.6.1.orig/apps/app_queue.c
-+++ asterisk-16.6.1/apps/app_queue.c
+--- asterisk-16.6.2.orig/apps/app_queue.c
++++ asterisk-16.6.2/apps/app_queue.c
 @@ -6086,7 +6086,7 @@ enum agent_complete_reason {
  /*! \brief Send out AMI message with member call completion status information */
  static void send_agent_complete(const char *queuename, struct ast_channel_snapshot *caller,

@@ -1,7 +1,7 @@
-Index: asterisk-16.6.1/channels/sip/reqresp_parser.c
+Index: asterisk-16.6.2/channels/sip/reqresp_parser.c
 ===================================================================
---- asterisk-16.6.1.orig/channels/sip/reqresp_parser.c
-+++ asterisk-16.6.1/channels/sip/reqresp_parser.c
+--- asterisk-16.6.2.orig/channels/sip/reqresp_parser.c
++++ asterisk-16.6.2/channels/sip/reqresp_parser.c
 @@ -925,7 +925,7 @@ int get_name_and_number(const char *hdr,
  	tmp_number = get_in_brackets(header);
  
