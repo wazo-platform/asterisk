@@ -3,10 +3,10 @@ Author: Faidon Liambotis <paravoid@debian.org>
 Forwarded: not-needed
 Last-Update: 2009-12-19
 
-Index: asterisk-16.6.1/Makefile
+Index: asterisk-16.6.2/Makefile
 ===================================================================
---- asterisk-16.6.1.orig/Makefile
-+++ asterisk-16.6.1/Makefile
+--- asterisk-16.6.2.orig/Makefile
++++ asterisk-16.6.2/Makefile
 @@ -430,7 +430,6 @@ dist-clean: distclean
  
  distclean: $(SUBDIRS_DIST_CLEAN) _clean

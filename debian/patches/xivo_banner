@@ -1,7 +1,7 @@
-Index: asterisk-16.6.1/main/asterisk.c
+Index: asterisk-16.6.2/main/asterisk.c
 ===================================================================
---- asterisk-16.6.1.orig/main/asterisk.c
-+++ asterisk-16.6.1/main/asterisk.c
+--- asterisk-16.6.2.orig/main/asterisk.c
++++ asterisk-16.6.2/main/asterisk.c
 @@ -303,6 +303,10 @@ int daemon(int, int);  /* defined in lib
                  "This is free software, with components licensed under the GNU General Public\n" \
                  "License version 2 and other licenses; you are welcome to redistribute it under\n" \

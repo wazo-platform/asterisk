@@ -1,16 +1,16 @@
-Index: asterisk-16.6.1/res/ari.make
+Index: asterisk-16.6.2/res/ari.make
 ===================================================================
---- asterisk-16.6.1.orig/res/ari.make
-+++ asterisk-16.6.1/res/ari.make
+--- asterisk-16.6.2.orig/res/ari.make
++++ asterisk-16.6.2/res/ari.make
 @@ -28,3 +28,4 @@ $(call MOD_ADD_C,res_ari_device_states,a
  $(call MOD_ADD_C,res_ari_mailboxes,ari/resource_mailboxes.c)
  $(call MOD_ADD_C,res_ari_events,ari/resource_events.c)
  $(call MOD_ADD_C,res_ari_applications,ari/resource_applications.c)
 +$(call MOD_ADD_C,res_ari_wazo,ari/resource_wazo.c)
-Index: asterisk-16.6.1/res/ari/resource_wazo.c
+Index: asterisk-16.6.2/res/ari/resource_wazo.c
 ===================================================================
 --- /dev/null
-+++ asterisk-16.6.1/res/ari/resource_wazo.c
++++ asterisk-16.6.2/res/ari/resource_wazo.c
 @@ -0,0 +1,409 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -421,10 +421,10 @@ Index: asterisk-16.6.1/res/ari/resource_wazo.c
 +static int validate_greeting(const char *greeting) {
 +      return !strcmp(greeting, "unavailable") || !strcmp(greeting, "busy") || !strcmp(greeting, "name");
 +}
-Index: asterisk-16.6.1/res/ari/resource_wazo.h
+Index: asterisk-16.6.2/res/ari/resource_wazo.h
 ===================================================================
 --- /dev/null
-+++ asterisk-16.6.1/res/ari/resource_wazo.h
++++ asterisk-16.6.2/res/ari/resource_wazo.h
 @@ -0,0 +1,200 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -626,10 +626,10 @@ Index: asterisk-16.6.1/res/ari/resource_wazo.h
 +void ast_ari_wazo_remove_voicemail_greeting(struct ast_variable *headers, struct ast_ari_wazo_remove_voicemail_greeting_args *args, struct ast_ari_response *response);
 +
 +#endif /* _ASTERISK_RESOURCE_WAZO_H */
-Index: asterisk-16.6.1/res/res_ari_wazo.c
+Index: asterisk-16.6.2/res/res_ari_wazo.c
 ===================================================================
 --- /dev/null
-+++ asterisk-16.6.1/res/res_ari_wazo.c
++++ asterisk-16.6.2/res/res_ari_wazo.c
 @@ -0,0 +1,596 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -1227,10 +1227,10 @@ Index: asterisk-16.6.1/res/res_ari_wazo.c
 +	.unload = unload_module,
 +	.requires = "res_ari,res_ari_model,res_stasis",
 +);
-Index: asterisk-16.6.1/rest-api/api-docs/wazo.json
+Index: asterisk-16.6.2/rest-api/api-docs/wazo.json
 ===================================================================
 --- /dev/null
-+++ asterisk-16.6.1/rest-api/api-docs/wazo.json
++++ asterisk-16.6.2/rest-api/api-docs/wazo.json
 @@ -0,0 +1,300 @@
 +{
 +	"_copyright": "Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)",
@@ -1532,10 +1532,10 @@ Index: asterisk-16.6.1/rest-api/api-docs/wazo.json
 +		}
 +	}
 +}
-Index: asterisk-16.6.1/rest-api/resources.json
+Index: asterisk-16.6.2/rest-api/resources.json
 ===================================================================
---- asterisk-16.6.1.orig/rest-api/resources.json
-+++ asterisk-16.6.1/rest-api/resources.json
+--- asterisk-16.6.2.orig/rest-api/resources.json
++++ asterisk-16.6.2/rest-api/resources.json
 @@ -49,6 +49,10 @@
  		{
  			"path": "/api-docs/applications.{format}",
@@ -1547,10 +1547,10 @@ Index: asterisk-16.6.1/rest-api/resources.json
  		}
  	]
  }
-Index: asterisk-16.6.1/include/asterisk/app.h
+Index: asterisk-16.6.2/include/asterisk/app.h
 ===================================================================
---- asterisk-16.6.1.orig/include/asterisk/app.h
-+++ asterisk-16.6.1/include/asterisk/app.h
+--- asterisk-16.6.2.orig/include/asterisk/app.h
++++ asterisk-16.6.2/include/asterisk/app.h
 @@ -533,6 +533,19 @@ typedef int (ast_vm_msg_forward_fn)(cons
  typedef int (ast_vm_msg_play_fn)(struct ast_channel *chan, const char *mailbox,
  	const char *context, const char *folder, const char *msg_num, ast_vm_msg_play_cb *cb);
@@ -1640,10 +1640,10 @@ Index: asterisk-16.6.1/include/asterisk/app.h
  /*!
   * \brief Initialize the application core
   * \retval 0 Success
-Index: asterisk-16.6.1/main/app.c
+Index: asterisk-16.6.2/main/app.c
 ===================================================================
---- asterisk-16.6.1.orig/main/app.c
-+++ asterisk-16.6.1/main/app.c
+--- asterisk-16.6.2.orig/main/app.c
++++ asterisk-16.6.2/main/app.c
 @@ -806,6 +806,58 @@ int ast_vm_msg_play(struct ast_channel *
  	return res;
  }
@@ -1703,10 +1703,10 @@ Index: asterisk-16.6.1/main/app.c
  #ifdef TEST_FRAMEWORK
  int ast_vm_test_create_user(const char *context, const char *mailbox)
  {
-Index: asterisk-16.6.1/apps/app_voicemail.c
+Index: asterisk-16.6.2/apps/app_voicemail.c
 ===================================================================
---- asterisk-16.6.1.orig/apps/app_voicemail.c
-+++ asterisk-16.6.1/apps/app_voicemail.c
+--- asterisk-16.6.2.orig/apps/app_voicemail.c
++++ asterisk-16.6.2/apps/app_voicemail.c
 @@ -613,6 +613,10 @@ static AST_LIST_HEAD_STATIC(vmstates, vm
  #define ENDL "\n"
  #endif
@@ -1944,10 +1944,10 @@ Index: asterisk-16.6.1/apps/app_voicemail.c
  /* This is a workaround so that menuselect displays a proper description
   * AST_MODULE_INFO(, , "Comedian Mail (Voicemail System)"
   */
-Index: asterisk-16.6.1/main/http.c
+Index: asterisk-16.6.2/main/http.c
 ===================================================================
---- asterisk-16.6.1.orig/main/http.c
-+++ asterisk-16.6.1/main/http.c
+--- asterisk-16.6.2.orig/main/http.c
++++ asterisk-16.6.2/main/http.c
 @@ -82,7 +82,7 @@
  
  /*! Maximum application/json or application/x-www-form-urlencoded body content length. */

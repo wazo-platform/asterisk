@@ -3,7 +3,7 @@
 
 PKG  = $(word 2,$(shell dpkg-parsechangelog | grep Source))
 VER ?= $(shell dpkg-parsechangelog | grep Version: | awk -F': ' '{print $$NF}' | sed -ne 's/^\(\([0-9]\+\):\)\?\(.*\)-.*/\3/p')
-ASTERISK_URL_DOWNLOAD = "http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-16.6.1.tar.gz"
+ASTERISK_URL_DOWNLOAD = "http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-16.6.2.tar.gz"
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/autotools.mk

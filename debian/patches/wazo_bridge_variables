@@ -1,7 +1,7 @@
-Index: asterisk-16.6.1/include/asterisk/bridge.h
+Index: asterisk-16.6.2/include/asterisk/bridge.h
 ===================================================================
---- asterisk-16.6.1.orig/include/asterisk/bridge.h
-+++ asterisk-16.6.1/include/asterisk/bridge.h
+--- asterisk-16.6.2.orig/include/asterisk/bridge.h
++++ asterisk-16.6.2/include/asterisk/bridge.h
 @@ -252,6 +252,31 @@ typedef void (*ast_bridge_notify_masquer
  typedef int (*ast_bridge_merge_priority_fn)(struct ast_bridge *self);
  
@@ -85,10 +85,10 @@ Index: asterisk-16.6.1/include/asterisk/bridge.h
  #if defined(__cplusplus) || defined(c_plusplus)
  }
  #endif
-Index: asterisk-16.6.1/main/bridge.c
+Index: asterisk-16.6.2/main/bridge.c
 ===================================================================
---- asterisk-16.6.1.orig/main/bridge.c
-+++ asterisk-16.6.1/main/bridge.c
+--- asterisk-16.6.2.orig/main/bridge.c
++++ asterisk-16.6.2/main/bridge.c
 @@ -118,6 +118,8 @@
  #include "asterisk/core_local.h"
  #include "asterisk/core_unreal.h"
@@ -151,10 +151,10 @@ Index: asterisk-16.6.1/main/bridge.c
  static int manager_bridge_tech_list(struct mansession *s, const struct message *m)
  {
  	const char *id = astman_get_header(m, "ActionID");
-Index: asterisk-16.6.1/res/ari/resource_bridges.c
+Index: asterisk-16.6.2/res/ari/resource_bridges.c
 ===================================================================
---- asterisk-16.6.1.orig/res/ari/resource_bridges.c
-+++ asterisk-16.6.1/res/ari/resource_bridges.c
+--- asterisk-16.6.2.orig/res/ari/resource_bridges.c
++++ asterisk-16.6.2/res/ari/resource_bridges.c
 @@ -44,6 +44,10 @@
  #include "asterisk/file.h"
  #include "asterisk/musiconhold.h"
@@ -288,10 +288,10 @@ Index: asterisk-16.6.1/res/ari/resource_bridges.c
 +	ast_ari_response_ok(response, response->message);
 +}
 \ No newline at end of file
-Index: asterisk-16.6.1/res/ari/resource_bridges.h
+Index: asterisk-16.6.2/res/ari/resource_bridges.h
 ===================================================================
---- asterisk-16.6.1.orig/res/ari/resource_bridges.h
-+++ asterisk-16.6.1/res/ari/resource_bridges.h
+--- asterisk-16.6.2.orig/res/ari/resource_bridges.h
++++ asterisk-16.6.2/res/ari/resource_bridges.h
 @@ -393,5 +393,59 @@ int ast_ari_bridges_record_parse_body(
   * \param[out] response HTTP response
   */
@@ -352,10 +352,10 @@ Index: asterisk-16.6.1/res/ari/resource_bridges.h
 +void ast_ari_bridges_set_bridge_var(struct ast_variable *headers, struct ast_ari_bridges_set_bridge_var_args *args, struct ast_ari_response *response);
  
  #endif /* _ASTERISK_RESOURCE_BRIDGES_H */
-Index: asterisk-16.6.1/res/res_ari_bridges.c
+Index: asterisk-16.6.2/res/res_ari_bridges.c
 ===================================================================
---- asterisk-16.6.1.orig/res/res_ari_bridges.c
-+++ asterisk-16.6.1/res/res_ari_bridges.c
+--- asterisk-16.6.2.orig/res/res_ari_bridges.c
++++ asterisk-16.6.2/res/res_ari_bridges.c
 @@ -1454,6 +1454,179 @@ static void ast_ari_bridges_record_cb(
  fin: __attribute__((unused))
  	return;
@@ -564,10 +564,10 @@ Index: asterisk-16.6.1/res/res_ari_bridges.c
  };
  /*! \brief REST handler for /api-docs/bridges.json */
  static struct stasis_rest_handlers bridges = {
-Index: asterisk-16.6.1/rest-api/api-docs/bridges.json
+Index: asterisk-16.6.2/rest-api/api-docs/bridges.json
 ===================================================================
---- asterisk-16.6.1.orig/rest-api/api-docs/bridges.json
-+++ asterisk-16.6.1/rest-api/api-docs/bridges.json
+--- asterisk-16.6.2.orig/rest-api/api-docs/bridges.json
++++ asterisk-16.6.2/rest-api/api-docs/bridges.json
 @@ -565,7 +565,6 @@
  							"reason": "Bridge not in a Stasis application"
  						}
@@ -685,10 +685,10 @@ Index: asterisk-16.6.1/rest-api/api-docs/bridges.json
  				}
  			}
  		}
-Index: asterisk-16.6.1/include/asterisk/stasis_bridges.h
+Index: asterisk-16.6.2/include/asterisk/stasis_bridges.h
 ===================================================================
---- asterisk-16.6.1.orig/include/asterisk/stasis_bridges.h
-+++ asterisk-16.6.1/include/asterisk/stasis_bridges.h
+--- asterisk-16.6.2.orig/include/asterisk/stasis_bridges.h
++++ asterisk-16.6.2/include/asterisk/stasis_bridges.h
 @@ -156,6 +156,9 @@ struct ast_bridge_merge_message {
  	struct ast_bridge_snapshot *to;		/*!< Bridge to which channels will be added during the merge */
  };
@@ -717,10 +717,10 @@ Index: asterisk-16.6.1/include/asterisk/stasis_bridges.h
   * \brief Blob of data associated with a bridge.
   *
   * The \c blob is actually a JSON object of structured data. It has a "type" field
-Index: asterisk-16.6.1/main/stasis_bridges.c
+Index: asterisk-16.6.2/main/stasis_bridges.c
 ===================================================================
---- asterisk-16.6.1.orig/main/stasis_bridges.c
-+++ asterisk-16.6.1/main/stasis_bridges.c
+--- asterisk-16.6.2.orig/main/stasis_bridges.c
++++ asterisk-16.6.2/main/stasis_bridges.c
 @@ -37,6 +37,7 @@
  #include "asterisk/stasis_channels.h"
  #include "asterisk/bridge.h"
@@ -861,10 +861,10 @@ Index: asterisk-16.6.1/main/stasis_bridges.c
  
  	return res;
  }
-Index: asterisk-16.6.1/rest-api/api-docs/events.json
+Index: asterisk-16.6.2/rest-api/api-docs/events.json
 ===================================================================
---- asterisk-16.6.1.orig/rest-api/api-docs/events.json
-+++ asterisk-16.6.1/rest-api/api-docs/events.json
+--- asterisk-16.6.2.orig/rest-api/api-docs/events.json
++++ asterisk-16.6.2/rest-api/api-docs/events.json
 @@ -162,6 +162,7 @@
  				"ApplicationMoveFailed",
  				"ApplicationReplaced",
