@@ -71,6 +71,7 @@ Breaks:
  wazo-res-stasis-amqp (<< 17.14~),
  xivo-libsccp (<< 17.14~),
  xivo-res-freeze-check (<< 17.14~)
+Homepage: http://www.asterisk.org
 Description: Open Source Private Branch Exchange (PBX) - Wazo version
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
@@ -95,8 +96,6 @@ Description: Open Source Private Branch Exchange (PBX) - Wazo version
  This software was heavily patched by Debian and Wazo.
  .
  This Debian package contains the classic Asterisk binary.
- .
-  Homepage: http://www.asterisk.org.
 
 Package: asterisk-dbg
 Architecture: any
@@ -106,6 +105,7 @@ Replaces: asterisk11-dbg
 Conflicts: asterisk11-dbg
 Provides: asterisk11-dbg
 Depends: ${misc:Depends}, asterisk (= ${binary:Version})
+Homepage: http://www.asterisk.org
 Description: Open Source Private Branch Exchange (PBX) - Wazo version
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
@@ -130,14 +130,13 @@ Description: Open Source Private Branch Exchange (PBX) - Wazo version
  This software was heavily patched by Debian and Wazo.
  .
  This package contains gdb debugging symbols for the classic Asterisk binary.
- .
-  Homepage: http://www.asterisk.org.
 
 Package: asterisk-dev
 Architecture: all
 Recommends: asterisk
 Section: devel
 Depends: ${misc:Depends}
+Homepage: http://www.asterisk.org
 Description: development files for asterisk
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
@@ -163,14 +162,13 @@ Description: development files for asterisk
  .
  This package contains the include files used if you wish to compile a
  package which requires asterisk source file headers.
- .
-  Homepage: http://www.asterisk.org.
 
 Package: asterisk-doc
 Architecture: all
 Recommends: asterisk
 Section: doc
 Depends: ${misc:Depends}
+Homepage: http://www.asterisk.org
 Description: Source code documentation for Asterisk
  Asterisk is an Open Source PBX and telephony toolkit.
  .
@@ -196,14 +194,13 @@ Description: Source code documentation for Asterisk
   * QuickNet Internet PhoneJack and LineJack (http://www.quicknet.net)
  .
   This package contains the documentation for configuring an Asterisk system.
- .
-  Homepage: http://www.asterisk.org.
 
 Package: asterisk-sounds-main
 Architecture: all
 Enhances: asterisk
 Section: comm
 Depends: ${misc:Depends}
+Homepage: http://www.asterisk.org
 Description: sound files for asterisk
  Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
@@ -228,5 +225,3 @@ Description: sound files for asterisk
  This software was heavily patched by Debian and Wazo.
  .
  This package contains the default sound files for operation of asterisk
- .
-  Homepage: http://www.asterisk.org.

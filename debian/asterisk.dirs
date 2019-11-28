@@ -1,5 +1,4 @@
 etc/asterisk
-run/asterisk
 usr/share/asterisk
 usr/share/asterisk/firmware/iax
 var/lib/asterisk

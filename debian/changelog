@@ -1,3 +1,9 @@
+asterisk (8:16.6.1-1~wazo3) wazo-dev-buster; urgency=medium
+
+  * remove the openr2 dependency from the binary package
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 06 Nov 2019 14:02:47 -0500
+
 asterisk (8:16.6.1-1~wazo2) wazo-dev-buster; urgency=medium
 
   * upgrade to Asterisk 16.6.1
@@ -905,7 +911,7 @@ asterisk (8:13.7.0-1~xivo3) xivo-dev; urgency=medium
 
   * revert 434db4dd427543102443cb555416e35295016bb fix on asterisk 13.8 not 13.7
 
- -- Sylvain Boily <quintana@quintana>  Tue, 19 Jan 2016 14:30:49 -0500
+ -- Sylvain Boily <sylvain@wazo.io>  Tue, 19 Jan 2016 14:30:49 -0500
 
 asterisk (8:13.7.0-1~xivo1) xivo-dev; urgency=medium
 
