@@ -1,4 +1,4 @@
-asterisk (8:16.6.2-1~4) wazo-dev-buster; urgency=medium
+asterisk (8:16.6.2-1~wazo4) wazo-dev-buster; urgency=medium
 
   * add debug instructions for the vanilla and debug packages
 
