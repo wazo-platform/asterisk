@@ -3,3 +3,5 @@ contribs/docker/sources
 asterisk-*.tar.gz
 asterisk-*/
 .pc
+.tox
+__pycache__
