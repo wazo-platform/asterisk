@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -ex
+
+virtualenv -p python3 .venv
+
+. .venv/bin/activate
+
+pip install -r integration_tests/test-requirements.txt
+
+cd integration_tests
+
+make test-setup
+make test
+
+# integration-tests ends here
