@@ -1,0 +1,11 @@
+Tests: integration-tests
+Depends: make, docker-ce
+Restrictions: build-needed, allow-stderr
+
+# Tests: unittests
+# Restrictions: needs-root
+# Depends: asterisk, expect
+# 
+# Tests: testsuite
+# Restrictions: needs-root
+# Depends: liblua5.3-dev, lua-check, git, python-twisted, sip-tester

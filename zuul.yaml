@@ -1,27 +1,3 @@
 - project:
-    check:
-      jobs:
-        - debian-packaging:
-            nodeset: debian10-vm
-            required-projects:
-              wazo-platform/xivo-ci
-        - wazo-tox-integration:
-            nodeset: debian10-vm
-            dependencies:
-              - debian-packaging
-            vars:
-              tox_extra_args: |
-                {% for artifact in zuul.artifacts|default([]) %}{% if artifact.name == 'repo' %}
-                REPO_URL={{ artifact.url }}
-                {% endif %}{% endfor %}
-
-    gate:
-      jobs:
-        - debian-packaging:
-            nodeset: debian10-vm
-            required-projects:
-              wazo-platform/xivo-ci
-        - wazo-tox-integration:
-            nodeset: debian10-vm
-            dependencies:
-              - debian-packaging
+    templates:
+      - debian-packaging-template
