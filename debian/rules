@@ -70,8 +70,9 @@ common-install-arch common-install-indep:: common-install-impl
 common-install-impl::
 	$(DEB_MAKE_ENVVARS) $(MAKE) -C $(BUILD_TREE) DESTDIR=$(CURDIR)/debian/tmp/ install samples
 
-install/asterisk::
+install/asterisk:: install-headers/asterisk
 	$(DEB_MAKE_ENVVARS) $(MAKE) -C $(BUILD_TREE) DESTDIR=$(CURDIR)/debian/tmp/ install
+	$(DEB_MAKE_ENVVARS) $(MAKE) -C $(BUILD_TREE) DESTDIR=$(CURDIR)/debian/tmp/ install-headers
 
 binary-install/asterisk::
 	mkdir -p $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/asterisk/bin
