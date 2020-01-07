@@ -4,7 +4,6 @@ This repository contains the packaging information and patches for [Asterisk](ht
 
 To update the version of Asterisk:
 
-* Update the version number in debian/rules
 * Update the version number in debian/changelog by adding a new section
 * Update all the patches
   * Download the upstream tarball, extract it and cd into the directory, e.g. `grep '^ASTERISK_URL_DOWNLOAD' debian/rules | awk -F' = ' '{ print $NF }' | xargs wget`
