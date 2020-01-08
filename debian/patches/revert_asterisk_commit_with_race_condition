@@ -1,3 +1,5 @@
+Related issue: https://issues.asterisk.org/jira/browse/ASTERISK-28679
+
 Index: asterisk-16.7.0/res/res_stasis.c
 ===================================================================
 --- asterisk-16.7.0.orig/res/res_stasis.c
