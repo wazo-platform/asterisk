@@ -55,6 +55,7 @@ configure/asterisk::
 			--enable res_mwi_external \
 			--enable res_stasis_mailbox \
 			--enable res_ari_mailboxes \
+			--enable CORE-SOUNDS-FR-GSM \
 			$(MENUSELECT_EXTRA_ARGS) \
 			menuselect.makeopts \
 	)
