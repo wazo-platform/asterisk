@@ -1,3 +1,9 @@
+asterisk (8:16.8.0-1~wazo1) wazo-dev-buster; urgency=medium
+
+  * Upgrade to Asterisk 16.8.0
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 05 Feb 2020 08:18:57 -0500
+
 asterisk (8:16.7.0-1~wazo6) wazo-dev-buster; urgency=medium
 
   * add asterisk related issue to patch
