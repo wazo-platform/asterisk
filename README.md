@@ -6,7 +6,10 @@ To update the version of Asterisk:
 
 * Update the version number in debian/changelog by adding a new section
 * Update all the patches
-  * Download the upstream tarball, extract it and cd into the directory, e.g. `grep '^ASTERISK_URL_DOWNLOAD' debian/rules | awk -F' = ' '{ print $NF }' | xargs wget`
+  * Download the upstream tarball, extract it and cd into the directory
+    * `VERSION=16.8.0`
+    * `grep '^ASTERISK_URL_DOWNLOAD' debian/rules | awk -F' = ' '{ print $NF }' | sed -n "s/\${VER}/$VERSION/p" | xargs wget`
+    * `tar -xf asterisk-$VERSION.tar.gz && cd asterisk-$VERSION`
   * Create a symbolic link to debian/patches, e.g. `ln -s ../debian/patches patches`
   * Push the topmost patch with `quilt push`, then resolve the conflicts if necessary, then refresh
     the patch with `quilt refresh`
