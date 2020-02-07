@@ -2,6 +2,10 @@ Tests: integration-tests
 Depends: make, docker-ce
 Restrictions: build-needed, allow-stderr
 
+Tests: contrib-scripts-unittests
+Depends: python3
+Restrictions: build-needed, allow-stderr
+
 # Tests: unittests
 # Restrictions: needs-root
 # Depends: asterisk, expect

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -ex
+
+virtualenv -p python3 .venv
+
+. .venv/bin/activate
+
+pip install -r contribs/scripts/test-requirements.txt
+
+cd contribs/scripts/tests
+
+pytest
