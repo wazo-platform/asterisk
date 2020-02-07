@@ -41,8 +41,17 @@ def extract_node(elem):
     return '\n'.join(notes)
 
 
+def extract_choices(elem):
+    result = {}
+    for enum in elem.findall('./*enum'):
+        description = extract_para(enum) if enum.text else ''
+        result[enum.attrib['name']] = description
+    return result
+
+
 def extract_pjsip_option(elem):
     synopsis, description, note = '', '', ''
+    choices = {}
 
     for e in elem:
         if e.tag == 'synopsis':
@@ -50,6 +59,7 @@ def extract_pjsip_option(elem):
         if e.tag == 'description':
             description = extract_para(e)
             note = extract_node(e)
+            choices = extract_choices(e)
 
     return {
         'name': elem.attrib['name'],
@@ -57,6 +67,7 @@ def extract_pjsip_option(elem):
         'synopsis': synopsis,
         'description': description,
         'note': note,
+        'choices': choices,
     }
 
 
@@ -86,6 +97,7 @@ def main():
     root = ElementTree.parse(filename).getroot()
     doc = extract_pjsip_doc(root)
     print(json.dumps(doc))
+
 
 if __name__ == '__main__':
     main()
