@@ -1,3 +1,9 @@
+asterisk (8:16.8.0-1~wazo3) wazo-dev-buster; urgency=medium
+
+  * add User asterisk to the service file
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 10 Feb 2020 14:30:19 -0500
+
 asterisk (8:16.8.0-1~wazo2) wazo-dev-buster; urgency=medium
 
   * add french core sounds

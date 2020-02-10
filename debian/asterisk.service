@@ -12,6 +12,7 @@ ExecStartPost=/bin/bash -c 'for i in {1..10}; do /usr/sbin/asterisk -rx "core wa
 ExecReload=/usr/sbin/asterisk -rx 'core reload'
 PIDFile=/run/asterisk/asterisk.pid
 UMask=0007
+User=asterisk
 WorkingDirectory=/var/spool/asterisk
 
 LimitNOFILE=8192
