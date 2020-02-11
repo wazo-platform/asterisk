@@ -195,6 +195,14 @@ Description: Source code documentation for Asterisk
  .
   This package contains the documentation for configuring an Asterisk system.
 
+Package: wazo-asterisk-json-config
+Architecture: all
+Depends: ${misc:Depends}
+Description: Asterisk configuration doc in JSON format
+ This package contains the documentation extracted from the Asterisk sources
+ in JSON format to be programmatically used by other systems.
+ .
+
 Package: asterisk-sounds-main
 Architecture: all
 Enhances: asterisk

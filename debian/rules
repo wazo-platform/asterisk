@@ -97,6 +97,12 @@ install/asterisk-doc::
 	dh_installdocs -p$(cdbs_curpkg) $(BUILD_TREE)/images/*.gif
 	dh_installdocs -p$(cdbs_curpkg) $(BUILD_TREE)/Zaptel-to-DAHDI.txt
 
+build/wazo-asterisk-json-config::
+	$(CURDIR)/contribs/scripts/pjsip_extract_config.py $(BUILD_TREE)/static-http/core-en_US.xml > $(BUILD_TREE)/pjsip_options.json
+
+install/wazo-asterisk-json-config::
+	dh_installdocs -p$(BUILD_TREE)/pjsip_options.json $(BUILD_TREE)/pjsip/options.json
+
 clean::
 	rm -f *.cdbs-config_list
 
