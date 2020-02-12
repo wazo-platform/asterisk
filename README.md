@@ -7,10 +7,18 @@ To update the version of Asterisk:
 * Update the version number in debian/changelog by adding a new section
 * Update all the patches
   * Download the upstream tarball, extract it and cd into the directory
-    * `VERSION=16.8.0`
-    * `grep '^ASTERISK_URL_DOWNLOAD' debian/rules | awk -F' = ' '{ print $NF }' | sed -n "s/\${VER}/$VERSION/p" | xargs wget`
-    * `tar -xf asterisk-$VERSION.tar.gz && cd asterisk-$VERSION`
-  * Create a symbolic link to debian/patches, e.g. `ln -s ../debian/patches patches`
+
+```sh
+VERSION=$(dpkg-parsechangelog | awk -F': ' '{ if($1 == "Version") { print $NF } }' | sed -ne 's/^\(\([0-9]\+\):\)\?\(.*\)-.*/\3/p')
+grep '^ASTERISK_URL_DOWNLOAD' debian/rules | awk -F' = ' '{ print $NF }' | sed -n "s/\${VER}/$VERSION/p" | xargs wget
+tar -xf asterisk-$VERSION.tar.gz && cd asterisk-$VERSION
+```
+  * Create a symbolic link to debian/patches
+
+```sh
+ln -s ../debian/patches patches
+```
+
   * Push the topmost patch with `quilt push`, then resolve the conflicts if necessary, then refresh
     the patch with `quilt refresh`
   * Repeat the last step until all patches have been refreshed
@@ -19,7 +27,7 @@ To update the version of Asterisk:
 To test that it compiles and builds fine (example for 13.10.0 on a remote wazo):
 
 ```sh
-rsync -v -rtlp asterisk-13.10.0.tar.gz debian wazo:ast-rebuild
+rsync -v -rtlp "asterisk-${VERSION}.tar.gz" debian wazo:ast-rebuild
 ssh wazo
 ```
 
