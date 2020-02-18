@@ -54,6 +54,7 @@ Build-Depends:
  quilt,
  unixodbc-dev,
  uuid-dev,
+ wazo-asterisk-doc-extractor,
  wget,
  xmlstarlet,
  zlib1g-dev
