@@ -1,3 +1,11 @@
+asterisk (8:16.8.0-1~wazo5) wazo-dev-buster; urgency=medium
+
+  * Backport upstream patch for bad audio due to incomplete TLS/SRTP setup [1]
+
+  [1] https://gerrit.asterisk.org/c/asterisk/+/13792
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 09 Mar 2020 16:21:47 -0400
+
 asterisk (8:16.8.0-1~wazo4) wazo-dev-buster; urgency=medium
 
   * add a JSON version of the PJSIP doc
