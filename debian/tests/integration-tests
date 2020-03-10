@@ -6,6 +6,11 @@ virtualenv -p python3 .venv
 
 . .venv/bin/activate
 
+pwd
+ls -l
+
+cd $SRCDIR
+
 pip install -r integration_tests/test-requirements.txt
 
 cd integration_tests

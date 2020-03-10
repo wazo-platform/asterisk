@@ -1,6 +1,6 @@
 Tests: integration-tests
 Depends: make, docker-ce
-Restrictions: build-needed, allow-stderr
+Restrictions: allow-stderr
 
 # Tests: unittests
 # Restrictions: needs-root
