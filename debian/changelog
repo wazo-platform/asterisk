@@ -1,3 +1,9 @@
+asterisk (8:16.9.0-1~wazo2) wazo-dev-buster; urgency=medium
+
+  * Asterisk 16.9.0
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 12 Mar 2020 13:22:45 -0400
+
 asterisk (8:16.8.0-1~wazo5) wazo-dev-buster; urgency=medium
 
   * Backport upstream patch for bad audio due to incomplete TLS/SRTP setup [1]
