@@ -1198,7 +1198,7 @@ Index: asterisk-17.3.0/apps/app_queue.c
 +			break;
 +		}
 +		ast_copy_string(skgrp->name, cat, sizeof(skgrp->name));
-+		skgrp->skills = ao2_container_alloc(37, NULL, NULL);
++		skgrp->skills = ao2_container_alloc_list(AO2_ALLOC_OPT_LOCK_MUTEX, 0, NULL, NULL);
 +
 +		for (var = ast_variable_browse(cfg, cat); var; var = var->next) {
 +			struct skill* sk;
@@ -1256,7 +1256,7 @@ Index: asterisk-17.3.0/apps/app_queue.c
 +			break;
 +		}
 +		ast_copy_string(ruleset->name, cat, sizeof(ruleset->name));
-+		ruleset->rules = ao2_container_alloc(37, NULL, NULL);
++		ruleset->rules = ao2_container_alloc_list(AO2_ALLOC_OPT_LOCK_MUTEX, 0, NULL, NULL);
 +		for (var = ast_variable_browse(cfg, cat); var; var = var->next) {
 +			struct skill_rule *r = ao2_alloc(sizeof(*r), destroy_skill_rule);
 +			if (!r) {
@@ -1336,7 +1336,7 @@ Index: asterisk-17.3.0/apps/app_queue.c
 +		}
 +
 +		while (!qe->mem_selection && (rule = ao2_iterator_next(&rule_iter))) {
-+			qe->mem_selection = ao2_container_alloc(37, member_hash_fn, member_cmp_fn);
++			qe->mem_selection = ao2_container_alloc_hash(AO2_ALLOC_OPT_LOCK_MUTEX, 0, 37, member_hash_fn, NULL, member_cmp_fn);
 +			mem_iter = ao2_iterator_init(q->members, 0);
 +			while ((member = ao2_iterator_next(&mem_iter))) {
 +				struct skills_group* skills;
@@ -1386,7 +1386,7 @@ Index: asterisk-17.3.0/apps/app_queue.c
 +	struct virtual_queue *vq = NULL;
 +
 +	if (!q->vqueues) {
-+		q->vqueues = ao2_container_alloc(37, NULL, NULL);
++		q->vqueues = ao2_container_alloc_list(AO2_ALLOC_OPT_LOCK_MUTEX, 0, NULL, NULL);
 +		if (!q->vqueues)
 +			return -1;
 +	} else {
@@ -1705,7 +1705,7 @@ Index: asterisk-17.3.0/apps/app_queue.c
 +{
 +	char *ptr, *var;
 +	struct rule_var *v;
-+	struct ao2_container *variables = ao2_container_alloc(37, NULL, NULL);
++	struct ao2_container *variables = ao2_container_alloc_list(AO2_ALLOC_OPT_LOCK_MUTEX, 0, NULL, NULL);
 +
 +	if (!variables) {
 +		return NULL;
