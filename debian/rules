@@ -74,6 +74,9 @@ common-install-impl::
 install/asterisk::
 	$(DEB_MAKE_ENVVARS) $(MAKE) -C $(BUILD_TREE) DESTDIR=$(CURDIR)/debian/tmp/ install
 
+install/asterisk-dev::
+	$(DEB_MAKE_ENVVARS) $(MAKE) -C $(BUILD_TREE) DESTDIR=$(CURDIR)/debian/tmp/ install-headers
+
 binary-install/asterisk::
 	mkdir -p $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/asterisk/bin
 	cp $(CURDIR)/debian/asterisk_fix $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/asterisk/bin/
