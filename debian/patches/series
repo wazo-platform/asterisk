@@ -1,5 +1,4 @@
 ### upstream fixes
-asterisk_13792_bad_audio_incomplete_dtls_srtp_setup
 deb_astgenkey-security
 deb_make-clean-fixes
 ## Wazo patches
