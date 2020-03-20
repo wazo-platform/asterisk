@@ -50,6 +50,10 @@ case "$1" in
 		fi
 	done
 
+	if [ -e /usr/share/asterisk/rest-api ]; then
+		chown -R $USER: /usr/share/asterisk/rest-api
+	fi
+
 	# Create /usr/local directory; policy 9.1.2
 	if [ ! -e /usr/local/share/asterisk/sounds ]; then
 		if mkdir -p /usr/local/share/asterisk/sounds 2>/dev/null ; then
