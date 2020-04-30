@@ -1,7 +1,7 @@
-Index: asterisk-17.3.0/res/res_pjsip/location.c
+Index: asterisk-17.4.0/res/res_pjsip/location.c
 ===================================================================
---- asterisk-17.3.0.orig/res/res_pjsip/location.c
-+++ asterisk-17.3.0/res/res_pjsip/location.c
+--- asterisk-17.4.0.orig/res/res_pjsip/location.c
++++ asterisk-17.4.0/res/res_pjsip/location.c
 @@ -355,7 +355,7 @@ struct ast_sip_contact *ast_sip_location
  struct ast_sip_contact *ast_sip_location_create_contact(struct ast_sip_aor *aor,
  	const char *uri, struct timeval expiration_time, const char *path_info,
@@ -41,10 +41,10 @@ Index: asterisk-17.3.0/res/res_pjsip/location.c
  
  	ast_sorcery_object_field_register(sorcery, "aor", "type", "", OPT_NOOP_T, 0, 0);
  	ast_sorcery_object_field_register(sorcery, "aor", "minimum_expiration", "60", OPT_UINT_T, 0, FLDSET(struct ast_sip_aor, minimum_expiration));
-Index: asterisk-17.3.0/res/res_pjsip_registrar.c
+Index: asterisk-17.4.0/res/res_pjsip_registrar.c
 ===================================================================
---- asterisk-17.3.0.orig/res/res_pjsip_registrar.c
-+++ asterisk-17.3.0/res/res_pjsip_registrar.c
+--- asterisk-17.4.0.orig/res/res_pjsip_registrar.c
++++ asterisk-17.4.0/res/res_pjsip_registrar.c
 @@ -753,6 +753,9 @@ static void register_aor_core(pjsip_rx_d
  
  		if (!contact) {
@@ -76,10 +76,10 @@ Index: asterisk-17.3.0/res/res_pjsip_registrar.c
  			if (!contact) {
  				ast_log(LOG_ERROR, "Unable to bind contact '%s' to AOR '%s'\n",
  					contact_uri, aor_name);
-Index: asterisk-17.3.0/include/asterisk/res_pjsip.h
+Index: asterisk-17.4.0/include/asterisk/res_pjsip.h
 ===================================================================
---- asterisk-17.3.0.orig/include/asterisk/res_pjsip.h
-+++ asterisk-17.3.0/include/asterisk/res_pjsip.h
+--- asterisk-17.4.0.orig/include/asterisk/res_pjsip.h
++++ asterisk-17.4.0/include/asterisk/res_pjsip.h
 @@ -284,6 +284,8 @@ struct ast_sip_contact {
  		AST_STRING_FIELD(call_id);
  		/*! The name of the endpoint that added the contact */
@@ -98,11 +98,11 @@ Index: asterisk-17.3.0/include/asterisk/res_pjsip.h
  
  /*!
   * \brief Update a contact
-Index: asterisk-17.3.0/res/res_pjsip.c
+Index: asterisk-17.4.0/res/res_pjsip.c
 ===================================================================
---- asterisk-17.3.0.orig/res/res_pjsip.c
-+++ asterisk-17.3.0/res/res_pjsip.c
-@@ -1505,6 +1505,12 @@
+--- asterisk-17.4.0.orig/res/res_pjsip.c
++++ asterisk-17.4.0/res/res_pjsip.c
+@@ -1521,6 +1521,12 @@
  						on a reliable transport and is not intended to be configured manually.
  					</para></description>
  				</configOption>
