@@ -1,0 +1,59 @@
+From fbb9359cd311eadb847ff8dc9d0dcbbe34ecddc5 Mon Sep 17 00:00:00 2001
+From: George Joseph <gjoseph@digium.com>
+Date: Mon, 04 May 2020 10:31:57 -0600
+Subject: [PATCH] streams: Fix one memory leak and one formats ref issue
+
+ast_stream_topology_create_from_format_cap() was setting the
+stream->formats directly but not freeing the default formats.  This
+causes a memory leak.
+
+* ast_stream_topology_create_from_format_cap() now calls
+  ast_stream_set_formats() which properly cleans up the existing
+  stream formats.
+
+When cloning a stream, the source stream's format caps _pointer_ is
+copied to the new stream and it's reference count bumped.  If
+either stream is set to "removed", this will cause _both_ streams
+to have their format caps cleared.
+
+* ast_stream_clone() now creates a new format caps object and copies
+  the formats from the source stream instead of just copying the
+  pointer.
+
+ASTERISK-28870
+
+Change-Id: If697d81c3658eb7baeea6dab413b13423938fb53
+---
+
+Index: asterisk-17.4.0/main/stream.c
+===================================================================
+--- asterisk-17.4.0.orig/main/stream.c
++++ asterisk-17.4.0/main/stream.c
+@@ -137,9 +137,13 @@ struct ast_stream *ast_stream_clone(cons
+ 	memcpy(new_stream, stream, sizeof(*new_stream));
+ 	strcpy(new_stream->name, stream_name); /* Safe */
+ 	new_stream->group = -1;
+-	if (new_stream->formats) {
+-		ao2_ref(new_stream->formats, +1);
++
++	new_stream->formats = ast_format_cap_alloc(AST_FORMAT_CAP_FLAG_DEFAULT);
++	if (!new_stream->formats) {
++		ast_free(new_stream);
++		return NULL;
+ 	}
++	ast_format_cap_append_from_cap(new_stream->formats, stream->formats, AST_MEDIA_TYPE_UNKNOWN);
+ 
+ 	new_stream->metadata = ast_stream_get_metadata_list(stream);
+ 
+@@ -585,8 +589,9 @@ struct ast_stream_topology *ast_stream_t
+ 			ast_stream_topology_free(topology);
+ 			return NULL;
+ 		}
+-		/* We're transferring the initial ref so no bump needed */
+-		stream->formats = new_cap;
++
++		ast_stream_set_formats(stream, new_cap);
++		ao2_ref(new_cap, -1);
+ 		stream->state = AST_STREAM_STATE_SENDRECV;
+ 		if (ast_stream_topology_append_stream(topology, stream) == -1) {
+ 			ast_stream_free(stream);
