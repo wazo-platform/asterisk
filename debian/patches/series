@@ -1,4 +1,6 @@
 ### upstream fixes
+fbb9359.diff
+e2c5d29.diff
 deb_astgenkey-security
 deb_make-clean-fixes
 ## Wazo patches
@@ -21,4 +23,3 @@ xivo_ari_set_channel_var_bypass
 wazo_ari_expose_voicemail_functions
 wazo_sip_mobility
 wazo_bridge_variables
-fbb9359.diff
