@@ -1,3 +1,22 @@
+asterisk (8:17.4.0-1~wazo5) wazo-dev-buster; urgency=medium
+
+  * add upstream patch to fix a memory leak
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 20 May 2020 07:43:19 -0400
+
+asterisk (8:17.4.0-1~wazo3) wazo-dev-buster; urgency=medium
+
+  * add upstream patch to fix a memory leak
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 20 May 2020 07:42:00 -0400
+
+asterisk (8:17.4.0-1~wazo2) wazo-dev-buster; urgency=medium
+
+  * Asterisk 17.4.0
+  * libsrtp 1.5.4
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 20 May 2020 07:41:00 -0400
+
 asterisk (8:17.3.0-1~wazo4) wazo-dev-buster; urgency=medium
 
   * remove unused code in postinst

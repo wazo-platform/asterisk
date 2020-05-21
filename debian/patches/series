@@ -1,4 +1,6 @@
 ### upstream fixes
+fbb9359.diff
+e2c5d29.diff
 deb_astgenkey-security
 deb_make-clean-fixes
 ## Wazo patches
