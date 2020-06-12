@@ -31,7 +31,6 @@ DEB_MAKE_INVOKE += MENUSELECT_MOH= \
   ASTVARRUNDIR=/run/asterisk \
 
 # Debian needs
-DEB_DH_INSTALLINIT_ARGS = --name asterisk -- defaults 30 70
 DEB_CONFIGURE_EXTRA_FLAGS = --without-misdn --with-jansson-bundled
 DEB_CONFIGURE_SCRIPT_ENV += $(FETCH_ENV)
 
