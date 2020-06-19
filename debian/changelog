@@ -1,8 +1,8 @@
 asterisk (8:17.4.0-1~wazo6) wazo-dev-buster; urgency=medium
 
-  * set niceness to -19
+  * Fix realtime priority
 
- -- Wazo Maintainers <dev@wazo.community>  Thu, 11 Jun 2020 15:57:45 -0400
+ -- Wazo Maintainers <dev@wazo.community>  Fri, 19 Jun 2020 12:05:44 -0400
 
 asterisk (8:17.4.0-1~wazo5) wazo-dev-buster; urgency=medium
 
