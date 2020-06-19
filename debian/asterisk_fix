@@ -39,9 +39,6 @@ fi
 
 # Make sure all (possibly) used dirs exist and is owned by asterisk
 
-# /run/asterisk is not yet handled by init.d :-(
-# (/run/asterisk is handled in sysV script /etc/init.d/asterisk)
-
 dirs="
         /var/log/asterisk
         /var/spool/asterisk
@@ -83,7 +80,7 @@ done
 ####################################
 # If asterisk in running, reload it
 # otherwise start it
-if [ -x "/etc/init.d/asterisk" ];then
+if [ -f "/lib/systemd/system/asterisk.service" ];then
 	if [ -f /run/asterisk/asterisk.pid ];then
 	    invoke-rc.d asterisk reload || exit $?
 	else

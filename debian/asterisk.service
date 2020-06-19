@@ -6,15 +6,17 @@ Before=monit.service
 
 [Service]
 Type=forking
-RuntimeDirectory=asterisk
-ExecStart=/usr/sbin/asterisk -g -U asterisk
+ExecStartPre=install -d -o asterisk -g asterisk /run/asterisk
+ExecStartPre=install -d -o asterisk -g asterisk /var/log/asterisk
+ExecStartPre=install -d -o asterisk -g asterisk /var/log/asterisk/cdr-csv
+ExecStartPre=install -d -o asterisk -g asterisk /var/log/asterisk/cdr-custom
+ExecStart=/usr/sbin/asterisk -g -p -U asterisk
 ExecStartPost=/bin/bash -c 'for i in {1..10}; do /usr/sbin/asterisk -rx "core waitfullybooted" &>/dev/null && exit 0; sleep 1; done; exit 1'
 ExecReload=/usr/sbin/asterisk -rx 'core reload'
+ExecStopPost=rm -rf /run/asterisk
 PIDFile=/run/asterisk/asterisk.pid
 UMask=0007
-User=asterisk
 WorkingDirectory=/var/spool/asterisk
-
 LimitNOFILE=8192
 
 [Install]
