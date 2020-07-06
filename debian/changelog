@@ -1,3 +1,9 @@
+asterisk (8:17.5.1-1~wazo2) wazo-dev-buster; urgency=medium
+
+  * Asterisk 17.5.1
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 02 Jul 2020 07:53:02 -0400
+
 asterisk (8:17.4.0-1~wazo6) wazo-dev-buster; urgency=medium
 
   * Fix realtime priority
