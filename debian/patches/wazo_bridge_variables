@@ -166,7 +166,7 @@ Index: asterisk-17.6.0/res/ari/resource_bridges.c
  
  /*!
   * \brief Finds a bridge, filling the response with an error, if appropriate.
-@@ -1064,3 +1068,120 @@ void ast_ari_bridges_clear_video_source(
+@@ -1065,3 +1069,120 @@ void ast_ari_bridges_clear_video_source(
  	ao2_ref(bridge, -1);
  	ast_ari_response_no_content(response);
  }
@@ -292,7 +292,7 @@ Index: asterisk-17.6.0/res/ari/resource_bridges.h
 ===================================================================
 --- asterisk-17.6.0.orig/res/ari/resource_bridges.h
 +++ asterisk-17.6.0/res/ari/resource_bridges.h
-@@ -393,5 +393,59 @@ int ast_ari_bridges_record_parse_body(
+@@ -395,5 +395,59 @@ int ast_ari_bridges_record_parse_body(
   * \param[out] response HTTP response
   */
  void ast_ari_bridges_record(struct ast_variable *headers, struct ast_ari_bridges_record_args *args, struct ast_ari_response *response);
@@ -356,7 +356,7 @@ Index: asterisk-17.6.0/res/res_ari_bridges.c
 ===================================================================
 --- asterisk-17.6.0.orig/res/res_ari_bridges.c
 +++ asterisk-17.6.0/res/res_ari_bridges.c
-@@ -1454,6 +1454,179 @@ static void ast_ari_bridges_record_cb(
+@@ -1461,6 +1461,179 @@ static void ast_ari_bridges_record_cb(
  fin: __attribute__((unused))
  	return;
  }
@@ -536,7 +536,7 @@ Index: asterisk-17.6.0/res/res_ari_bridges.c
  
  /*! \brief REST handler for /api-docs/bridges.json */
  static struct stasis_rest_handlers bridges_bridgeId_addChannel = {
-@@ -1531,6 +1704,16 @@ static struct stasis_rest_handlers bridg
+@@ -1538,6 +1711,16 @@ static struct stasis_rest_handlers bridg
  	.children = {  }
  };
  /*! \brief REST handler for /api-docs/bridges.json */
@@ -553,7 +553,7 @@ Index: asterisk-17.6.0/res/res_ari_bridges.c
  static struct stasis_rest_handlers bridges_bridgeId = {
  	.path_segment = "bridgeId",
  	.is_wildcard = 1,
-@@ -1539,8 +1722,8 @@ static struct stasis_rest_handlers bridg
+@@ -1546,8 +1729,8 @@ static struct stasis_rest_handlers bridg
  		[AST_HTTP_GET] = ast_ari_bridges_get_cb,
  		[AST_HTTP_DELETE] = ast_ari_bridges_destroy_cb,
  	},
@@ -568,7 +568,7 @@ Index: asterisk-17.6.0/rest-api/api-docs/bridges.json
 ===================================================================
 --- asterisk-17.6.0.orig/rest-api/api-docs/bridges.json
 +++ asterisk-17.6.0/rest-api/api-docs/bridges.json
-@@ -565,7 +565,6 @@
+@@ -574,7 +574,6 @@
  							"reason": "Bridge not in a Stasis application"
  						}
  					]
@@ -576,7 +576,7 @@ Index: asterisk-17.6.0/rest-api/api-docs/bridges.json
  				}
  			]
  		},
-@@ -695,6 +694,96 @@
+@@ -704,6 +703,96 @@
                      ]
  				}
  			]
@@ -673,7 +673,7 @@ Index: asterisk-17.6.0/rest-api/api-docs/bridges.json
  		}
  	],
  	"models": {
-@@ -758,6 +847,11 @@
+@@ -767,6 +856,11 @@
  					"required": true,
  					"type": "Date",
  					"description": "Timestamp when bridge was created"
