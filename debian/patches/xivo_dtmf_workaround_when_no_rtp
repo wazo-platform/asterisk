@@ -1,7 +1,7 @@
-Index: asterisk-17.6.0/main/features.c
+Index: asterisk-17.7.0/main/features.c
 ===================================================================
---- asterisk-17.6.0.orig/main/features.c
-+++ asterisk-17.6.0/main/features.c
+--- asterisk-17.7.0.orig/main/features.c
++++ asterisk-17.7.0/main/features.c
 @@ -658,6 +658,14 @@ int ast_bridge_call_with_flags(struct as
  
  	ast_bridge_basic_set_flags(bridge, flags);
