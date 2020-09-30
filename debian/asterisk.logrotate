@@ -9,6 +9,6 @@
         sharedscripts
         compress
         postrotate
-                /usr/sbin/invoke-rc.d asterisk logger-reload >/dev/null 2>/dev/null
+                /usr/sbin/asterisk -rx 'logger reload' >/dev/null 2>/dev/null
         endscript
 }
