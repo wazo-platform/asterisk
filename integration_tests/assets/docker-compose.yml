@@ -1,12 +1,12 @@
 version: "3"
 services:
   sync:
-    image: wazopbx/wait
+    image: wazoplatform/wait
     environment:
       TIMEOUT: "${INTEGRATION_TEST_TIMEOUT}"
 
   ari:
-    image: wazopbx/asterisk
+    image: wazoplatform/asterisk
     ports:
       - "5039"
     volumes:
