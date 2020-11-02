@@ -1,7 +1,7 @@
-Index: asterisk-17.7.0/apps/app_queue.c
+Index: asterisk-17.8.0/apps/app_queue.c
 ===================================================================
---- asterisk-17.7.0.orig/apps/app_queue.c
-+++ asterisk-17.7.0/apps/app_queue.c
+--- asterisk-17.8.0.orig/apps/app_queue.c
++++ asterisk-17.8.0/apps/app_queue.c
 @@ -1576,6 +1576,7 @@ struct queue_ent {
  	char announce[PATH_MAX];               /*!< Announcement to play for member when call is answered */
  	char context[AST_MAX_CONTEXT];         /*!< Context when user exits queue */
@@ -45,7 +45,7 @@ Index: asterisk-17.7.0/apps/app_queue.c
  			ast_channel_publish_cached_blob(qe->chan, queue_caller_leave_type(), blob);
  			ast_debug(1, "Queue '%s' Leave, Channel '%s'\n", q->name, ast_channel_name(qe->chan));
  			/* Take us out of the queue */
-@@ -8552,6 +8568,8 @@ static int queue_exec(struct ast_channel
+@@ -8553,6 +8569,8 @@ static int queue_exec(struct ast_channel
  	} else {
  		raise_penalty = INT_MAX;
  	}
