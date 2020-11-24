@@ -1,7 +1,7 @@
-Index: asterisk-17.8.1/include/asterisk/bridge_features.h
+Index: asterisk-17.9.0/include/asterisk/bridge_features.h
 ===================================================================
---- asterisk-17.8.1.orig/include/asterisk/bridge_features.h
-+++ asterisk-17.8.1/include/asterisk/bridge_features.h
+--- asterisk-17.9.0.orig/include/asterisk/bridge_features.h
++++ asterisk-17.9.0/include/asterisk/bridge_features.h
 @@ -277,6 +277,8 @@ struct ast_bridge_features {
  	unsigned int mute:1;
  	/*! TRUE if DTMF should be passed into the bridge tech.  */
@@ -11,10 +11,10 @@ Index: asterisk-17.8.1/include/asterisk/bridge_features.h
  	/*! TRUE if text messaging is permitted. */
  	unsigned int text_messaging:1;
  };
-Index: asterisk-17.8.1/include/asterisk/stasis_app.h
+Index: asterisk-17.9.0/include/asterisk/stasis_app.h
 ===================================================================
---- asterisk-17.8.1.orig/include/asterisk/stasis_app.h
-+++ asterisk-17.8.1/include/asterisk/stasis_app.h
+--- asterisk-17.9.0.orig/include/asterisk/stasis_app.h
++++ asterisk-17.9.0/include/asterisk/stasis_app.h
 @@ -838,6 +838,16 @@ void stasis_app_control_mute_in_bridge(
  	struct stasis_app_control *control, int mute);
  
@@ -32,10 +32,10 @@ Index: asterisk-17.8.1/include/asterisk/stasis_app.h
   * \since 12
   * \brief Gets the bridge currently associated with a control object.
   *
-Index: asterisk-17.8.1/res/ari/resource_bridges.c
+Index: asterisk-17.9.0/res/ari/resource_bridges.c
 ===================================================================
---- asterisk-17.8.1.orig/res/ari/resource_bridges.c
-+++ asterisk-17.8.1/res/ari/resource_bridges.c
+--- asterisk-17.9.0.orig/res/ari/resource_bridges.c
++++ asterisk-17.9.0/res/ari/resource_bridges.c
 @@ -221,6 +221,7 @@ void ast_ari_bridges_add_channel(struct
  		if (!stasis_app_control_bridge_features_init(list->controls[i])) {
  			stasis_app_control_absorb_dtmf_in_bridge(list->controls[i], args->absorb_dtmf);
@@ -44,10 +44,10 @@ Index: asterisk-17.8.1/res/ari/resource_bridges.c
  		}
  	}
  
-Index: asterisk-17.8.1/res/ari/resource_bridges.h
+Index: asterisk-17.9.0/res/ari/resource_bridges.h
 ===================================================================
---- asterisk-17.8.1.orig/res/ari/resource_bridges.h
-+++ asterisk-17.8.1/res/ari/resource_bridges.h
+--- asterisk-17.9.0.orig/res/ari/resource_bridges.h
++++ asterisk-17.9.0/res/ari/resource_bridges.h
 @@ -154,6 +154,8 @@ struct ast_ari_bridges_add_channel_args
  	int absorb_dtmf;
  	/*! Mute audio from this channel, preventing it to pass through to the bridge */
@@ -57,10 +57,10 @@ Index: asterisk-17.8.1/res/ari/resource_bridges.h
  };
  /*!
   * \brief Body parsing function for /bridges/{bridgeId}/addChannel.
-Index: asterisk-17.8.1/res/res_ari_bridges.c
+Index: asterisk-17.9.0/res/res_ari_bridges.c
 ===================================================================
---- asterisk-17.8.1.orig/res/res_ari_bridges.c
-+++ asterisk-17.8.1/res/res_ari_bridges.c
+--- asterisk-17.9.0.orig/res/res_ari_bridges.c
++++ asterisk-17.9.0/res/res_ari_bridges.c
 @@ -440,6 +440,10 @@ int ast_ari_bridges_add_channel_parse_bo
  	if (field) {
  		args->mute = ast_json_is_true(field);
@@ -82,10 +82,10 @@ Index: asterisk-17.8.1/res/res_ari_bridges.c
  		{}
  	}
  	for (i = path_vars; i; i = i->next) {
-Index: asterisk-17.8.1/res/stasis/control.c
+Index: asterisk-17.9.0/res/stasis/control.c
 ===================================================================
---- asterisk-17.8.1.orig/res/stasis/control.c
-+++ asterisk-17.8.1/res/stasis/control.c
+--- asterisk-17.9.0.orig/res/stasis/control.c
++++ asterisk-17.9.0/res/stasis/control.c
 @@ -1285,6 +1285,7 @@ int control_swap_channel_in_bridge(struc
  {
  	int res;
@@ -126,10 +126,10 @@ Index: asterisk-17.8.1/res/stasis/control.c
  void control_flush_queue(struct stasis_app_control *control)
  {
  	struct ao2_iterator iter;
-Index: asterisk-17.8.1/rest-api/api-docs/bridges.json
+Index: asterisk-17.9.0/rest-api/api-docs/bridges.json
 ===================================================================
---- asterisk-17.8.1.orig/rest-api/api-docs/bridges.json
-+++ asterisk-17.8.1/rest-api/api-docs/bridges.json
+--- asterisk-17.9.0.orig/rest-api/api-docs/bridges.json
++++ asterisk-17.9.0/rest-api/api-docs/bridges.json
 @@ -191,6 +191,15 @@
  							"allowMultiple": false,
  							"dataType": "boolean",
