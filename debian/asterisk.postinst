@@ -62,6 +62,10 @@ case "$1" in
 		fi
 	fi
 
+	# Added in 20.17 to remove the init file that is not used anymore
+	OLD_INIT_FILE="/etc/init.d/asterisk"
+	rm -f "${OLD_INIT_FILE}"
+
 	### this is done here in case asterisk-config was installed/upgraded first
 
 	set +e # ignore errors temporarily
