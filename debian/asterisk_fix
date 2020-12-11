@@ -1,4 +1,6 @@
 #! /bin/sh
+# Copyright 2020 The Wazo Authors  (see the AUTHORS file)
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 if getent passwd asterisk >/dev/null ;then
 	# Some halfbaked Sarge versions needed their home dir fixed:
