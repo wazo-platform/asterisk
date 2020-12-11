@@ -1,11 +1,13 @@
 #! /bin/sh
+# Copyright 2020 The Wazo Authors  (see the AUTHORS file)
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 if getent passwd asterisk >/dev/null ;then
 	# Some halfbaked Sarge versions needed their home dir fixed:
-        if [ "`getent passwd asterisk|awk -F: '{print $6}'`" = \
+	if [ "`getent passwd asterisk|awk -F: '{print $6}'`" = \
 		"/run/asterisk" ];then
 		usermod -d /var/lib/asterisk asterisk
-        fi
+	fi
 else
 	adduser_extra_opts=""
 	# Cosmetic noise reduction
@@ -13,7 +15,7 @@ else
 		adduser_extra_opts="--no-create-home"
 	fi
 	adduser --system --group --home /var/lib/asterisk \
-	    $adduser_extra_opts \
+		$adduser_extra_opts \
 		--gecos "Asterisk PBX daemon" asterisk
 fi
 
@@ -40,32 +42,32 @@ fi
 # Make sure all (possibly) used dirs exist and is owned by asterisk
 
 dirs="
-        /var/log/asterisk
-        /var/spool/asterisk
-        /var/lib/asterisk
-        /run/asterisk
-        /etc/asterisk
+	/var/log/asterisk
+	/var/spool/asterisk
+	/var/lib/asterisk
+	/run/asterisk
+	/etc/asterisk
 "
 
 subdirs="
-        /var/lib/asterisk/sounds/priv-callerintros
-        /var/lib/asterisk/sounds/meetme
-        /var/log/asterisk/cdr-csv
-        /var/log/asterisk/cdr-custom
-        /var/spool/asterisk/dictate
-        /var/spool/asterisk/meetme
-        /var/spool/asterisk/monitor
-        /var/spool/asterisk/system
-        /var/spool/asterisk/tmp
-        /var/spool/asterisk/voicemail
+	/var/lib/asterisk/sounds/priv-callerintros
+	/var/lib/asterisk/sounds/meetme
+	/var/log/asterisk/cdr-csv
+	/var/log/asterisk/cdr-custom
+	/var/spool/asterisk/dictate
+	/var/spool/asterisk/meetme
+	/var/spool/asterisk/monitor
+	/var/spool/asterisk/system
+	/var/spool/asterisk/tmp
+	/var/spool/asterisk/voicemail
 "
 
 for dir in $subdirs $dirs; do
-        mkdir -p "$dir"
+	mkdir -p "$dir"
 done
 
 for dir in $dirs; do
-        chown -R asterisk: "$dir"
+	chown -R asterisk: "$dir"
 done
 
 ###################################
@@ -73,17 +75,14 @@ asterisk_dirs="/etc/asterisk /var/lib/asterisk /var/spool/asterisk/monitor"
 
 chown -R asterisk:asterisk $asterisk_dirs
 for dir in $asterisk_dirs; do
-    find $dir -type d -exec chmod 2775 {} \;
-    find $dir -name 'agi-bin' -prune -o -type f -exec chmod 660 {} \;
+	find $dir -type d -exec chmod 2775 {} \;
+	find $dir -name 'agi-bin' -prune -o -type f -exec chmod 660 {} \;
 done
 
 ####################################
 # If asterisk in running, reload it
-# otherwise start it
 if [ -f "/lib/systemd/system/asterisk.service" ];then
 	if [ -f /run/asterisk/asterisk.pid ];then
-	    invoke-rc.d asterisk reload || exit $?
-	else
-	    invoke-rc.d asterisk restart || exit $?
+		deb-systemd-invoke reload asterisk || exit $?
 	fi
 fi
