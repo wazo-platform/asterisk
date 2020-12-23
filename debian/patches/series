@@ -1,5 +1,4 @@
 ### upstream fixes
-colp-patch.diff
 deb_astgenkey-security
 deb_make-clean-fixes
 ## Wazo patches
