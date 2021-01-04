@@ -1,10 +1,9 @@
 ### upstream fixes
-colp-patch.diff
 deb_astgenkey-security
 deb_make-clean-fixes
 ## Wazo patches
 xivo_queue_agent_talking
-xivo_banner
+wazo_banner
 xivo_skill_queues
 xivo_agent_complete_wrapup
 xivo_sip_tel_uri
