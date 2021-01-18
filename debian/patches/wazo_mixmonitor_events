@@ -78,6 +78,7 @@ Index: asterisk-18.1.1/apps/app_mixmonitor.c
 +	if (message) {
 +		stasis_publish(ast_channel_topic(chan), message);
 +	}
++	pbx_builtin_setvar_helper(chan, "MIXMONITOR_ENABLED", "1");
 +
  	return 0;
  }
@@ -90,7 +91,7 @@ Index: asterisk-18.1.1/apps/app_mixmonitor.c
  
  	AST_DECLARE_APP_ARGS(args,
  		AST_APP_ARG(mixmonid);
-@@ -1242,6 +1274,13 @@ static int stop_mixmonitor_full(struct a
+@@ -1242,6 +1274,16 @@ static int stop_mixmonitor_full(struct a
  		ast_beep_stop(chan, beep_id);
  	}
  
@@ -100,11 +101,14 @@ Index: asterisk-18.1.1/apps/app_mixmonitor.c
 +	if (message) {
 +		stasis_publish(ast_channel_topic(chan), message);
 +	}
++	pbx_builtin_setvar_helper(chan, "MIXMONITOR_ENABLED", "0");
++	pbx_builtin_setvar_helper(chan, "MIXMONITOR_READ_MUTED", "0");
++	pbx_builtin_setvar_helper(chan, "MIXMONITOR_WRITE_MUTED", "0");
 +
  	return 0;
  }
  
-@@ -1329,6 +1368,8 @@ static int manager_mute_mixmonitor(struc
+@@ -1329,6 +1371,8 @@ static int manager_mute_mixmonitor(struc
  	const char *direction = astman_get_header(m,"Direction");
  	int clearmute = 1;
  	enum ast_audiohook_flags flag;
@@ -113,7 +117,7 @@ Index: asterisk-18.1.1/apps/app_mixmonitor.c
  
  	if (ast_strlen_zero(direction)) {
  		astman_send_error(s, m, "No direction specified. Must be read, write or both");
-@@ -1370,6 +1411,17 @@ static int manager_mute_mixmonitor(struc
+@@ -1370,6 +1414,24 @@ static int manager_mute_mixmonitor(struc
  		return AMI_SUCCESS;
  	}
  
@@ -126,6 +130,13 @@ Index: asterisk-18.1.1/apps/app_mixmonitor.c
 +
 +	if (stasis_message) {
 +		stasis_publish(ast_channel_topic(c), stasis_message);
++	}
++
++	if (flag & AST_AUDIOHOOK_MUTE_READ) {
++		pbx_builtin_setvar_helper(c, "MIXMONITOR_READ_MUTED", clearmute ? "0" : "1");
++	}
++	if (flag & AST_AUDIOHOOK_MUTE_WRITE) {
++		pbx_builtin_setvar_helper(c, "MIXMONITOR_WRITE_MUTED", clearmute ? "0" : "1");
 +	}
 +
  	astman_append(s, "Response: Success\r\n");
