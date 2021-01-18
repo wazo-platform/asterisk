@@ -73,12 +73,11 @@ Index: asterisk-18.1.1/apps/app_mixmonitor.c
  		ast_module_unref(ast_module_info->self);
  	}
  
-+  message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
-+                                               ast_channel_mixmonitor_start_type(),
-+                                               NULL);
-+  if (message) {
-+    stasis_publish(ast_channel_topic(chan), message);
-+  }
++	message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
++		ast_channel_mixmonitor_start_type(), NULL);
++	if (message) {
++		stasis_publish(ast_channel_topic(chan), message);
++	}
 +
  	return 0;
  }
@@ -95,12 +94,12 @@ Index: asterisk-18.1.1/apps/app_mixmonitor.c
  		ast_beep_stop(chan, beep_id);
  	}
  
-+  message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
-+                                               ast_channel_mixmonitor_stop_type(),
-+                                               NULL);
-+  if (message) {
-+    stasis_publish(ast_channel_topic(chan), message);
-+  }
++	message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
++	                                             ast_channel_mixmonitor_stop_type(),
++	                                             NULL);
++	if (message) {
++		stasis_publish(ast_channel_topic(chan), message);
++	}
 +
  	return 0;
  }
