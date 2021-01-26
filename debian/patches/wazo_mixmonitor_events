@@ -11,15 +11,24 @@ Index: asterisk-18.2.0/apps/app_mixmonitor.c
  #include "asterisk/callerid.h"
  #include "asterisk/mod_format.h"
  #include "asterisk/linkedlists.h"
-@@ -1077,6 +1079,7 @@ static int mixmonitor_exec(struct ast_ch
+@@ -58,6 +60,7 @@
+ #include "asterisk/mixmonitor.h"
+ #include "asterisk/format_cache.h"
+ #include "asterisk/beep.h"
++#include "asterisk/cel.h"
+ 
+ /*** DOCUMENTATION
+ 	<application name="MixMonitor" language="en_US">
+@@ -1077,6 +1080,8 @@ static int mixmonitor_exec(struct ast_ch
  	struct ast_flags flags = { 0 };
  	char *recipients = NULL;
  	char *parse;
 +	RAII_VAR(struct stasis_message *, message, NULL, ao2_cleanup);
++	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
  	AST_DECLARE_APP_ARGS(args,
  		AST_APP_ARG(filename);
  		AST_APP_ARG(options);
-@@ -1197,6 +1200,13 @@ static int mixmonitor_exec(struct ast_ch
+@@ -1197,6 +1202,22 @@ static int mixmonitor_exec(struct ast_ch
  		ast_module_unref(ast_module_info->self);
  	}
  
@@ -29,11 +38,20 @@ Index: asterisk-18.2.0/apps/app_mixmonitor.c
 +  if (message) {
 +    stasis_publish(ast_channel_topic(chan), message);
 +  }
++	blob = ast_json_pack("{s: s, s: {s: s, s: s}}",
++		"event", "MixMonitor",
++		"extra",
++		"status", "start",
++		"filename", args.filename);
++	if (!blob) {
++		return 0;
++	}
++	ast_cel_publish_event(chan, AST_CEL_APP_START, blob);
 +
  	return 0;
  }
  
-@@ -1206,6 +1216,7 @@ static int stop_mixmonitor_full(struct a
+@@ -1206,6 +1227,7 @@ static int stop_mixmonitor_full(struct a
  	char *parse = "";
  	struct mixmonitor_ds *mixmonitor_ds;
  	const char *beep_id = NULL;
@@ -41,7 +59,7 @@ Index: asterisk-18.2.0/apps/app_mixmonitor.c
  
  	AST_DECLARE_APP_ARGS(args,
  		AST_APP_ARG(mixmonid);
-@@ -1263,6 +1274,13 @@ static int stop_mixmonitor_full(struct a
+@@ -1263,6 +1285,13 @@ static int stop_mixmonitor_full(struct a
  		ast_beep_stop(chan, beep_id);
  	}
  
@@ -55,7 +73,7 @@ Index: asterisk-18.2.0/apps/app_mixmonitor.c
  	return 0;
  }
  
-@@ -1350,6 +1368,8 @@ static int manager_mute_mixmonitor(struc
+@@ -1350,6 +1379,8 @@ static int manager_mute_mixmonitor(struc
  	const char *direction = astman_get_header(m,"Direction");
  	int clearmute = 1;
  	enum ast_audiohook_flags flag;
@@ -64,7 +82,7 @@ Index: asterisk-18.2.0/apps/app_mixmonitor.c
  
  	if (ast_strlen_zero(direction)) {
  		astman_send_error(s, m, "No direction specified. Must be read, write or both");
-@@ -1391,6 +1411,17 @@ static int manager_mute_mixmonitor(struc
+@@ -1391,6 +1422,17 @@ static int manager_mute_mixmonitor(struc
  		return AMI_SUCCESS;
  	}
  
