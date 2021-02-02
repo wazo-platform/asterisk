@@ -36,8 +36,8 @@ Index: asterisk-18.2.0/apps/app_mixmonitor.c
 +		"filename", filename,
 +		"mixmonitor_id", datastore_id);
 +	message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
-+												ast_channel_mixmonitor_start_type(),
-+												blob);
++		ast_channel_mixmonitor_start_type(),
++		blob);
 +	if (message) {
 +		stasis_publish(ast_channel_topic(chan), message);
 +	}
