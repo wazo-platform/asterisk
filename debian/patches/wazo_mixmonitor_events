@@ -11,51 +11,81 @@ Index: asterisk-18.2.0/apps/app_mixmonitor.c
  #include "asterisk/callerid.h"
  #include "asterisk/mod_format.h"
  #include "asterisk/linkedlists.h"
-@@ -1077,6 +1079,7 @@ static int mixmonitor_exec(struct ast_ch
- 	struct ast_flags flags = { 0 };
- 	char *recipients = NULL;
- 	char *parse;
+@@ -58,6 +60,7 @@
+ #include "asterisk/mixmonitor.h"
+ #include "asterisk/format_cache.h"
+ #include "asterisk/beep.h"
++#include "asterisk/cel.h"
+ 
+ /*** DOCUMENTATION
+ 	<application name="MixMonitor" language="en_US">
+@@ -893,6 +896,8 @@ static int launch_monitor_thread(struct
+ 	struct mixmonitor *mixmonitor;
+ 	char postprocess2[1024] = "";
+ 	char *datastore_id = NULL;
 +	RAII_VAR(struct stasis_message *, message, NULL, ao2_cleanup);
- 	AST_DECLARE_APP_ARGS(args,
- 		AST_APP_ARG(filename);
- 		AST_APP_ARG(options);
-@@ -1197,6 +1200,13 @@ static int mixmonitor_exec(struct ast_ch
- 		ast_module_unref(ast_module_info->self);
++	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
+ 
+ 	postprocess2[0] = 0;
+ 	/* If a post process system command is given attach it to the structure */
+@@ -1014,6 +1019,15 @@ static int launch_monitor_thread(struct
+ 		mixmonitor_free(mixmonitor);
+ 		return -1;
  	}
++	blob = ast_json_pack("{s: s, s: s}",
++		"filename", filename,
++		"mixmonitor_id", datastore_id);
++	message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
++		ast_channel_mixmonitor_start_type(),
++		blob);
++	if (message) {
++		stasis_publish(ast_channel_topic(chan), message);
++	}
  
-+  message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
-+                                               ast_channel_mixmonitor_start_type(),
-+                                               NULL);
-+  if (message) {
-+    stasis_publish(ast_channel_topic(chan), message);
-+  }
-+
- 	return 0;
- }
+ 	ast_free(datastore_id);
  
-@@ -1206,6 +1216,7 @@ static int stop_mixmonitor_full(struct a
+@@ -1206,6 +1220,9 @@ static int stop_mixmonitor_full(struct a
  	char *parse = "";
  	struct mixmonitor_ds *mixmonitor_ds;
  	const char *beep_id = NULL;
++	const char *datastore_id = NULL;
 +	RAII_VAR(struct stasis_message *, message, NULL, ao2_cleanup);
++	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
  
  	AST_DECLARE_APP_ARGS(args,
  		AST_APP_ARG(mixmonid);
-@@ -1263,6 +1274,13 @@ static int stop_mixmonitor_full(struct a
+@@ -1229,6 +1246,12 @@ static int stop_mixmonitor_full(struct a
+ 
+ 	ast_mutex_lock(&mixmonitor_ds->lock);
+ 
++	if (ast_asprintf(&datastore_id, "%p", mixmonitor_ds) == -1) {
++		ast_log(LOG_ERROR, "Failed to allocate memory for MixMonitor ID.\n");
++		ast_mutex_unlock(&mixmonitor_ds->lock);
++		return -1;
++	}
++
+ 	/* closing the filestream here guarantees the file is available to the dialplan
+ 	 * after calling StopMixMonitor */
+ 	mixmonitor_ds_close_fs(mixmonitor_ds);
+@@ -1263,6 +1286,17 @@ static int stop_mixmonitor_full(struct a
  		ast_beep_stop(chan, beep_id);
  	}
  
-+  message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
-+                                               ast_channel_mixmonitor_stop_type(),
-+                                               NULL);
-+  if (message) {
-+    stasis_publish(ast_channel_topic(chan), message);
-+  }
++	blob = ast_json_pack("{s: s}",
++		"mixmonitor_id", datastore_id);
++	message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
++		ast_channel_mixmonitor_stop_type(),
++		blob);
++	if (message) {
++		stasis_publish(ast_channel_topic(chan), message);
++	}
++
++	ast_free(datastore_id);
 +
  	return 0;
  }
  
-@@ -1350,6 +1368,8 @@ static int manager_mute_mixmonitor(struc
+@@ -1350,6 +1384,8 @@ static int manager_mute_mixmonitor(struc
  	const char *direction = astman_get_header(m,"Direction");
  	int clearmute = 1;
  	enum ast_audiohook_flags flag;
@@ -64,7 +94,7 @@ Index: asterisk-18.2.0/apps/app_mixmonitor.c
  
  	if (ast_strlen_zero(direction)) {
  		astman_send_error(s, m, "No direction specified. Must be read, write or both");
-@@ -1391,6 +1411,17 @@ static int manager_mute_mixmonitor(struc
+@@ -1391,6 +1427,17 @@ static int manager_mute_mixmonitor(struc
  		return AMI_SUCCESS;
  	}
  
@@ -241,3 +271,82 @@ Index: asterisk-18.2.0/main/stasis_channels.c
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_talking_start);
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_talking_stop);
  
+Index: asterisk-18.2.0/main/cel.c
+===================================================================
+--- asterisk-18.2.0.orig/main/cel.c
++++ asterisk-18.2.0/main/cel.c
+@@ -321,6 +321,8 @@ static const char * const cel_event_type
+ 	[AST_CEL_FORWARD]          = "FORWARD",
+ 	[AST_CEL_LINKEDID_END]     = "LINKEDID_END",
+ 	[AST_CEL_LOCAL_OPTIMIZE]   = "LOCAL_OPTIMIZE",
++	[AST_CEL_MIXMONITOR_START] = "MIXMONITOR_START",
++	[AST_CEL_MIXMONITOR_STOP]  = "MIXMONITOR_STOP",
+ };
+ 
+ struct cel_backend {
+@@ -1389,6 +1391,33 @@ static void cel_pickup_cb(
+ 	ast_json_unref(extra);
+ }
+ 
++static void cel_mixmonitor_start_cb(
++	void *data, struct stasis_subscription *sub,
++	struct stasis_message *message)
++{
++	struct ast_channel_blob *obj = stasis_message_data(message);
++
++	if (!obj || !obj->snapshot || !obj->blob) {
++		return;
++	}
++
++	cel_report_event(obj->snapshot, AST_CEL_MIXMONITOR_START,
++		stasis_message_timestamp(message), NULL, obj->blob, NULL);
++}
++
++static void cel_mixmonitor_stop_cb(
++	void *data, struct stasis_subscription *sub,
++	struct stasis_message *message)
++{
++	struct ast_channel_blob *obj = stasis_message_data(message);
++
++	if (!obj || !obj->snapshot || !obj->blob) {
++		return;
++	}
++	cel_report_event(obj->snapshot, AST_CEL_MIXMONITOR_STOP,
++		stasis_message_timestamp(message), NULL, obj->blob, NULL);
++}
++
+ static void cel_local_cb(
+ 	void *data, struct stasis_subscription *sub,
+ 	struct stasis_message *message)
+@@ -1554,6 +1583,16 @@ static int create_routes(void)
+ 		NULL);
+ 
+ 	ret |= stasis_message_router_add(cel_state_router,
++		ast_channel_mixmonitor_start_type(),
++		cel_mixmonitor_start_cb,
++		NULL);
++
++	ret |= stasis_message_router_add(cel_state_router,
++		ast_channel_mixmonitor_stop_type(),
++		cel_mixmonitor_stop_cb,
++		NULL);
++
++	ret |= stasis_message_router_add(cel_state_router,
+ 		ast_local_optimization_end_type(),
+ 		cel_local_cb,
+ 		NULL);
+Index: asterisk-18.2.0/include/asterisk/cel.h
+===================================================================
+--- asterisk-18.2.0.orig/include/asterisk/cel.h
++++ asterisk-18.2.0/include/asterisk/cel.h
+@@ -75,6 +75,10 @@ enum ast_cel_event_type {
+ 	AST_CEL_FORWARD = 16,
+ 	/*! \brief A local channel optimization occurred */
+ 	AST_CEL_LOCAL_OPTIMIZE = 17,
++	/*! \brief a MixMonitor has been started on this channel */
++	AST_CEL_MIXMONITOR_START = 18,
++	/*! \brief a MixMonitor has been stopped on this channel */
++	AST_CEL_MIXMONITOR_STOP = 19,
+ };
+ 
+ /*!
