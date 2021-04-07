@@ -1,4 +1,4 @@
-# asterisk
+# Asterisk
 
 This repository contains the packaging information and patches for [Asterisk](http://www.asterisk.org/).
 
