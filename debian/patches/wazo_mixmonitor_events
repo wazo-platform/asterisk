@@ -27,7 +27,28 @@ Index: asterisk-18.3.0/apps/app_mixmonitor.c
  
  	ast_free(datastore_id);
  
-@@ -1260,7 +1271,9 @@ static int stop_mixmonitor_full(struct a
+@@ -1124,7 +1135,6 @@ static int mixmonitor_exec(struct ast_ch
+ 	struct ast_flags flags = { 0 };
+ 	char *recipients = NULL;
+ 	char *parse;
+-	RAII_VAR(struct stasis_message *, message, NULL, ao2_cleanup);
+ 	AST_DECLARE_APP_ARGS(args,
+ 		AST_APP_ARG(filename);
+ 		AST_APP_ARG(options);
+@@ -1245,12 +1255,6 @@ static int mixmonitor_exec(struct ast_ch
+ 		ast_module_unref(ast_module_info->self);
+ 	}
+ 
+-	message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
+-		ast_channel_mixmonitor_start_type(), NULL);
+-	if (message) {
+-		stasis_publish(ast_channel_topic(chan), message);
+-	}
+-
+ 	return 0;
+ }
+ 
+@@ -1260,7 +1264,9 @@ static int stop_mixmonitor_full(struct a
  	char *parse = "";
  	struct mixmonitor_ds *mixmonitor_ds;
  	const char *beep_id = NULL;
@@ -37,7 +58,7 @@ Index: asterisk-18.3.0/apps/app_mixmonitor.c
  
  	AST_DECLARE_APP_ARGS(args,
  		AST_APP_ARG(mixmonid);
-@@ -1284,6 +1297,12 @@ static int stop_mixmonitor_full(struct a
+@@ -1284,6 +1290,12 @@ static int stop_mixmonitor_full(struct a
  
  	ast_mutex_lock(&mixmonitor_ds->lock);
  
@@ -50,19 +71,21 @@ Index: asterisk-18.3.0/apps/app_mixmonitor.c
  	/* closing the filestream here guarantees the file is available to the dialplan
  	 * after calling StopMixMonitor */
  	mixmonitor_ds_close_fs(mixmonitor_ds);
-@@ -1325,6 +1344,17 @@ static int stop_mixmonitor_full(struct a
- 		stasis_publish(ast_channel_topic(chan), message);
+@@ -1318,13 +1330,17 @@ static int stop_mixmonitor_full(struct a
+ 		ast_beep_stop(chan, beep_id);
  	}
  
 +	blob = ast_json_pack("{s: s}",
 +		"mixmonitor_id", datastore_id);
-+	message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
+ 	message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
+-	                                             ast_channel_mixmonitor_stop_type(),
+-	                                             NULL);
 +		ast_channel_mixmonitor_stop_type(),
 +		blob);
-+	if (message) {
-+		stasis_publish(ast_channel_topic(chan), message);
-+	}
-+
+ 	if (message) {
+ 		stasis_publish(ast_channel_topic(chan), message);
+ 	}
+ 
 +	ast_free(datastore_id);
 +
  	return 0;
