@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2017-2019 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2017-2021 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
 import ari as ari_client
@@ -31,7 +31,7 @@ def ari():
     AssetLauncher.kill_containers()
     AssetLauncher.rm_containers()
     AssetLauncher.launch_service_with_asset()
-    ari_url = 'http://localhost:{port}'.format(port=AssetLauncher.service_port(5039, 'ari'))
+    ari_url = 'http://127.0.0.1:{port}'.format(port=AssetLauncher.service_port(5039, 'ari'))
     ari = until.return_(ari_client.connect, ari_url, 'wazo', 'wazo', timeout=5, interval=0.1)
 
     yield ari
