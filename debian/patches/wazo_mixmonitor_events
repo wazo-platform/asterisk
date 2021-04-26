@@ -1,25 +1,8 @@
-Index: asterisk-18.2.2/apps/app_mixmonitor.c
+Index: asterisk-18.3.0/apps/app_mixmonitor.c
 ===================================================================
---- asterisk-18.2.2.orig/apps/app_mixmonitor.c
-+++ asterisk-18.2.2/apps/app_mixmonitor.c
-@@ -51,6 +51,8 @@
- #include "asterisk/channel.h"
- #include "asterisk/autochan.h"
- #include "asterisk/manager.h"
-+#include "asterisk/stasis.h"
-+#include "asterisk/stasis_channels.h"
- #include "asterisk/callerid.h"
- #include "asterisk/mod_format.h"
- #include "asterisk/linkedlists.h"
-@@ -58,6 +60,7 @@
- #include "asterisk/mixmonitor.h"
- #include "asterisk/format_cache.h"
- #include "asterisk/beep.h"
-+#include "asterisk/cel.h"
- 
- /*** DOCUMENTATION
- 	<application name="MixMonitor" language="en_US">
-@@ -893,6 +896,8 @@ static int launch_monitor_thread(struct
+--- asterisk-18.3.0.orig/apps/app_mixmonitor.c
++++ asterisk-18.3.0/apps/app_mixmonitor.c
+@@ -940,6 +940,8 @@ static int launch_monitor_thread(struct
  	struct mixmonitor *mixmonitor;
  	char postprocess2[1024] = "";
  	char *datastore_id = NULL;
@@ -28,7 +11,7 @@ Index: asterisk-18.2.2/apps/app_mixmonitor.c
  
  	postprocess2[0] = 0;
  	/* If a post process system command is given attach it to the structure */
-@@ -1014,6 +1019,15 @@ static int launch_monitor_thread(struct
+@@ -1061,6 +1063,15 @@ static int launch_monitor_thread(struct
  		mixmonitor_free(mixmonitor);
  		return -1;
  	}
@@ -44,17 +27,38 @@ Index: asterisk-18.2.2/apps/app_mixmonitor.c
  
  	ast_free(datastore_id);
  
-@@ -1206,6 +1220,9 @@ static int stop_mixmonitor_full(struct a
+@@ -1124,7 +1135,6 @@ static int mixmonitor_exec(struct ast_ch
+ 	struct ast_flags flags = { 0 };
+ 	char *recipients = NULL;
+ 	char *parse;
+-	RAII_VAR(struct stasis_message *, message, NULL, ao2_cleanup);
+ 	AST_DECLARE_APP_ARGS(args,
+ 		AST_APP_ARG(filename);
+ 		AST_APP_ARG(options);
+@@ -1245,12 +1255,6 @@ static int mixmonitor_exec(struct ast_ch
+ 		ast_module_unref(ast_module_info->self);
+ 	}
+ 
+-	message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
+-		ast_channel_mixmonitor_start_type(), NULL);
+-	if (message) {
+-		stasis_publish(ast_channel_topic(chan), message);
+-	}
+-
+ 	return 0;
+ }
+ 
+@@ -1260,7 +1264,9 @@ static int stop_mixmonitor_full(struct a
  	char *parse = "";
  	struct mixmonitor_ds *mixmonitor_ds;
  	const char *beep_id = NULL;
 +	const char *datastore_id = NULL;
-+	RAII_VAR(struct stasis_message *, message, NULL, ao2_cleanup);
+ 	RAII_VAR(struct stasis_message *, message, NULL, ao2_cleanup);
 +	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
  
  	AST_DECLARE_APP_ARGS(args,
  		AST_APP_ARG(mixmonid);
-@@ -1229,6 +1246,12 @@ static int stop_mixmonitor_full(struct a
+@@ -1284,6 +1290,12 @@ static int stop_mixmonitor_full(struct a
  
  	ast_mutex_lock(&mixmonitor_ds->lock);
  
@@ -67,214 +71,30 @@ Index: asterisk-18.2.2/apps/app_mixmonitor.c
  	/* closing the filestream here guarantees the file is available to the dialplan
  	 * after calling StopMixMonitor */
  	mixmonitor_ds_close_fs(mixmonitor_ds);
-@@ -1263,6 +1286,17 @@ static int stop_mixmonitor_full(struct a
+@@ -1318,13 +1330,17 @@ static int stop_mixmonitor_full(struct a
  		ast_beep_stop(chan, beep_id);
  	}
  
 +	blob = ast_json_pack("{s: s}",
 +		"mixmonitor_id", datastore_id);
-+	message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
+ 	message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
+-	                                             ast_channel_mixmonitor_stop_type(),
+-	                                             NULL);
 +		ast_channel_mixmonitor_stop_type(),
 +		blob);
-+	if (message) {
-+		stasis_publish(ast_channel_topic(chan), message);
-+	}
-+
+ 	if (message) {
+ 		stasis_publish(ast_channel_topic(chan), message);
+ 	}
+ 
 +	ast_free(datastore_id);
 +
  	return 0;
  }
  
-@@ -1350,6 +1384,8 @@ static int manager_mute_mixmonitor(struc
- 	const char *direction = astman_get_header(m,"Direction");
- 	int clearmute = 1;
- 	enum ast_audiohook_flags flag;
-+	RAII_VAR(struct stasis_message *, stasis_message, NULL, ao2_cleanup);
-+	RAII_VAR(struct ast_json *, stasis_message_blob, NULL, ast_json_unref);
- 
- 	if (ast_strlen_zero(direction)) {
- 		astman_send_error(s, m, "No direction specified. Must be read, write or both");
-@@ -1391,6 +1427,17 @@ static int manager_mute_mixmonitor(struc
- 		return AMI_SUCCESS;
- 	}
- 
-+	stasis_message_blob = ast_json_pack("{s: s, s: b}",
-+		"direction", direction,
-+		"state", ast_true(state));
-+
-+	stasis_message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(c),
-+		ast_channel_mixmonitor_mute_type(), stasis_message_blob);
-+
-+	if (stasis_message) {
-+		stasis_publish(ast_channel_topic(c), stasis_message);
-+	}
-+
- 	astman_append(s, "Response: Success\r\n");
- 
- 	if (!ast_strlen_zero(id)) {
-Index: asterisk-18.2.2/include/asterisk/stasis_channels.h
+Index: asterisk-18.3.0/main/cel.c
 ===================================================================
---- asterisk-18.2.2.orig/include/asterisk/stasis_channels.h
-+++ asterisk-18.2.2/include/asterisk/stasis_channels.h
-@@ -590,7 +590,31 @@ struct stasis_message_type *ast_channel_
- struct stasis_message_type *ast_channel_monitor_stop_type(void);
- 
- /*!
-- * \since 12.0.0
-+ * \since 18
-+ * \brief Message type for starting mixmonitor on a channel
-+ *
-+ * \retval A stasis message type
-+ */
-+struct stasis_message_type *ast_channel_mixmonitor_start_type(void);
-+
-+/*!
-+ * \since 18
-+ * \brief Message type for stopping mixmonitor on a channel
-+ *
-+ * \retval A stasis message type
-+ */
-+struct stasis_message_type *ast_channel_mixmonitor_stop_type(void);
-+
-+/*!
-+ * \since 18
-+ * \brief Message type for muting or unmuting mixmonitor on a channel
-+ *
-+ * \retval A stasis message type
-+ */
-+struct stasis_message_type *ast_channel_mixmonitor_mute_type(void);
-+
-+/*!
-+ * \since 18.0.0
-  * \brief Message type for agent login on a channel
-  *
-  * \retval A stasis message type
-Index: asterisk-18.2.2/main/manager_channels.c
-===================================================================
---- asterisk-18.2.2.orig/main/manager_channels.c
-+++ asterisk-18.2.2/main/manager_channels.c
-@@ -1116,6 +1116,53 @@ static void channel_monitor_stop_cb(void
- 	publish_basic_channel_event("MonitorStop", EVENT_FLAG_CALL, payload->snapshot);
- }
- 
-+static void channel_mixmonitor_start_cb(void *data, struct stasis_subscription *sub,
-+		struct stasis_message *message)
-+{
-+	struct ast_channel_blob *payload = stasis_message_data(message);
-+
-+	publish_basic_channel_event("MixMonitorStart", EVENT_FLAG_CALL, payload->snapshot);
-+}
-+
-+static void channel_mixmonitor_stop_cb(void *data, struct stasis_subscription *sub,
-+		struct stasis_message *message)
-+{
-+	struct ast_channel_blob *payload = stasis_message_data(message);
-+
-+	publish_basic_channel_event("MixMonitorStop", EVENT_FLAG_CALL, payload->snapshot);
-+}
-+
-+static void channel_mixmonitor_mute_cb(void *data, struct stasis_subscription *sub,
-+		struct stasis_message *message)
-+{
-+	RAII_VAR(struct ast_str *, channel_event_string, NULL, ast_free);
-+	RAII_VAR(struct ast_str *, event_buffer, ast_str_create(64), ast_free);
-+	struct ast_channel_blob *payload = stasis_message_data(message);
-+	struct ast_json *direction = ast_json_object_get(payload->blob, "direction");
-+	const int state = ast_json_is_true(ast_json_object_get(payload->blob, "state"));
-+
-+	if (!event_buffer) {
-+		return;
-+	}
-+
-+	channel_event_string = ast_manager_build_channel_state_string(payload->snapshot);
-+	if (!channel_event_string) {
-+		return;
-+	}
-+
-+	if (direction) {
-+		ast_str_append(&event_buffer, 0, "Direction: %s\r\n", ast_json_string_get(direction));
-+	}
-+	ast_str_append(&event_buffer, 0, "State: %s\r\n", state ? "1" : "0");
-+
-+	manager_event(EVENT_FLAG_CALL, "MixMonitorMute",
-+		"%s"
-+		"%s",
-+		ast_str_buffer(channel_event_string),
-+		ast_str_buffer(event_buffer));
-+
-+}
-+
- static int dial_status_end(const char *dialstatus)
- {
- 	return (strcmp(dialstatus, "RINGING") &&
-@@ -1320,6 +1367,15 @@ int manager_channels_init(void)
- 	ret |= stasis_message_router_add(message_router,
- 		ast_channel_monitor_stop_type(), channel_monitor_stop_cb, NULL);
- 
-+	ret |= stasis_message_router_add(message_router,
-+    ast_channel_mixmonitor_start_type(), channel_mixmonitor_start_cb, NULL);
-+
-+	ret |= stasis_message_router_add(message_router,
-+    ast_channel_mixmonitor_stop_type(), channel_mixmonitor_stop_cb, NULL);
-+
-+	ret |= stasis_message_router_add(message_router,
-+    ast_channel_mixmonitor_mute_type(), channel_mixmonitor_mute_cb, NULL);
-+
- 	/* If somehow we failed to add any routes, just shut down the whole
- 	 * thing and fail it.
- 	 */
-Index: asterisk-18.2.2/main/stasis.c
-===================================================================
---- asterisk-18.2.2.orig/main/stasis.c
-+++ asterisk-18.2.2/main/stasis.c
-@@ -130,6 +130,9 @@
- 							<enum name="ast_channel_moh_stop_type" />
- 							<enum name="ast_channel_monitor_start_type" />
- 							<enum name="ast_channel_monitor_stop_type" />
-+							<enum name="ast_channel_mixmonitor_start_type" />
-+							<enum name="ast_channel_mixmonitor_stop_type" />
-+							<enum name="ast_channel_mixmonitor_mute_type" />
- 							<enum name="ast_channel_agent_login_type" />
- 							<enum name="ast_channel_agent_logoff_type" />
- 							<enum name="ast_channel_talking_start" />
-Index: asterisk-18.2.2/main/stasis_channels.c
-===================================================================
---- asterisk-18.2.2.orig/main/stasis_channels.c
-+++ asterisk-18.2.2/main/stasis_channels.c
-@@ -1651,6 +1651,9 @@ STASIS_MESSAGE_TYPE_DEFN(ast_channel_moh
- 	);
- STASIS_MESSAGE_TYPE_DEFN(ast_channel_monitor_start_type);
- STASIS_MESSAGE_TYPE_DEFN(ast_channel_monitor_stop_type);
-+STASIS_MESSAGE_TYPE_DEFN(ast_channel_mixmonitor_start_type);
-+STASIS_MESSAGE_TYPE_DEFN(ast_channel_mixmonitor_stop_type);
-+STASIS_MESSAGE_TYPE_DEFN(ast_channel_mixmonitor_mute_type);
- STASIS_MESSAGE_TYPE_DEFN(ast_channel_agent_login_type,
- 	.to_ami = agent_login_to_ami,
- 	);
-@@ -1694,6 +1697,9 @@ static void stasis_channels_cleanup(void
- 	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_moh_stop_type);
- 	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_monitor_start_type);
- 	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_monitor_stop_type);
-+	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_mixmonitor_start_type);
-+	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_mixmonitor_stop_type);
-+	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_mixmonitor_mute_type);
- 	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_agent_login_type);
- 	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_agent_logoff_type);
- 	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_talking_start);
-@@ -1744,6 +1750,9 @@ int ast_stasis_channels_init(void)
- 	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_moh_stop_type);
- 	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_monitor_start_type);
- 	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_monitor_stop_type);
-+	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_mixmonitor_start_type);
-+	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_mixmonitor_stop_type);
-+	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_mixmonitor_mute_type);
- 	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_talking_start);
- 	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_talking_stop);
- 
-Index: asterisk-18.2.2/main/cel.c
-===================================================================
---- asterisk-18.2.2.orig/main/cel.c
-+++ asterisk-18.2.2/main/cel.c
+--- asterisk-18.3.0.orig/main/cel.c
++++ asterisk-18.3.0/main/cel.c
 @@ -321,6 +321,8 @@ static const char * const cel_event_type
  	[AST_CEL_FORWARD]          = "FORWARD",
  	[AST_CEL_LINKEDID_END]     = "LINKEDID_END",
@@ -335,10 +155,10 @@ Index: asterisk-18.2.2/main/cel.c
  		ast_local_optimization_end_type(),
  		cel_local_cb,
  		NULL);
-Index: asterisk-18.2.2/include/asterisk/cel.h
+Index: asterisk-18.3.0/include/asterisk/cel.h
 ===================================================================
---- asterisk-18.2.2.orig/include/asterisk/cel.h
-+++ asterisk-18.2.2/include/asterisk/cel.h
+--- asterisk-18.3.0.orig/include/asterisk/cel.h
++++ asterisk-18.3.0/include/asterisk/cel.h
 @@ -75,6 +75,10 @@ enum ast_cel_event_type {
  	AST_CEL_FORWARD = 16,
  	/*! \brief A local channel optimization occurred */
