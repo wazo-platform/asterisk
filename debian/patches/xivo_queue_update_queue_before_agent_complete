@@ -1,7 +1,7 @@
-Index: asterisk-18.4.0/apps/app_queue.c
+Index: asterisk-18.5.0/apps/app_queue.c
 ===================================================================
---- asterisk-18.4.0.orig/apps/app_queue.c
-+++ asterisk-18.4.0/apps/app_queue.c
+--- asterisk-18.5.0.orig/apps/app_queue.c
++++ asterisk-18.5.0/apps/app_queue.c
 @@ -6424,10 +6424,10 @@ static void handle_blind_transfer(void *
  			(long) (queue_data->starttime - queue_data->holdstart),
  			(long) (time(NULL) - queue_data->starttime), queue_data->caller_pos);
