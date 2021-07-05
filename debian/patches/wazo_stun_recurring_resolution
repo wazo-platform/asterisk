@@ -1,0 +1,289 @@
+Index: asterisk-18.5.0/configs/samples/rtp.conf.sample
+===================================================================
+--- asterisk-18.5.0.orig/configs/samples/rtp.conf.sample
++++ asterisk-18.5.0/configs/samples/rtp.conf.sample
+@@ -63,7 +63,8 @@ rtpend=20000
+ ; Hostname or address for the STUN server used when determining the external
+ ; IP address and port an RTP session can be reached at. The port number is
+ ; optional. If omitted the default value of 3478 will be used. This option is
+-; disabled by default.
++; disabled by default. Name resolution will occur at load time, and if DNS is
++; used, name resolution will occur repeatedly after the TTL expires.
+ ;
+ ; e.g. stundaddr=mystun.server.com:3478
+ ;
+Index: asterisk-18.5.0/main/dns_recurring.c
+===================================================================
+--- asterisk-18.5.0.orig/main/dns_recurring.c
++++ asterisk-18.5.0/main/dns_recurring.c
+@@ -39,6 +39,11 @@
+ 
+ #include <arpa/nameser.h>
+ 
++/* \brief Delay between TTL expiration and the next DNS query, to make sure the
++resolver cache really expired. */
++#define EXTRA_TTL 2
++#define MAX_TTL ((INT_MAX - EXTRA_TTL) / 1000)
++
+ /*! \brief Destructor for a DNS query */
+ static void dns_query_recurring_destroy(void *data)
+ {
+@@ -91,10 +96,10 @@ static void dns_query_recurring_resoluti
+ 	/* So.. if something has not externally cancelled this we can reschedule based on the TTL */
+ 	if (!recurring->cancelled) {
+ 		const struct ast_dns_result *result = ast_dns_query_get_result(query);
+-		int ttl = MIN(ast_dns_result_get_lowest_ttl(result), INT_MAX / 1000);
++		int ttl = MIN(ast_dns_result_get_lowest_ttl(result), MAX_TTL);
+ 
+ 		if (ttl) {
+-			recurring->timer = ast_sched_add(ast_dns_get_sched(), ttl * 1000, dns_query_recurring_scheduled_callback, ao2_bump(recurring));
++			recurring->timer = ast_sched_add(ast_dns_get_sched(), (ttl + EXTRA_TTL) * 1000, dns_query_recurring_scheduled_callback, ao2_bump(recurring));
+ 			if (recurring->timer < 0) {
+ 				/* It is impossible for this to be the last reference as the query has a reference to it */
+ 				ao2_ref(recurring, -1);
+Index: asterisk-18.5.0/res/res_rtp_asterisk.c
+===================================================================
+--- asterisk-18.5.0.orig/res/res_rtp_asterisk.c
++++ asterisk-18.5.0/res/res_rtp_asterisk.c
+@@ -36,6 +36,11 @@
+ 
+ #include "asterisk.h"
+ 
++#include <arpa/nameser.h>
++#include "asterisk/dns_core.h"
++#include "asterisk/dns_internal.h"
++#include "asterisk/dns_recurring.h"
++
+ #include <sys/time.h>
+ #include <signal.h>
+ #include <fcntl.h>
+@@ -213,7 +218,7 @@ static int dtls_mtu = DEFAULT_DTLS_MTU;
+ #ifdef HAVE_PJPROJECT
+ static int icesupport = DEFAULT_ICESUPPORT;
+ static int stun_software_attribute = DEFAULT_STUN_SOFTWARE_ATTRIBUTE;
+-static struct sockaddr_in stunaddr;
++static struct ast_sockaddr stunaddr;
+ static pj_str_t turnaddr;
+ static int turnport = DEFAULT_TURN_PORT;
+ static pj_str_t turnusername;
+@@ -229,6 +234,11 @@ static ast_rwlock_t ice_acl_lock = AST_R
+ static struct ast_acl_list *stun_acl = NULL;
+ static ast_rwlock_t stun_acl_lock = AST_RWLOCK_INIT_VALUE;
+ 
++/*! stunaddr recurring resolution */
++static ast_rwlock_t stunaddr_lock = AST_RWLOCK_INIT_VALUE;
++static struct stunaddr_resolve_data *stunaddr_resolve_data;
++static struct ast_dns_query_recurring *stunaddr_resolver = NULL;
++
+ /*! \brief Pool factory used by pjlib to allocate memory. */
+ static pj_caching_pool cachingpool;
+ 
+@@ -645,6 +655,12 @@ static BIO_METHOD *dtls_bio_methods;
+ 
+ static int __rtp_sendto(struct ast_rtp_instance *instance, void *buf, size_t size, int flags, struct ast_sockaddr *sa, int rtcp, int *via_ice, int use_srtp);
+ 
++struct stunaddr_resolve_data {
++	uint16_t port;
++};
++void stunaddr_resolve_callback(const struct ast_dns_query *query);
++int store_stunaddr_resolved(const struct ast_dns_query *query);
++
+ #if defined(HAVE_OPENSSL) && (OPENSSL_VERSION_NUMBER >= 0x10001000L) && !defined(OPENSSL_NO_SRTP)
+ static int dtls_bio_new(BIO *bio)
+ {
+@@ -3528,6 +3544,7 @@ static void rtp_add_candidates_to_ice(st
+ 	pj_sockaddr pjtmp;
+ 	struct ast_ice_host_candidate *candidate;
+ 	int af_inet_ok = 0, af_inet6_ok = 0;
++	struct ast_sockaddr *stunaddr_pointer = NULL;
+ 
+ 	if (ast_sockaddr_is_ipv4(addr)) {
+ 		af_inet_ok = 1;
+@@ -3637,12 +3654,17 @@ static void rtp_add_candidates_to_ice(st
+ 		freeifaddrs(ifa);
+ 	}
+ 
++	ast_rwlock_rdlock(&stunaddr_lock);
++	stunaddr_pointer = &stunaddr;
++	ast_rwlock_unlock(&stunaddr_lock);
++
+ 	/* If configured to use a STUN server to get our external mapped address do so */
+-	if (stunaddr.sin_addr.s_addr && !stun_address_is_blacklisted(addr) &&
++	if (!ast_sockaddr_isnull(stunaddr_pointer) && !stun_address_is_blacklisted(addr) &&
+ 		(ast_sockaddr_is_ipv4(addr) || ast_sockaddr_is_any(addr)) &&
+ 		count < PJ_ICE_MAX_CAND) {
+-		struct sockaddr_in answer;
++		struct sockaddr_in answer, stun_sin;
+ 		int rsp;
++		ast_sockaddr_to_sin(stunaddr_pointer, &stun_sin);
+ 
+ 		ast_debug_category(3, AST_DEBUG_CATEGORY_ICE | AST_DEBUG_CATEGORY_STUN,
+ 			"(%p) ICE request STUN %s %s candidate\n", instance,
+@@ -3655,7 +3677,7 @@ static void rtp_add_candidates_to_ice(st
+ 		 */
+ 		ao2_unlock(instance);
+ 		rsp = ast_stun_request(component == AST_RTP_ICE_COMPONENT_RTCP
+-			? rtp->rtcp->s : rtp->s, &stunaddr, NULL, &answer);
++			? rtp->rtcp->s : rtp->s, &stun_sin, NULL, &answer);
+ 		ao2_lock(instance);
+ 		if (!rsp) {
+ 			struct ast_rtp_engine_ice_candidate *candidate;
+@@ -9008,6 +9030,72 @@ static int ast_rtp_bundle(struct ast_rtp
+ 	return 0;
+ }
+ 
++void stunaddr_resolve_callback(const struct ast_dns_query *query)
++{
++	const int lowest_ttl = ast_dns_result_get_lowest_ttl(ast_dns_query_get_result(query));
++	const char *stunaddr_name = ast_dns_query_get_name(query);
++
++	if (!store_stunaddr_resolved(query)) {
++		ast_log(LOG_WARNING, "Failed to resolve stunaddr '%s'. Cancelling recurring resolution.\n", stunaddr_name);
++		return;
++	}
++
++	ast_debug_stun(2, "Resolved stunaddr '%s' to '%s'. Lowest TTL = %d.\n",
++		stunaddr_name,
++		ast_sockaddr_stringify(&stunaddr),
++		lowest_ttl);
++
++	if (!lowest_ttl) {
++		ast_log(LOG_WARNING, "Resolution for stunaddr '%s' returned TTL = 0. Recurring resolution was cancelled.\n", ast_dns_query_get_name(query));
++	}
++}
++
++int store_stunaddr_resolved(const struct ast_dns_query *query)
++{
++	const struct ast_dns_result *result = ast_dns_query_get_result(query);
++	const struct ast_dns_record *record;
++	const struct stunaddr_resolve_data *data = ast_dns_query_get_data(query);
++	const in_port_t in_port = htons(data->port);
++
++	for (record = ast_dns_result_get_records(result); record; record = ast_dns_record_get_next(record)) {
++		const size_t data_size = ast_dns_record_get_data_size(record);
++		const unsigned char *data = (unsigned char *)ast_dns_record_get_data(record);
++		const int rr_type = ast_dns_record_get_rr_type(record);
++
++		if (rr_type == ns_t_aaaa && data_size == 16) {
++			struct sockaddr_in6 sin6 = { 0, };
++
++			sin6.sin6_port = in_port;
++			memcpy(&sin6.sin6_addr, data, data_size);
++			sin6.sin6_family = AF_INET6;
++
++			ast_rwlock_wrlock(&stunaddr_lock);
++			memcpy(&stunaddr.ss, &sin6, sizeof(sin6));
++			stunaddr.len = sizeof(sin6);
++			ast_rwlock_unlock(&stunaddr_lock);
++
++			return 1;
++		} else if (rr_type == ns_t_a && data_size == 4) {
++			struct sockaddr_in sin4 = { 0, };
++
++			sin4.sin_port = in_port;
++			memcpy(&sin4.sin_addr, data, data_size);
++			sin4.sin_family = AF_INET;
++
++			ast_rwlock_wrlock(&stunaddr_lock);
++			ast_sockaddr_from_sin(&stunaddr, &sin4);
++			ast_rwlock_unlock(&stunaddr_lock);
++
++			return 1;
++		} else {
++			ast_debug_stun(3, "Unrecognized rr_type '%u' or data_size '%zu' from DNS query for stunaddr '%s'\n",
++										 rr_type, data_size, ast_dns_query_get_name(query));
++			continue;
++		}
++	}
++	return 0;
++}
++
+ #if defined(HAVE_OPENSSL) && (OPENSSL_VERSION_NUMBER >= 0x10001000L) && !defined(OPENSSL_NO_SRTP)
+ /*! \pre instance is locked */
+ static int ast_rtp_activate(struct ast_rtp_instance *instance)
+@@ -9137,6 +9225,7 @@ static char *handle_cli_rtp_settings(str
+ 	ast_cli(a->fd, "  Replay Protect:  %s\n", AST_CLI_YESNO(srtp_replay_protection));
+ #ifdef HAVE_PJPROJECT
+ 	ast_cli(a->fd, "  ICE support:     %s\n", AST_CLI_YESNO(icesupport));
++	ast_cli(a->fd, "  STUN address:    %s\n", ast_sockaddr_stringify(&stunaddr));
+ #endif
+ 	return CLI_SUCCESS;
+ }
+@@ -9385,7 +9474,9 @@ static int rtp_reload(int reload, int by
+ 	icesupport = DEFAULT_ICESUPPORT;
+ 	stun_software_attribute = DEFAULT_STUN_SOFTWARE_ATTRIBUTE;
+ 	turnport = DEFAULT_TURN_PORT;
+-	memset(&stunaddr, 0, sizeof(stunaddr));
++	ast_rwlock_wrlock(&stunaddr_lock);
++	ast_sockaddr_setnull(&stunaddr);
++	ast_rwlock_unlock(&stunaddr_lock);
+ 	turnaddr = pj_str(NULL);
+ 	turnusername = pj_str(NULL);
+ 	turnpassword = pj_str(NULL);
+@@ -9463,9 +9554,46 @@ static int rtp_reload(int reload, int by
+ 		stun_software_attribute = ast_true(s);
+ 	}
+ 	if ((s = ast_variable_retrieve(cfg, "general", "stunaddr"))) {
+-		stunaddr.sin_port = htons(STANDARD_STUN_PORT);
+-		if (ast_parse_arg(s, PARSE_INADDR, &stunaddr)) {
+-			ast_log(LOG_WARNING, "Invalid STUN server address: %s\n", s);
++		char *hostport, *host, *port;
++		unsigned int port_parsed = STANDARD_STUN_PORT;
++		struct ast_sockaddr stunaddr_parsed;
++
++		if (stunaddr_resolver) {
++			if (ast_dns_resolve_recurring_cancel(stunaddr_resolver)) {
++				ast_log(LOG_ERROR, "Failed to cancel recurring DNS resolution of previous stunaddr.\n");
++			}
++			ao2_ref(stunaddr_resolver, -1);
++			stunaddr_resolver = NULL;
++		}
++		ao2_cleanup(stunaddr_resolve_data);
++		stunaddr_resolve_data = NULL;
++
++		hostport = ast_strdupa(s);
++
++		if (!ast_parse_arg(hostport, PARSE_ADDR, &stunaddr_parsed)) {
++			ast_debug_stun(3, "stunaddr = '%s' does not need name resolution\n", ast_sockaddr_stringify_host(&stunaddr_parsed));
++			if (!ast_sockaddr_port(&stunaddr_parsed)) {
++				ast_sockaddr_set_port(&stunaddr_parsed, STANDARD_STUN_PORT);
++			}
++			ast_rwlock_wrlock(&stunaddr_lock);
++			ast_sockaddr_copy(&stunaddr, &stunaddr_parsed);
++			ast_rwlock_unlock(&stunaddr_lock);
++		} else if (ast_sockaddr_split_hostport(hostport, &host, &port, 0)) {
++			if (port) {
++				ast_parse_arg(port, PARSE_UINT32|PARSE_IN_RANGE, &port_parsed, 1, 65535);
++			}
++
++			if (!(stunaddr_resolve_data = ao2_alloc(sizeof(*stunaddr_resolve_data), NULL))) {
++				ast_log(LOG_ERROR, "Failed to allocate STUN resolution data.\n");
++				return -1;
++			}
++			stunaddr_resolve_data->port = port_parsed;
++			stunaddr_resolver = ast_dns_resolve_recurring(host, T_A, C_IN, &stunaddr_resolve_callback, stunaddr_resolve_data);
++			if (!stunaddr_resolver) {
++				ast_log(LOG_ERROR, "Failed to setup recurring DNS resolution of stunaddr '%s'", host);
++			}
++		} else {
++			ast_log(LOG_ERROR, "Failed to parse stunaddr '%s'", hostport);
+ 		}
+ 	}
+ 	if ((s = ast_variable_retrieve(cfg, "general", "turnaddr"))) {
+@@ -9725,6 +9853,16 @@ static int unload_module(void)
+ 	acl_change_sub = stasis_unsubscribe_and_join(acl_change_sub);
+ 	rtp_unload_acl(&ice_acl_lock, &ice_acl);
+ 	rtp_unload_acl(&stun_acl_lock, &stun_acl);
++
++	if (stunaddr_resolver) {
++		if (ast_dns_resolve_recurring_cancel(stunaddr_resolver)) {
++			ast_log(LOG_ERROR, "Failed to cancel recurring DNS resolution of previous stunaddr.\n");
++		}
++		ao2_ref(stunaddr_resolver, -1);
++		stunaddr_resolver = NULL;
++	}
++	ao2_cleanup(stunaddr_resolve_data);
++	stunaddr_resolve_data = NULL;
+ #endif
+ 
+ 	return 0;

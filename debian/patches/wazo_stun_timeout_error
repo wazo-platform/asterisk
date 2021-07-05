@@ -1,0 +1,20 @@
+Index: asterisk-18.5.0/main/stun.c
+===================================================================
+--- asterisk-18.5.0.orig/main/stun.c
++++ asterisk-18.5.0/main/stun.c
+@@ -438,6 +438,7 @@ try_again:
+ 			ms = ast_remaining_ms(start, 3000);
+ 			if (ms <= 0) {
+ 				/* No response, timeout */
++				ast_log(LOG_WARNING, "STUN request number %d timed out.\n", retry);
+ 				res = 1;
+ 				continue;
+ 			}
+@@ -448,6 +449,7 @@ try_again:
+ 			}
+ 			if (!res) {
+ 				/* No response, timeout */
++				ast_log(LOG_WARNING, "STUN request number %d timed out.\n", retry);
+ 				res = 1;
+ 				continue;
+ 			}
