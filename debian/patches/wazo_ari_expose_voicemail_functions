@@ -1732,16 +1732,7 @@ Index: asterisk-18.5.0/apps/app_voicemail.c
  
  #ifdef TEST_FRAMEWORK
  static int vm_test_destroy_user(const char *context, const char *mailbox);
-@@ -5746,6 +5757,8 @@ static int invent_message(struct ast_cha
- 		return -1;
- 	}
- 
-+	ast_log(AST_LOG_ERROR, "PATH:(%s)\n", fn);
-+
- 	RETRIEVE(fn, -1, ext, context);
- 	if (ast_fileexists(fn, NULL, NULL) > 0) {
- 		res = ast_stream_and_wait(chan, fn, ecodes);
-@@ -15033,6 +15046,10 @@ static const struct ast_vm_functions vm_
+@@ -15033,6 +15044,10 @@ static const struct ast_vm_functions vm_
  	.msg_remove = vm_msg_remove,
  	.msg_forward = vm_msg_forward,
  	.msg_play = vm_msg_play,
@@ -1752,7 +1743,7 @@ Index: asterisk-18.5.0/apps/app_voicemail.c
  };
  
  static const struct ast_vm_greeter_functions vm_greeter_table = {
-@@ -16598,6 +16615,191 @@ play2_msg_cleanup:
+@@ -16598,6 +16613,191 @@ play2_msg_cleanup:
  	return res;
  }
  
