@@ -1,3 +1,16 @@
 - project:
     templates:
       - debian-packaging-template
+    check:
+      jobs:
+        - asterisk-tox-integration
+    gate:
+      jobs:
+        - asterisk-tox-integration
+
+- job:
+    name: asterisk-tox-integration
+    description: Run asterisk integration tests
+    parent: wazo-tox-integration
+    vars:
+      docker_install_siblings: false
