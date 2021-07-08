@@ -85,8 +85,8 @@ Index: asterisk-18.5.0/res/res_rtp_asterisk.c
 +struct stunaddr_resolve_data {
 +	uint16_t port;
 +};
-+void stunaddr_resolve_callback(const struct ast_dns_query *query);
-+int store_stunaddr_resolved(const struct ast_dns_query *query);
++static void stunaddr_resolve_callback(const struct ast_dns_query *query);
++static int store_stunaddr_resolved(const struct ast_dns_query *query);
 +
  #if defined(HAVE_OPENSSL) && (OPENSSL_VERSION_NUMBER >= 0x10001000L) && !defined(OPENSSL_NO_SRTP)
  static int dtls_bio_new(BIO *bio)
@@ -128,11 +128,11 @@ Index: asterisk-18.5.0/res/res_rtp_asterisk.c
  		ao2_lock(instance);
  		if (!rsp) {
  			struct ast_rtp_engine_ice_candidate *candidate;
-@@ -9008,6 +9030,72 @@ static int ast_rtp_bundle(struct ast_rtp
+@@ -9008,6 +9030,87 @@ static int ast_rtp_bundle(struct ast_rtp
  	return 0;
  }
  
-+void stunaddr_resolve_callback(const struct ast_dns_query *query)
++static void stunaddr_resolve_callback(const struct ast_dns_query *query)
 +{
 +	const int lowest_ttl = ast_dns_result_get_lowest_ttl(ast_dns_query_get_result(query));
 +	const char *stunaddr_name = ast_dns_query_get_name(query);
@@ -152,7 +152,7 @@ Index: asterisk-18.5.0/res/res_rtp_asterisk.c
 +	}
 +}
 +
-+int store_stunaddr_resolved(const struct ast_dns_query *query)
++static int store_stunaddr_resolved(const struct ast_dns_query *query)
 +{
 +	const struct ast_dns_result *result = ast_dns_query_get_result(query);
 +	const struct ast_dns_record *record;
@@ -198,10 +198,25 @@ Index: asterisk-18.5.0/res/res_rtp_asterisk.c
 +	return 0;
 +}
 +
++static void clean_stunaddr(void) {
++	if (stunaddr_resolver) {
++		if (ast_dns_resolve_recurring_cancel(stunaddr_resolver)) {
++			ast_log(LOG_ERROR, "Failed to cancel recurring DNS resolution of previous stunaddr.\n");
++		}
++		ao2_ref(stunaddr_resolver, -1);
++		stunaddr_resolver = NULL;
++	}
++	ao2_cleanup(stunaddr_resolve_data);
++	stunaddr_resolve_data = NULL;
++	ast_rwlock_wrlock(&stunaddr_lock);
++	ast_sockaddr_setnull(&stunaddr);
++	ast_rwlock_unlock(&stunaddr_lock);
++}
++
  #if defined(HAVE_OPENSSL) && (OPENSSL_VERSION_NUMBER >= 0x10001000L) && !defined(OPENSSL_NO_SRTP)
  /*! \pre instance is locked */
  static int ast_rtp_activate(struct ast_rtp_instance *instance)
-@@ -9137,6 +9225,7 @@ static char *handle_cli_rtp_settings(str
+@@ -9137,6 +9240,7 @@ static char *handle_cli_rtp_settings(str
  	ast_cli(a->fd, "  Replay Protect:  %s\n", AST_CLI_YESNO(srtp_replay_protection));
  #ifdef HAVE_PJPROJECT
  	ast_cli(a->fd, "  ICE support:     %s\n", AST_CLI_YESNO(icesupport));
@@ -209,18 +224,16 @@ Index: asterisk-18.5.0/res/res_rtp_asterisk.c
  #endif
  	return CLI_SUCCESS;
  }
-@@ -9385,7 +9474,9 @@ static int rtp_reload(int reload, int by
+@@ -9385,7 +9489,7 @@ static int rtp_reload(int reload, int by
  	icesupport = DEFAULT_ICESUPPORT;
  	stun_software_attribute = DEFAULT_STUN_SOFTWARE_ATTRIBUTE;
  	turnport = DEFAULT_TURN_PORT;
 -	memset(&stunaddr, 0, sizeof(stunaddr));
-+	ast_rwlock_wrlock(&stunaddr_lock);
-+	ast_sockaddr_setnull(&stunaddr);
-+	ast_rwlock_unlock(&stunaddr_lock);
++	clean_stunaddr();
  	turnaddr = pj_str(NULL);
  	turnusername = pj_str(NULL);
  	turnpassword = pj_str(NULL);
-@@ -9463,9 +9554,46 @@ static int rtp_reload(int reload, int by
+@@ -9463,9 +9567,37 @@ static int rtp_reload(int reload, int by
  		stun_software_attribute = ast_true(s);
  	}
  	if ((s = ast_variable_retrieve(cfg, "general", "stunaddr"))) {
@@ -231,15 +244,6 @@ Index: asterisk-18.5.0/res/res_rtp_asterisk.c
 +		unsigned int port_parsed = STANDARD_STUN_PORT;
 +		struct ast_sockaddr stunaddr_parsed;
 +
-+		if (stunaddr_resolver) {
-+			if (ast_dns_resolve_recurring_cancel(stunaddr_resolver)) {
-+				ast_log(LOG_ERROR, "Failed to cancel recurring DNS resolution of previous stunaddr.\n");
-+			}
-+			ao2_ref(stunaddr_resolver, -1);
-+			stunaddr_resolver = NULL;
-+		}
-+		ao2_cleanup(stunaddr_resolve_data);
-+		stunaddr_resolve_data = NULL;
 +
 +		hostport = ast_strdupa(s);
 +
@@ -270,20 +274,11 @@ Index: asterisk-18.5.0/res/res_rtp_asterisk.c
  		}
  	}
  	if ((s = ast_variable_retrieve(cfg, "general", "turnaddr"))) {
-@@ -9725,6 +9853,16 @@ static int unload_module(void)
+@@ -9725,6 +9857,7 @@ static int unload_module(void)
  	acl_change_sub = stasis_unsubscribe_and_join(acl_change_sub);
  	rtp_unload_acl(&ice_acl_lock, &ice_acl);
  	rtp_unload_acl(&stun_acl_lock, &stun_acl);
-+
-+	if (stunaddr_resolver) {
-+		if (ast_dns_resolve_recurring_cancel(stunaddr_resolver)) {
-+			ast_log(LOG_ERROR, "Failed to cancel recurring DNS resolution of previous stunaddr.\n");
-+		}
-+		ao2_ref(stunaddr_resolver, -1);
-+		stunaddr_resolver = NULL;
-+	}
-+	ao2_cleanup(stunaddr_resolve_data);
-+	stunaddr_resolve_data = NULL;
++	clean_stunaddr();
  #endif
  
  	return 0;
