@@ -6,7 +6,7 @@ Index: asterisk-18.5.0/main/stun.c
  			ms = ast_remaining_ms(start, 3000);
  			if (ms <= 0) {
  				/* No response, timeout */
-+				ast_log(LOG_WARNING, "STUN request number %d timed out.\n", retry);
++				ast_log(LOG_WARNING, "Attempt %d to send STUN request to '%s' timed out. Check that the server address is correct and reachable.\n", retry, ast_inet_ntoa(dst->sin_addr));
  				res = 1;
  				continue;
  			}
@@ -14,7 +14,7 @@ Index: asterisk-18.5.0/main/stun.c
  			}
  			if (!res) {
  				/* No response, timeout */
-+				ast_log(LOG_WARNING, "STUN request number %d timed out.\n", retry);
++				ast_log(LOG_WARNING, "Attempt %d to send STUN request to '%s' timed out. Check that the server address is correct and reachable.\n", retry, ast_inet_ntoa(dst->sin_addr));
  				res = 1;
  				continue;
  			}
