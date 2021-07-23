@@ -1,7 +1,7 @@
-Index: asterisk-18.5.0/apps/app_queue.c
+Index: asterisk-18.5.1/apps/app_queue.c
 ===================================================================
---- asterisk-18.5.0.orig/apps/app_queue.c
-+++ asterisk-18.5.0/apps/app_queue.c
+--- asterisk-18.5.1.orig/apps/app_queue.c
++++ asterisk-18.5.1/apps/app_queue.c
 @@ -1570,6 +1570,7 @@ struct queue_ent {
  	char announce[PATH_MAX];               /*!< Announcement to play for member when call is answered */
  	char context[AST_MAX_CONTEXT];         /*!< Context when user exits queue */

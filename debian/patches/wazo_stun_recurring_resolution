@@ -1,7 +1,7 @@
-Index: asterisk-18.5.0/configs/samples/rtp.conf.sample
+Index: asterisk-18.5.1/configs/samples/rtp.conf.sample
 ===================================================================
---- asterisk-18.5.0.orig/configs/samples/rtp.conf.sample
-+++ asterisk-18.5.0/configs/samples/rtp.conf.sample
+--- asterisk-18.5.1.orig/configs/samples/rtp.conf.sample
++++ asterisk-18.5.1/configs/samples/rtp.conf.sample
 @@ -63,7 +63,8 @@ rtpend=20000
  ; Hostname or address for the STUN server used when determining the external
  ; IP address and port an RTP session can be reached at. The port number is
@@ -12,10 +12,10 @@ Index: asterisk-18.5.0/configs/samples/rtp.conf.sample
  ;
  ; e.g. stundaddr=mystun.server.com:3478
  ;
-Index: asterisk-18.5.0/main/dns_recurring.c
+Index: asterisk-18.5.1/main/dns_recurring.c
 ===================================================================
---- asterisk-18.5.0.orig/main/dns_recurring.c
-+++ asterisk-18.5.0/main/dns_recurring.c
+--- asterisk-18.5.1.orig/main/dns_recurring.c
++++ asterisk-18.5.1/main/dns_recurring.c
 @@ -39,6 +39,11 @@
  
  #include <arpa/nameser.h>
@@ -41,10 +41,10 @@ Index: asterisk-18.5.0/main/dns_recurring.c
  			if (recurring->timer < 0) {
  				/* It is impossible for this to be the last reference as the query has a reference to it */
  				ao2_ref(recurring, -1);
-Index: asterisk-18.5.0/res/res_rtp_asterisk.c
+Index: asterisk-18.5.1/res/res_rtp_asterisk.c
 ===================================================================
---- asterisk-18.5.0.orig/res/res_rtp_asterisk.c
-+++ asterisk-18.5.0/res/res_rtp_asterisk.c
+--- asterisk-18.5.1.orig/res/res_rtp_asterisk.c
++++ asterisk-18.5.1/res/res_rtp_asterisk.c
 @@ -36,6 +36,11 @@
  
  #include "asterisk.h"
