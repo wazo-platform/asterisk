@@ -1,7 +1,7 @@
-Index: asterisk-18.5.0/apps/app_mixmonitor.c
+Index: asterisk-18.5.1/apps/app_mixmonitor.c
 ===================================================================
---- asterisk-18.5.0.orig/apps/app_mixmonitor.c
-+++ asterisk-18.5.0/apps/app_mixmonitor.c
+--- asterisk-18.5.1.orig/apps/app_mixmonitor.c
++++ asterisk-18.5.1/apps/app_mixmonitor.c
 @@ -940,6 +940,8 @@ static int launch_monitor_thread(struct
  	struct mixmonitor *mixmonitor;
  	char postprocess2[1024] = "";
@@ -91,10 +91,10 @@ Index: asterisk-18.5.0/apps/app_mixmonitor.c
  	return 0;
  }
  
-Index: asterisk-18.5.0/main/cel.c
+Index: asterisk-18.5.1/main/cel.c
 ===================================================================
---- asterisk-18.5.0.orig/main/cel.c
-+++ asterisk-18.5.0/main/cel.c
+--- asterisk-18.5.1.orig/main/cel.c
++++ asterisk-18.5.1/main/cel.c
 @@ -321,6 +321,8 @@ static const char * const cel_event_type
  	[AST_CEL_FORWARD]          = "FORWARD",
  	[AST_CEL_LINKEDID_END]     = "LINKEDID_END",
@@ -155,10 +155,10 @@ Index: asterisk-18.5.0/main/cel.c
  		ast_local_optimization_end_type(),
  		cel_local_cb,
  		NULL);
-Index: asterisk-18.5.0/include/asterisk/cel.h
+Index: asterisk-18.5.1/include/asterisk/cel.h
 ===================================================================
---- asterisk-18.5.0.orig/include/asterisk/cel.h
-+++ asterisk-18.5.0/include/asterisk/cel.h
+--- asterisk-18.5.1.orig/include/asterisk/cel.h
++++ asterisk-18.5.1/include/asterisk/cel.h
 @@ -75,6 +75,10 @@ enum ast_cel_event_type {
  	AST_CEL_FORWARD = 16,
  	/*! \brief A local channel optimization occurred */

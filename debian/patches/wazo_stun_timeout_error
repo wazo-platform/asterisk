@@ -1,7 +1,7 @@
-Index: asterisk-18.5.0/main/stun.c
+Index: asterisk-18.5.1/main/stun.c
 ===================================================================
---- asterisk-18.5.0.orig/main/stun.c
-+++ asterisk-18.5.0/main/stun.c
+--- asterisk-18.5.1.orig/main/stun.c
++++ asterisk-18.5.1/main/stun.c
 @@ -438,6 +438,7 @@ try_again:
  			ms = ast_remaining_ms(start, 3000);
  			if (ms <= 0) {
