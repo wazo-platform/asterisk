@@ -1,0 +1,13 @@
+Index: asterisk-upstream/res/res_rtp_asterisk.c
+===================================================================
+--- asterisk-upstream.orig/res/res_rtp_asterisk.c
++++ asterisk-upstream/res/res_rtp_asterisk.c
+@@ -2607,7 +2607,7 @@ static void ast_rtp_ice_start_media(pj_i
+ 		update_address_with_ice_candidate(ice, AST_RTP_ICE_COMPONENT_RTP, &remote_address);
+ 		if (!ast_sockaddr_isnull(&remote_address)) {
+ 			/* Symmetric RTP must be disabled for the remote address to not get overwritten */
+-			ast_rtp_instance_set_prop(instance, AST_RTP_PROPERTY_NAT, 0);
++			/* ast_rtp_instance_set_prop(instance, AST_RTP_PROPERTY_NAT, 0); */
+ 
+ 			ast_rtp_instance_set_remote_address(instance, &remote_address);
+ 		}

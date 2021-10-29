@@ -1,3 +1,9 @@
+asterisk (8:18.6.0-1~wazo4) wazo-dev-buster; urgency=medium
+
+  * Test RTP symmetric enforcing
+
+ -- Wazo Maintainers <dev@wazo.community>  Fri, 29 Oct 2021 16:28:02 -0400
+
 asterisk (8:18.6.0-1~wazo3) wazo-dev-buster; urgency=medium
 
   * Fix STUN DNS recurring resolution stopping on TTL = 0
