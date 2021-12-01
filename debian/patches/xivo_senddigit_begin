@@ -1,8 +1,8 @@
 Index: asterisk-18.8.0/main/channel.c
 ===================================================================
---- asterisk-18.8.0.orig/main/channel.c	2021-11-29 16:25:49.435827647 -0500
-+++ asterisk-18.8.0/main/channel.c	2021-11-29 16:25:49.431827581 -0500
-@@ -4895,7 +4895,24 @@
+--- asterisk-18.8.0.orig/main/channel.c
++++ asterisk-18.8.0/main/channel.c
+@@ -4895,7 +4895,24 @@ int ast_senddigit_begin(struct ast_chann
  	ast_channel_sending_dtmf_tv_set(chan, ast_tvnow());
  	ast_channel_unlock(chan);
  

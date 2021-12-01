@@ -8,9 +8,9 @@ as a known minor issue.
 
 Index: asterisk-18.8.0/contrib/scripts/astgenkey
 ===================================================================
---- asterisk-18.8.0.orig/contrib/scripts/astgenkey	2021-11-29 16:24:28.066480345 -0500
-+++ asterisk-18.8.0/contrib/scripts/astgenkey	2021-11-29 16:24:28.062480276 -0500
-@@ -47,7 +47,11 @@
+--- asterisk-18.8.0.orig/contrib/scripts/astgenkey
++++ asterisk-18.8.0/contrib/scripts/astgenkey
+@@ -47,7 +47,11 @@ done
  rm -f ${KEY}.key ${KEY}.pub
  
  echo "Generating SSL key '$KEY': "

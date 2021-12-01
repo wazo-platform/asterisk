@@ -1,8 +1,8 @@
 Index: asterisk-18.8.0/include/asterisk/file.h
 ===================================================================
---- asterisk-18.8.0.orig/include/asterisk/file.h	2021-11-29 16:25:54.267904578 -0500
-+++ asterisk-18.8.0/include/asterisk/file.h	2021-11-29 16:25:54.263904515 -0500
-@@ -47,6 +47,7 @@
+--- asterisk-18.8.0.orig/include/asterisk/file.h
++++ asterisk-18.8.0/include/asterisk/file.h
+@@ -47,6 +47,7 @@ struct ast_format;
  #define AST_DIGIT_NONE ""
  #define AST_DIGIT_ANY "0123456789#*ABCD"
  #define AST_DIGIT_ANYNUM "0123456789"
@@ -12,9 +12,9 @@ Index: asterisk-18.8.0/include/asterisk/file.h
  
 Index: asterisk-18.8.0/main/bridge_basic.c
 ===================================================================
---- asterisk-18.8.0.orig/main/bridge_basic.c	2021-11-29 16:25:54.267904578 -0500
-+++ asterisk-18.8.0/main/bridge_basic.c	2021-11-29 16:25:54.263904515 -0500
-@@ -3183,7 +3183,7 @@
+--- asterisk-18.8.0.orig/main/bridge_basic.c
++++ asterisk-18.8.0/main/bridge_basic.c
+@@ -3183,7 +3183,7 @@ static int grab_transfer(struct ast_chan
  	ast_channel_unlock(chan);
  
  	/* Play the simple "transfer" prompt out and wait */
