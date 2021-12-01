@@ -1,7 +1,7 @@
-Index: asterisk-18.6.0/apps/app_queue.c
+Index: asterisk-18.8.0/apps/app_queue.c
 ===================================================================
---- asterisk-18.6.0.orig/apps/app_queue.c
-+++ asterisk-18.6.0/apps/app_queue.c
+--- asterisk-18.8.0.orig/apps/app_queue.c
++++ asterisk-18.8.0/apps/app_queue.c
 @@ -2233,6 +2233,18 @@ static struct ast_manager_event_blob *qu
  			ast_log(LOG_NOTICE, "No caller event string, bailing\n");
  			return NULL;
@@ -21,7 +21,7 @@ Index: asterisk-18.6.0/apps/app_queue.c
  	}
  
  	agent = ast_multi_channel_blob_get_channel(obj, "agent");
-@@ -6091,13 +6103,14 @@ static void send_agent_complete(const ch
+@@ -6136,13 +6148,14 @@ static void send_agent_complete(const ch
  		break;
  	}
  
