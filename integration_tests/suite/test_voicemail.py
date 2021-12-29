@@ -11,9 +11,9 @@ from hamcrest import assert_that
 from hamcrest import calling
 from hamcrest import has_property
 from requests.exceptions import HTTPError
-from xivo_test_helpers import until
-from xivo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
-from xivo_test_helpers.hamcrest.raises import raises
+from wazo_test_helpers import until
+from wazo_test_helpers.asset_launching_test_case import AssetLaunchingTestCase
+from wazo_test_helpers.hamcrest.raises import raises
 
 log_level = logging.DEBUG if os.environ.get('TEST_LOGS') == 'verbose' else logging.INFO
 logging.basicConfig(level=log_level)
