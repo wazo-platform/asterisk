@@ -89,6 +89,15 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
  #endif
  
  #if defined(HAVE_OPENSSL) && (OPENSSL_VERSION_NUMBER >= 0x10001000L) && !defined(OPENSSL_NO_SRTP)
+@@ -3543,7 +3550,7 @@ static void rtp_add_candidates_to_ice(st
+ 	pj_sockaddr pjtmp;
+ 	struct ast_ice_host_candidate *candidate;
+ 	int af_inet_ok = 0, af_inet6_ok = 0;
+-	struct sockaddr_in stunaddr_copy;
++	struct sockaddr_in stunaddr_copy = {0};
+ 
+ 	if (ast_sockaddr_is_ipv4(addr)) {
+ 		af_inet_ok = 1;
 @@ -3653,9 +3660,7 @@ static void rtp_add_candidates_to_ice(st
  		freeifaddrs(ifa);
  	}
@@ -100,7 +109,7 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
  
  	/* If configured to use a STUN server to get our external mapped address do so */
  	if (stunaddr_copy.sin_addr.s_addr && !stun_address_is_blacklisted(addr) &&
-@@ -9034,70 +9039,171 @@ static int ast_rtp_bundle(struct ast_rtp
+@@ -9034,70 +9039,175 @@ static int ast_rtp_bundle(struct ast_rtp
  }
  
  #ifdef HAVE_PJPROJECT
@@ -312,13 +321,17 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
 +	}
 +
 +	ao2_rdlock((struct stun_resolver *) stun);
++	if (!stun->address) {
++		ao2_unlock((struct stun_resolver *) stun);
++		return -1;
++	}
 +	memcpy(retsin, stun->address, sizeof(*stun->address));
 +	ao2_unlock((struct stun_resolver *) stun);
 +	return 0;
  }
  #endif
  
-@@ -9234,10 +9340,9 @@ static char *handle_cli_rtp_settings(str
+@@ -9234,10 +9344,9 @@ static char *handle_cli_rtp_settings(str
  #ifdef HAVE_PJPROJECT
  	ast_cli(a->fd, "  ICE support:     %s\n", AST_CLI_YESNO(icesupport));
  
@@ -332,7 +345,7 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
  #endif
  	return CLI_SUCCESS;
  }
-@@ -9486,7 +9591,7 @@ static int rtp_reload(int reload, int by
+@@ -9486,7 +9595,7 @@ static int rtp_reload(int reload, int by
  	icesupport = DEFAULT_ICESUPPORT;
  	stun_software_attribute = DEFAULT_STUN_SOFTWARE_ATTRIBUTE;
  	turnport = DEFAULT_TURN_PORT;
@@ -341,7 +354,7 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
  	turnaddr = pj_str(NULL);
  	turnusername = pj_str(NULL);
  	turnpassword = pj_str(NULL);
-@@ -9564,36 +9669,8 @@ static int rtp_reload(int reload, int by
+@@ -9564,36 +9673,8 @@ static int rtp_reload(int reload, int by
  		stun_software_attribute = ast_true(s);
  	}
  	if ((s = ast_variable_retrieve(cfg, "general", "stunaddr"))) {
@@ -380,7 +393,7 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
  	}
  	if ((s = ast_variable_retrieve(cfg, "general", "turnaddr"))) {
  		struct sockaddr_in addr;
-@@ -9852,7 +9929,7 @@ static int unload_module(void)
+@@ -9852,7 +9933,7 @@ static int unload_module(void)
  	acl_change_sub = stasis_unsubscribe_and_join(acl_change_sub);
  	rtp_unload_acl(&ice_acl_lock, &ice_acl);
  	rtp_unload_acl(&stun_acl_lock, &stun_acl);
