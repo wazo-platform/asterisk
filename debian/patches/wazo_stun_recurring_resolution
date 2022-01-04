@@ -64,7 +64,18 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
  static pj_str_t turnaddr;
  static int turnport = DEFAULT_TURN_PORT;
  static pj_str_t turnusername;
-@@ -283,6 +283,12 @@ struct ast_ice_host_candidate {
+@@ -235,10 +235,6 @@ static ast_rwlock_t ice_acl_lock = AST_R
+ static struct ast_acl_list *stun_acl = NULL;
+ static ast_rwlock_t stun_acl_lock = AST_RWLOCK_INIT_VALUE;
+ 
+-/*! stunaddr recurring resolution */
+-static ast_rwlock_t stunaddr_lock = AST_RWLOCK_INIT_VALUE;
+-static struct ast_dns_query_recurring *stunaddr_resolver = NULL;
+-
+ /*! \brief Pool factory used by pjlib to allocate memory. */
+ static pj_caching_pool cachingpool;
+ 
+@@ -283,6 +279,12 @@ struct ast_ice_host_candidate {
  	AST_RWLIST_ENTRY(ast_ice_host_candidate) next;
  };
  
@@ -77,19 +88,28 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
  /*! \brief List of ICE host candidate mappings */
  static AST_RWLIST_HEAD_STATIC(host_candidates, ast_ice_host_candidate);
  
-@@ -656,8 +662,9 @@ static BIO_METHOD *dtls_bio_methods;
+@@ -656,8 +658,9 @@ static BIO_METHOD *dtls_bio_methods;
  static int __rtp_sendto(struct ast_rtp_instance *instance, void *buf, size_t size, int flags, struct ast_sockaddr *sa, int rtcp, int *via_ice, int use_srtp);
  
  #ifdef HAVE_PJPROJECT
 -static void stunaddr_resolve_callback(const struct ast_dns_query *query);
 -static int store_stunaddr_resolved(const struct ast_dns_query *query);
-+static int stun_resolver_get_resolved(struct sockaddr_in *retaddr, const struct stun_resolver *stun);
++static int stun_resolver_get_resolved(struct sockaddr_in *retaddr, struct stun_resolver *stun);
 +static struct stun_resolver *stun_resolver_create(const char *hostport);
 +static void stun_resolver_stop(struct stun_resolver *stun);
  #endif
  
  #if defined(HAVE_OPENSSL) && (OPENSSL_VERSION_NUMBER >= 0x10001000L) && !defined(OPENSSL_NO_SRTP)
-@@ -3653,9 +3660,7 @@ static void rtp_add_candidates_to_ice(st
+@@ -3543,7 +3546,7 @@ static void rtp_add_candidates_to_ice(st
+ 	pj_sockaddr pjtmp;
+ 	struct ast_ice_host_candidate *candidate;
+ 	int af_inet_ok = 0, af_inet6_ok = 0;
+-	struct sockaddr_in stunaddr_copy;
++	struct sockaddr_in stunaddr_copy = {0};
+ 
+ 	if (ast_sockaddr_is_ipv4(addr)) {
+ 		af_inet_ok = 1;
+@@ -3653,9 +3656,7 @@ static void rtp_add_candidates_to_ice(st
  		freeifaddrs(ifa);
  	}
  
@@ -100,7 +120,7 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
  
  	/* If configured to use a STUN server to get our external mapped address do so */
  	if (stunaddr_copy.sin_addr.s_addr && !stun_address_is_blacklisted(addr) &&
-@@ -9034,70 +9039,171 @@ static int ast_rtp_bundle(struct ast_rtp
+@@ -9034,70 +9035,175 @@ static int ast_rtp_bundle(struct ast_rtp
  }
  
  #ifdef HAVE_PJPROJECT
@@ -119,12 +139,12 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
 +		memset(stun->address, 0, sizeof(*stun->address));
 +		ast_free(stun->address);
 +		stun->address = NULL;
-+	}
+ 	}
 +	if (stun->hostname) {
 +		*(char *) stun->hostname = '\0';
 +		ast_free((char *) stun->hostname);
 +		stun->hostname = NULL;
- 	}
++	}
 +}
  
 -	if (DEBUG_ATLEAST(2)) {
@@ -149,9 +169,7 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
 +		const size_t datasize = ast_dns_record_get_data_size(record);
 +		const int rr_type = ast_dns_record_get_rr_type(record);
 +		data = ast_dns_record_get_data(record);
- 
--	if (!lowest_ttl) {
--		ast_log(LOG_WARNING, "Resolution for stunaddr '%s' returned TTL = 0. Recurring resolution was cancelled.\n", ast_dns_query_get_name(query));
++
 +		switch (rr_type) {
 +		case T_A:
 +			if (datasize != 4) {
@@ -175,7 +193,9 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
 +		case T_AAAA:
 +			ast_debug_stun(2, "Retrieved an AAAA record, but STUN implementation doesn't support IPv6.");
 +			continue;
-+
+ 
+-	if (!lowest_ttl) {
+-		ast_log(LOG_WARNING, "Resolution for stunaddr '%s' returned TTL = 0. Recurring resolution was cancelled.\n", ast_dns_query_get_name(query));
 +		default:
 +			ast_debug_stun(2, "Received invalid STUN address: '%s', moving to next entry...",
 +						   ast_inet_ntoa(*(struct in_addr *) data));
@@ -229,7 +249,7 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
 +		if (!ast_sockaddr_is_ipv4(&address)) {
 +			ast_debug_stun(2, "STUN implementation doesn't support IPv6 addresses.");
 +			return -1;
- 		}
++		}
 +		ast_sockaddr_set_port(&address, stunport);
 +		ast_sockaddr_to_sin(&address, stun->address);
 +		ast_debug_stun(2, "Resolving STUN using static address at '%s:%u'", stun->hostname, stunport);
@@ -242,7 +262,7 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
 +		if (!stun->resolver) {
 +			ast_log(LOG_ERROR, "Failed to start recurring dns query");
 +			return -1;
-+		}
+ 		}
 +		ast_debug_stun(2, "Initialized recurring DNS query to resolve STUN");
 +	}
 +	/* Not an IPv4 nor a canonical name */
@@ -305,15 +325,19 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
 +	ao2_cleanup(stun);
 +}
 +
-+static int stun_resolver_get_resolved(struct sockaddr_in *retsin, const struct stun_resolver *stun)
++static int stun_resolver_get_resolved(struct sockaddr_in *retsin, struct stun_resolver *stun)
 +{
 +	if (!stun || !retsin) {
 +		return -1;
 +	}
 +
-+	ao2_rdlock((struct stun_resolver *) stun);
++	ao2_rdlock(stun);
++	if (!stun->address) {
++		ao2_unlock(stun);
++		return -1;
++	}
 +	memcpy(retsin, stun->address, sizeof(*stun->address));
-+	ao2_unlock((struct stun_resolver *) stun);
++	ao2_unlock(stun);
 +	return 0;
  }
  #endif
