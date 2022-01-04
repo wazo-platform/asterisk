@@ -1,3 +1,9 @@
+asterisk (8:18.8.0-1~wazo3) wazo-dev-buster; urgency=medium
+
+  * Add null check for STUN address
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 04 Jan 2022 09:34:33 -0500
+
 asterisk (8:18.8.0-1~wazo2) wazo-dev-buster; urgency=medium
 
   * Asterisk 18.8.0
@@ -138,7 +144,7 @@ asterisk (8:17.7.0-1~wazo2) wazo-dev-buster; urgency=medium
 
 asterisk (8:17.6.0-1~wazo3) wazo-dev-buster; urgency=medium
 
-  * Fix logrotate command 
+  * Fix logrotate command
 
  -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 30 Sep 2020 13:54:56 -0400
 
@@ -606,7 +612,7 @@ asterisk (8:15.4.1-1~wazo1) wazo-dev-stretch; urgency=medium
 
 asterisk (8:15.4.0-1~wazo2) wazo-dev-stretch; urgency=medium
 
-  * Fix unit masking when using asterisk-vanilla 
+  * Fix unit masking when using asterisk-vanilla
 
  -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 15 May 2018 10:59:51 -0400
 
@@ -660,7 +666,7 @@ asterisk (8:15.1.3-1~wazo10) wazo-dev; urgency=medium
 
 asterisk (8:15.1.3-1~wazo9) wazo-dev; urgency=medium
 
-  * bump version 
+  * bump version
 
  -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 26 Dec 2017 14:53:09 -0500
 
@@ -1339,7 +1345,7 @@ asterisk11 (11.2.1+pf.xivo.13.05~20130312.141540.ebe5465-2) squeeze-xivo-skaro-d
 
 asterisk11 (11.1.2+pf.xivo.13.04~20130107.150857.298cca9-7) squeeze-xivo-skaro-dev; urgency=low
 
-  * fix typo 
+  * fix typo
 
  -- Nicolas HICHER <nhicher@avencall.com>  Mon, 25 Feb 2013 10:32:26 -0500
 
@@ -1352,13 +1358,13 @@ asterisk11 (11.1.2+pf.xivo.13.04~20130107.150857.298cca9-6) squeeze-xivo-skaro-d
 
 asterisk11 (11.1.2+pf.xivo.13.04~20130107.150857.298cca9-5) squeeze-xivo-skaro-dev; urgency=low
 
-  * revert init script 
+  * revert init script
 
  -- Nicolas HICHER <nhicher@avencall.com>  Sat, 23 Feb 2013 08:49:59 -0500
 
 asterisk11 (11.1.2+pf.xivo.13.04~20130107.150857.298cca9-3) squeeze-xivo-skaro-dev; urgency=low
 
-  * add provides, replaces, conflicts with asterisk 
+  * add provides, replaces, conflicts with asterisk
 
  -- Nicolas HICHER <nhicher@avencall.com>  Fri, 22 Feb 2013 14:40:04 -0500
 
@@ -1370,6 +1376,6 @@ asterisk11 (11.1.2+pf.xivo.13.04~20130107.150857.298cca9-2) squeeze-xivo-skaro-d
 
 asterisk11 (11.0.0-0) squeeze-xivo-skaro-dev; urgency=low
 
-  * asterisk 11 
+  * asterisk 11
 
  -- Nicolas HICHER (atarakt) <nhicher@proformatique.com>  Fri, 26 Oct 2012 15:19:17 -0400
