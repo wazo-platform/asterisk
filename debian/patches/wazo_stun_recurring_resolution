@@ -1,12 +1,12 @@
-Index: asterisk-18.8.0/main/dns_recurring.c
+Index: asterisk-19.1.0/main/dns_recurring.c
 ===================================================================
---- asterisk-18.8.0.orig/main/dns_recurring.c
-+++ asterisk-18.8.0/main/dns_recurring.c
+--- asterisk-19.1.0.orig/main/dns_recurring.c
++++ asterisk-19.1.0/main/dns_recurring.c
 @@ -39,11 +39,18 @@
  
  #include <arpa/nameser.h>
  
--/* \brief Delay between TTL expiration and the next DNS query, to make sure the
+-/*! \brief Delay between TTL expiration and the next DNS query, to make sure the
 -resolver cache really expired. */
 -#define EXTRA_TTL 2
  #define MAX_TTL ((INT_MAX - EXTRA_TTL) / 1000)
@@ -51,10 +51,10 @@ Index: asterisk-18.8.0/main/dns_recurring.c
  		}
  	}
  
-Index: asterisk-18.8.0/res/res_rtp_asterisk.c
+Index: asterisk-19.1.0/res/res_rtp_asterisk.c
 ===================================================================
---- asterisk-18.8.0.orig/res/res_rtp_asterisk.c
-+++ asterisk-18.8.0/res/res_rtp_asterisk.c
+--- asterisk-19.1.0.orig/res/res_rtp_asterisk.c
++++ asterisk-19.1.0/res/res_rtp_asterisk.c
 @@ -219,7 +219,7 @@ static int dtls_mtu = DEFAULT_DTLS_MTU;
  #ifdef HAVE_PJPROJECT
  static int icesupport = DEFAULT_ICESUPPORT;
