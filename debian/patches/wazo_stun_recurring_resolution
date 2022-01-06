@@ -356,16 +356,17 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
  #endif
  	return CLI_SUCCESS;
  }
-@@ -9486,7 +9591,7 @@ static int rtp_reload(int reload, int by
+@@ -9486,7 +9591,8 @@ static int rtp_reload(int reload, int by
  	icesupport = DEFAULT_ICESUPPORT;
  	stun_software_attribute = DEFAULT_STUN_SOFTWARE_ATTRIBUTE;
  	turnport = DEFAULT_TURN_PORT;
 -	clean_stunaddr();
 +	stun_resolver_stop(stunres);
++	stunres = NULL;
  	turnaddr = pj_str(NULL);
  	turnusername = pj_str(NULL);
  	turnpassword = pj_str(NULL);
-@@ -9564,36 +9669,8 @@ static int rtp_reload(int reload, int by
+@@ -9564,36 +9670,8 @@ static int rtp_reload(int reload, int by
  		stun_software_attribute = ast_true(s);
  	}
  	if ((s = ast_variable_retrieve(cfg, "general", "stunaddr"))) {
@@ -404,7 +405,7 @@ Index: asterisk-18.8.0/res/res_rtp_asterisk.c
  	}
  	if ((s = ast_variable_retrieve(cfg, "general", "turnaddr"))) {
  		struct sockaddr_in addr;
-@@ -9852,7 +9929,7 @@ static int unload_module(void)
+@@ -9852,7 +9930,7 @@ static int unload_module(void)
  	acl_change_sub = stasis_unsubscribe_and_join(acl_change_sub);
  	rtp_unload_acl(&ice_acl_lock, &ice_acl);
  	rtp_unload_acl(&stun_acl_lock, &stun_acl);
