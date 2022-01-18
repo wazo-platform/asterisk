@@ -1,8 +1,8 @@
-Index: asterisk-18.8.0/main/channel.c
+Index: asterisk-18.9.0/main/channel.c
 ===================================================================
---- asterisk-18.8.0.orig/main/channel.c
-+++ asterisk-18.8.0/main/channel.c
-@@ -4895,7 +4895,24 @@ int ast_senddigit_begin(struct ast_chann
+--- asterisk-18.9.0.orig/main/channel.c
++++ asterisk-18.9.0/main/channel.c
+@@ -4887,7 +4887,24 @@ int ast_senddigit_begin(struct ast_chann
  	ast_channel_sending_dtmf_tv_set(chan, ast_tvnow());
  	ast_channel_unlock(chan);
  

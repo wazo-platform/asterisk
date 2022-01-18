@@ -1,30 +1,23 @@
-Index: asterisk-18.8.0/main/dns_recurring.c
+Index: asterisk-18.9.0/main/dns_recurring.c
 ===================================================================
---- asterisk-18.8.0.orig/main/dns_recurring.c
-+++ asterisk-18.8.0/main/dns_recurring.c
-@@ -39,11 +39,18 @@
+--- asterisk-18.9.0.orig/main/dns_recurring.c
++++ asterisk-18.9.0/main/dns_recurring.c
+@@ -41,9 +41,13 @@
  
- #include <arpa/nameser.h>
- 
--/* \brief Delay between TTL expiration and the next DNS query, to make sure the
--resolver cache really expired. */
+ /*! \brief Delay between TTL expiration and the next DNS query, to make sure the
+ resolver cache really expired. */
 -#define EXTRA_TTL 2
++#define EXTRA_TTL 1
  #define MAX_TTL ((INT_MAX - EXTRA_TTL) / 1000)
  
-+/* \brief Delay between TTL expiration and the next DNS query, to make sure the
-+ * resolver cache really expired.
-+ */
-+#define EXTRA_TTL 1
-+
-+/* \brief Default TTL value to use when received TTL is zero (expired).  A value of 30 seconds or more
-+ * should be chosen to avoid unnecessary spam to the DNS server.
-+ */
++/*! \brief Default TTL value to use when received TTL is zero (expired).  A value of 30 seconds or more
++should be chosen to avoid unnecessary spam to the DNS server. */
 +#define DEFAULT_TTL 30
 +
  /*! \brief Destructor for a DNS query */
  static void dns_query_recurring_destroy(void *data)
  {
-@@ -96,14 +103,20 @@ static void dns_query_recurring_resoluti
+@@ -96,14 +100,20 @@ static void dns_query_recurring_resoluti
  	/* So.. if something has not externally cancelled this we can reschedule based on the TTL */
  	if (!recurring->cancelled) {
  		const struct ast_dns_result *result = ast_dns_query_get_result(query);
@@ -51,10 +44,10 @@ Index: asterisk-18.8.0/main/dns_recurring.c
  		}
  	}
  
-Index: asterisk-18.8.0/res/res_rtp_asterisk.c
+Index: asterisk-18.9.0/res/res_rtp_asterisk.c
 ===================================================================
---- asterisk-18.8.0.orig/res/res_rtp_asterisk.c
-+++ asterisk-18.8.0/res/res_rtp_asterisk.c
+--- asterisk-18.9.0.orig/res/res_rtp_asterisk.c
++++ asterisk-18.9.0/res/res_rtp_asterisk.c
 @@ -219,7 +219,7 @@ static int dtls_mtu = DEFAULT_DTLS_MTU;
  #ifdef HAVE_PJPROJECT
  static int icesupport = DEFAULT_ICESUPPORT;

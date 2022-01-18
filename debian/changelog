@@ -1,3 +1,9 @@
+asterisk (8:18.9.0-1~wazo2) wazo-dev-buster; urgency=medium
+
+  * asterisk 18.9.0
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 18 Jan 2022 11:34:04 -0500
+
 asterisk (8:18.8.0-1~wazo4) wazo-dev-buster; urgency=medium
 
   * Reset STUN address during reload
