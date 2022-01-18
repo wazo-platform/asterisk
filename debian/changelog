@@ -1,3 +1,9 @@
+asterisk (8:18.9.0-1~wazo3) wazo-dev-buster; urgency=medium
+
+  * backport app_queue hint fix from 18.10.0
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 18 Jan 2022 15:27:49 -0500
+
 asterisk (8:18.9.0-1~wazo2) wazo-dev-buster; urgency=medium
 
   * asterisk 18.9.0
