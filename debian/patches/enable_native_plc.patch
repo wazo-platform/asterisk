@@ -10,7 +10,7 @@ Index: asterisk-18.10.0/main/translate.c
  
  	/*
  	 * If the translator has not provided a format
-@@ -564,13 +565,46 @@ static struct ast_frame *generate_interp
+@@ -564,14 +565,17 @@ static struct ast_frame *generate_interp
  /*! \brief do the actual translation */
  struct ast_frame *ast_translate(struct ast_trans_pvt *path, struct ast_frame *f, int consume)
  {
@@ -24,7 +24,16 @@ Index: asterisk-18.10.0/main/translate.c
  	long len;
 -	int seqno;
 +	int seqno, frames_missing;
-+
+ 
++	/* RTCP frames can be received with different seqno from main/channel.c:.__ast_queue_frame */
++	/* These frames are forwarded to the translator for feedback before doing PLC */
+ 	if (f->frametype == AST_FRAME_RTCP) {
+ 		/* Just pass the feedback to the right callback, if it exists.
+ 		 * This "translation" does nothing so return a null frame. */
+@@ -583,6 +587,38 @@ struct ast_frame *ast_translate(struct a
+ 		return &ast_null_frame;
+ 	}
+ 
 +	/* Determine the amount of lost packets for PLC */
 +	/* But not at start with first frame = path->f.seqno is still 0x10000 */
 +	/* But not when there is no sequence number = frame created internally */
@@ -56,10 +65,11 @@ Index: asterisk-18.10.0/main/translate.c
 +	} else {
 +		frames_missing = 0;
 +	}
- 
- 	if (f->frametype == AST_FRAME_RTCP) {
- 		/* Just pass the feedback to the right callback, if it exists.
-@@ -611,19 +645,94 @@ struct ast_frame *ast_translate(struct a
++
+ 	has_timing_info = ast_test_flag(f, AST_FRFLAG_HAS_TIMING_INFO);
+ 	ts = f->ts;
+ 	len = f->len;
+@@ -611,19 +647,94 @@ struct ast_frame *ast_translate(struct a
  			 f->samples, ast_format_get_sample_rate(f->subclass.format)));
  	}
  	delivery = f->delivery;
