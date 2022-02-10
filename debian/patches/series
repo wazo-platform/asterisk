@@ -24,5 +24,3 @@ wazo_bridge_variables
 wazo_mixmonitor_events
 wazo_stun_recurring_resolution
 increase-max-sdp-media
-ASTERISK-29578-app-queue-fix-hints
-ASTERISK-29821
