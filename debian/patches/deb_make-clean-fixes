@@ -3,10 +3,10 @@ Author: Faidon Liambotis <paravoid@debian.org>
 Forwarded: not-needed
 Last-Update: 2009-12-19
 
-Index: asterisk-18.9.0/Makefile
+Index: asterisk-18.10.0/Makefile
 ===================================================================
---- asterisk-18.9.0.orig/Makefile
-+++ asterisk-18.9.0/Makefile
+--- asterisk-18.10.0.orig/Makefile
++++ asterisk-18.10.0/Makefile
 @@ -435,7 +435,6 @@ dist-clean: distclean
  
  distclean: $(SUBDIRS_DIST_CLEAN) _clean
@@ -16,7 +16,7 @@ Index: asterisk-18.9.0/Makefile
  	rm -f config.log config.status config.cache
  	rm -rf autom4te.cache
 @@ -445,6 +444,10 @@ distclean: $(SUBDIRS_DIST_CLEAN) _clean
- 	rm -f doc/asterisk-ng-doxygen
+ 	rm -f doc/Doxyfile
  	rm -f build_tools/menuselect-deps
  
 +# tarballs distributed by Digium include sounds
