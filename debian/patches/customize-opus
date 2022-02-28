@@ -1,0 +1,13 @@
+Index: asterisk-18.10.0/include/asterisk/opus.h
+===================================================================
+--- asterisk-18.10.0.orig/include/asterisk/opus.h
++++ asterisk-18.10.0/include/asterisk/opus.h
+@@ -53,7 +53,7 @@
+ /*! \brief Default attribute values */
+ #define CODEC_OPUS_DEFAULT_SAMPLE_RATE 48000
+ #define CODEC_OPUS_DEFAULT_MAX_PLAYBACK_RATE 48000
+-#define CODEC_OPUS_DEFAULT_MAX_PTIME 120
++#define CODEC_OPUS_DEFAULT_MAX_PTIME 20
+ #define CODEC_OPUS_DEFAULT_PTIME 20
+ #define CODEC_OPUS_DEFAULT_BITRATE -1000 /* OPUS_AUTO */
+ #define CODEC_OPUS_DEFAULT_CBR 0
