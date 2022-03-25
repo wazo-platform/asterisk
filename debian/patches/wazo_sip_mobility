@@ -102,16 +102,16 @@ Index: asterisk-18.11.0/res/res_pjsip/pjsip_config.xml
 ===================================================================
 --- asterisk-18.11.0.orig/res/res_pjsip/pjsip_config.xml
 +++ asterisk-18.11.0/res/res_pjsip/pjsip_config.xml
-@@ -1878,6 +1878,12 @@
+@@ -1877,6 +1877,12 @@
+ 						on a reliable transport and is not intended to be configured manually.
  					</para></description>
  				</configOption>
++				<configOption name="mobility">
++					<synopsis>If a contact is 'mobile' or 'fixed'.</synopsis>
++					<description><para>
++						Can take values 'mobile' or 'fixed' depending on the type of contact.
++					</para></description>
++				</configOption>
  			</configObject>
-+			<configOption name="mobility">
-+				<synopsis>If a contact is 'mobile' or 'fixed'.</synopsis>
-+				<description><para>
-+					Can take values 'mobile' or 'fixed' depending on the type of contact.
-+				</para></description>
-+			</configOption>
  			<configObject name="aor">
  				<synopsis>The configuration for a location of an endpoint</synopsis>
- 				<description><para>
