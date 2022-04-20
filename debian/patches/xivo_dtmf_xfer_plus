@@ -1,7 +1,7 @@
-Index: asterisk-18.11.0/include/asterisk/file.h
+Index: asterisk-18.11.1/include/asterisk/file.h
 ===================================================================
---- asterisk-18.11.0.orig/include/asterisk/file.h
-+++ asterisk-18.11.0/include/asterisk/file.h
+--- asterisk-18.11.1.orig/include/asterisk/file.h
++++ asterisk-18.11.1/include/asterisk/file.h
 @@ -47,6 +47,7 @@ struct ast_format;
  #define AST_DIGIT_NONE ""
  #define AST_DIGIT_ANY "0123456789#*ABCD"
@@ -10,10 +10,10 @@ Index: asterisk-18.11.0/include/asterisk/file.h
  
  #define SEEK_FORCECUR	10
  
-Index: asterisk-18.11.0/main/bridge_basic.c
+Index: asterisk-18.11.1/main/bridge_basic.c
 ===================================================================
---- asterisk-18.11.0.orig/main/bridge_basic.c
-+++ asterisk-18.11.0/main/bridge_basic.c
+--- asterisk-18.11.1.orig/main/bridge_basic.c
++++ asterisk-18.11.1/main/bridge_basic.c
 @@ -3181,7 +3181,7 @@ static int grab_transfer(struct ast_chan
  	ast_channel_unlock(chan);
  
