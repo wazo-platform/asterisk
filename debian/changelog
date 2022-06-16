@@ -1,3 +1,9 @@
+asterisk (8:18.12.1-1~wazo4) wazo-dev-buster; urgency=medium
+
+  * Dockerfile add res-stasis-amqp
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 07 Jun 2022 15:23:22 -0400
+
 asterisk (8:18.12.1-1~wazo3) wazo-dev-buster; urgency=medium
 
   * Only allow 1 mobile contact on a given AOR

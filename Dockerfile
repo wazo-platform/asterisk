@@ -1,5 +1,5 @@
 FROM debian:buster
-MAINTAINER Wazo Maintainers <dev@wazo.community>
+LABEL maintainer="Wazo Maintainers <dev@wazo.community>"
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -11,7 +11,8 @@ RUN echo "deb http://mirror.wazo.community/debian/ wazo-dev-buster main" > /etc/
 RUN wget http://mirror.wazo.community/wazo_current.key -O - | apt-key add -
 RUN apt-get -q update && apt-get -q -y install \
     asterisk \
-    wazo-libsccp
+    wazo-libsccp \
+    wazo-res-stasis-amqp
 
 EXPOSE 2000 5038 5060/udp
 
