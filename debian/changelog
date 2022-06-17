@@ -1,3 +1,9 @@
+asterisk (8:18.12.1-1~wazo5) wazo-dev-buster; urgency=medium
+
+  * Enable malloc debug
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 17 Jun 2022 09:43:49 -0400
+
 asterisk (8:18.12.1-1~wazo4) wazo-dev-buster; urgency=medium
 
   * Dockerfile add res-stasis-amqp
