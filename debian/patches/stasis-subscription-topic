@@ -1,0 +1,37 @@
+Index: asterisk-19.5.0/include/asterisk/stasis.h
+===================================================================
+--- asterisk-19.5.0.orig/include/asterisk/stasis.h
++++ asterisk-19.5.0/include/asterisk/stasis.h
+@@ -857,6 +857,16 @@ struct stasis_forward *stasis_forward_ca
+ const char *stasis_subscription_uniqueid(const struct stasis_subscription *sub);
+ 
+ /*!
++ * \brief Get the topic name for the subscription
++ *
++ * \param sub Subscription for which to get the unique ID.
++ * \return topic name for the subscription.
++ * \since wazo-22.11
++ */
++const char *stasis_subscription_topic_name(const struct stasis_subscription *sub);
++
++
++/*!
+  * \brief Returns whether a subscription is currently subscribed.
+  *
+  * Note that there may still be messages queued up to be dispatched to this
+Index: asterisk-19.5.0/main/stasis.c
+===================================================================
+--- asterisk-19.5.0.orig/main/stasis.c
++++ asterisk-19.5.0/main/stasis.c
+@@ -1173,6 +1173,11 @@ const char *stasis_subscription_uniqueid
+ 	return sub->uniqueid;
+ }
+ 
++const char *stasis_subscription_topic_name(const struct stasis_subscription *sub)
++{
++	return stasis_topic_name(sub->topic);
++}
++
+ int stasis_subscription_final_message(struct stasis_subscription *sub, struct stasis_message *msg)
+ {
+ 	struct stasis_subscription_change *change;
