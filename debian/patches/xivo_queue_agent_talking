@@ -1,8 +1,8 @@
 Adding agent in conversation counter in QueueSummary AMI event (based on AST_DEVICE_INUSE flag)
-Index: asterisk-19.5.0/apps/app_queue.c
+Index: asterisk-19.6.0/apps/app_queue.c
 ===================================================================
---- asterisk-19.5.0.orig/apps/app_queue.c
-+++ asterisk-19.5.0/apps/app_queue.c
+--- asterisk-19.6.0.orig/apps/app_queue.c
++++ asterisk-19.6.0/apps/app_queue.c
 @@ -10326,6 +10326,7 @@ static int manager_queues_summary(struct
  {
  	time_t now;
