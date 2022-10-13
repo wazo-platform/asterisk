@@ -1,0 +1,22 @@
+Index: asterisk-19.6.0/res/res_geolocation/geoloc_datastore.c
+===================================================================
+--- asterisk-19.6.0.orig/res/res_geolocation/geoloc_datastore.c
++++ asterisk-19.6.0/res/res_geolocation/geoloc_datastore.c
+@@ -255,7 +255,7 @@ struct ast_datastore *ast_geoloc_datasto
+ 	}
+ 
+ 	rc = ast_geoloc_datastore_add_eprofile(ds, eprofile);
+-	if (rc != 0) {
++	if (rc <= 0) {
+ 		ast_datastore_free(ds);
+ 		ds = NULL;
+ 	}
+@@ -297,7 +297,7 @@ struct ast_datastore *ast_geoloc_datasto
+ 
+ 	rc = ast_geoloc_datastore_add_eprofile(ds, eprofile);
+ 	ao2_ref(eprofile, -1);
+-	if (rc != 0) {
++	if (rc <= 0) {
+ 		ast_datastore_free(ds);
+ 		ds = NULL;
+ 	}
