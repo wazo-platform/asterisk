@@ -7,7 +7,6 @@ Build-Depends:
  automake,
  autotools-dev,
  cdbs (>= 0.4.123),
- dahdi-linux-dev (>= 2.1.0),
  debhelper (>= 9),
  dh-systemd (>= 1.5),
  freetds-dev,
