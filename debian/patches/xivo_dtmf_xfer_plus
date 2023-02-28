@@ -1,7 +1,7 @@
-Index: asterisk-19.8.0/include/asterisk/file.h
+Index: asterisk-20.1.0/include/asterisk/file.h
 ===================================================================
---- asterisk-19.8.0.orig/include/asterisk/file.h
-+++ asterisk-19.8.0/include/asterisk/file.h
+--- asterisk-20.1.0.orig/include/asterisk/file.h
++++ asterisk-20.1.0/include/asterisk/file.h
 @@ -47,6 +47,7 @@ struct ast_format;
  #define AST_DIGIT_NONE ""
  #define AST_DIGIT_ANY "0123456789#*ABCD"
@@ -10,10 +10,10 @@ Index: asterisk-19.8.0/include/asterisk/file.h
  
  #define SEEK_FORCECUR	10
  
-Index: asterisk-19.8.0/main/bridge_basic.c
+Index: asterisk-20.1.0/main/bridge_basic.c
 ===================================================================
---- asterisk-19.8.0.orig/main/bridge_basic.c
-+++ asterisk-19.8.0/main/bridge_basic.c
+--- asterisk-20.1.0.orig/main/bridge_basic.c
++++ asterisk-20.1.0/main/bridge_basic.c
 @@ -3219,7 +3219,7 @@ static int grab_transfer(struct ast_chan
  
  	/* Play the simple "transfer" prompt out and wait */
