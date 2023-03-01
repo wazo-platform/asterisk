@@ -30,9 +30,6 @@ else
   confflags += --build $(DEB_BUILD_GNU_TYPE) --host $(DEB_HOST_GNU_TYPE)
 endif
 
-# We copy around a number of things in case we're linux:
-BUILD_OS=$(shell dpkg-architecture -qDEB_BUILD_ARCH_OS)
-
 export PROC := $(shell dpkg-architecture -qDEB_BUILD_GNU_CPU)
 
 # don't let asterisk mess with build flags
@@ -116,9 +113,7 @@ REMOVED_PROTO_FILES = $(REMOVED_PROTO_CONFS:%=$(CURDIR)/debian/tmp/etc/asterisk/
 SUBPACKS_EXTRA = \
 		 voicemail voicemail-odbcstorage voicemail-imapstorage \
 		 ooh323 mysql mp3
-ifeq (linux,$(BUILD_OS))
 SUBPACKS_EXTRA += dahdi mobile tests vpb
-endif
 SUBPACKS_EXTRA_DIRS = $(SUBPACKS_EXTRA:%=$(CURDIR)/debian/asterisk-%)
 SUBPACKS_EXTRA_DIRS_MOD = $(SUBPACKS_EXTRA_DIRS:%=%/usr/lib/asterisk/modules)
 
