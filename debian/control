@@ -5,10 +5,7 @@ Maintainer: Wazo Maintainers <dev@wazo.community>
 Build-Depends:
  autoconf,
  automake,
- autotools-dev,
- cdbs (>= 0.4.123),
- debhelper (>= 9),
- dh-systemd (>= 1.5),
+ debhelper (>= 10),
  freetds-dev,
  libasound2-dev,
  libbluetooth-dev,
