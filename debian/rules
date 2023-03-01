@@ -21,10 +21,6 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 DPKG_EXPORT_BUILDFLAGS = 1
 include /usr/share/dpkg/buildflags.mk
 
-# PJPROJECT version, used to copy the repacked pjproject
-# tarball, see debian/README.source
-PJVER = 2.12.1
-
 export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
@@ -80,12 +76,6 @@ override_dh_autoreconf:
 # ignore them.
 override_dh_auto_configure:
 	chmod 755 $(CURDIR)/debian/dummyprogs/fetch
-	# Copy DSFG-free version of pjproject source into /tmp where the
-	# upstream build will find it, update checksums because we repacked
-	# it
-	cp -a debian/pjproject_${PJVER}~dfsg.orig.tar.bz2 /tmp/pjproject-${PJVER}.tar.bz2
-	cp third-party/pjproject/pjproject-${PJVER}.tar.bz2.md5 third-party/pjproject/pjproject-${PJVER}.tar.bz2.md5.debian_sav
-	md5sum /tmp/pjproject-${PJVER}.tar.bz2 | sed 's:/tmp/::' > third-party/pjproject/pjproject-${PJVER}.tar.bz2.md5
 	$(FETCH_ENV) ./configure			\
 		CFLAGS="-fgnu89-inline $(CFLAGS) $(CPPFLAGS)" LDFLAGS="$(LDFLAGS) -Wl,--as-needed" \
 		--host=$(DEB_HOST_GNU_TYPE)		\
@@ -119,10 +109,6 @@ override_dh_clean:
 
 	[ ! -f .version.debian_sav ] || mv .version.debian_sav .version
 	if [ -f configure.debian_sav ]; then mv configure.debian_sav configure; fi
-	if [ -f third-party/pjproject/pjproject-${PJVER}.tar.bz2.md5.debian_sav ]; then \
-	  mv third-party/pjproject/pjproject-${PJVER}.tar.bz2.md5.debian_sav third-party/pjproject/pjproject-${PJVER}.tar.bz2.md5; \
-	fi
-
 	dh_clean
 
 REMOVED_PROTO_CONFS = dundi mgcp skinny unistim
