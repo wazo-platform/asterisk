@@ -110,15 +110,6 @@ override_dh_auto_build:
 		menuselect/menuselect --enable DEBUG_THREADS menuselect.makeopts ; \
 	fi
 	$(FETCH_ENV) dh_auto_build -- $(BUILDFLAGS)
-	# Sanity check: don't break the ABI for modules:
-	@abi_hash=`awk -F'"' '/AST_BUILDOPT_SUM/ {print $$2}' include/asterisk/buildopts.h`; \
-	  if [ "$$abi_hash" != "$(SAVED_ABI_HASH)" ]; then \
-	    echo "Debian packaging problem: ABI checksum changed."; \
-	    echo "  Was: $(SAVED_ABI_HASH)"; \
-	    echo "  Now: $$abi_hash"; \
-	    echo "Check include/asterisk/buildopts.h"; \
-	    [ -n "$(EXP_RELEASE)" ] || exit 1; \
-	  fi
 
 SND_FILE=asterisk-core-sounds-en-gsm-1.4.20.tar.gz
 override_dh_clean:
@@ -133,10 +124,6 @@ override_dh_clean:
 	fi
 
 	dh_clean
-
-override_dh_gencontrol:
-	AST_BUILDOPT_SUM=`grep AST_BUILDOPT_SUM include/asterisk/buildopts.h  | sed -e 's/.\+ "\(.\+\)\"/\1/g'`; \
-		dh_gencontrol -- -Vasterisk:ABI=$$AST_BUILDOPT_SUM
 
 REMOVED_PROTO_CONFS = dundi mgcp skinny unistim
 REMOVED_PROTO_FILES = $(REMOVED_PROTO_CONFS:%=$(CURDIR)/debian/tmp/etc/asterisk/%.conf)
