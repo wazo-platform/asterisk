@@ -108,10 +108,6 @@ override_dh_auto_install:
 	$(RM) -f $(REMOVED_PROTO_FILES)
 	mkdir -p $(CURDIR)/debian/tmp/usr/bin/
 	mkdir -p $(CURDIR)/debian/tmp/usr/share/man/man1
-	mkdir -p $(CURDIR)/debian/tmp/usr/share/dahdi/span_config.d
-	cp -a debian/asterisk-config-custom $(CURDIR)/debian/tmp/usr/bin/
-	cp -a debian/asterisk-config-custom $(CURDIR)/debian/tmp/usr/share/man/man1/
-	cp -a debian/50-asterisk $(CURDIR)/debian/tmp/usr/share/dahdi/span_config.d/
 	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/conf2ael
 	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/muted
 	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/streamplayer
@@ -130,15 +126,6 @@ override_dh_install-arch:
 		$(CURDIR)/debian/asterisk-voicemail-imapstorage/usr/lib/asterisk/modules/app_voicemail.so
 	mv $(CURDIR)/debian/asterisk-voicemail-odbcstorage/usr/lib/asterisk/modules/app_voicemail_odbcstorage.so \
 		$(CURDIR)/debian/asterisk-voicemail-odbcstorage/usr/lib/asterisk/modules/app_voicemail.so
-
-override_dh_fixperms:
-	dh_fixperms
-	# should follow dh_fixperms; asterisk configurations may contain
-	# sensitive information, such as passwords
-	if [ -d $(CURDIR)/debian/asterisk-config ]; then \
-		chmod o-rwx $(CURDIR)/debian/asterisk-config/etc/asterisk/*; \
-		chmod o+rx  $(CURDIR)/debian/asterisk-config/etc/asterisk/manager.d; \
-	fi
 
 .PHONY: get-orig-source
 
