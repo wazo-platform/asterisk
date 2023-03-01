@@ -1,9 +1,6 @@
-var/lib/asterisk/static-http usr/share/asterisk/static-http
-var/lib/asterisk/keys usr/share/asterisk/keys
-var/lib/asterisk/sounds/priv-callerintros usr/share/asterisk/sounds/priv-callerintros
-var/lib/asterisk/sounds/custom usr/share/asterisk/sounds/recordings
-usr/local/share/asterisk/sounds	usr/share/asterisk/sounds/custom
-usr/share/man/man8/asterisk.8 usr/share/man/man8/rasterisk.8
-var/lib/asterisk/keys usr/share/asterisk/keys
-var/lib/asterisk/static-http usr/share/asterisk/static-http
+usr/share/man/man8/asterisk.8		usr/share/man/man8/rasterisk.8
+usr/local/share/asterisk/sounds		usr/share/asterisk/sounds/custom
+var/lib/asterisk/sounds/custom		usr/share/asterisk/sounds/recordings
+var/lib/asterisk/priv-callerintros	usr/share/asterisk/sounds/priv-callerintros
+
 var/lib/asterisk/moh usr/share/asterisk/moh
