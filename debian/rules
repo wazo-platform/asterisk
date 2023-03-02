@@ -10,6 +10,14 @@
 #  please enable "PIE" and "BINDNOW" in the build.
 #  The "all" option enables "PIE" and "BINDNOW" and future hardening flags
 
+# uncomment the next line to create a "MALLOC_DEBUG" version of asterisk
+#MENUSELECT_EXTRA_ARGS := --enable MALLOC_DEBUG
+# uncomment the next 2 lines to create a "debug" version of asterisk
+#MENUSELECT_EXTRA_ARGS := --enable DONT_OPTIMIZE
+#MENUSELECT_EXTRA_ARGS += --enable DEBUG_THREADS
+# ...and the next line to be able to use the asterisk test framework
+#MENUSELECT_EXTRA_ARGS += --enable TEST_FRAMEWORK
+
 PKG  = $(word 2,$(shell dpkg-parsechangelog | grep Source))
 VER ?= $(shell dpkg-parsechangelog | grep Version: | awk -F': ' '{print $$NF}' | sed -ne 's/^\(\([0-9]\+\):\)\?\(.*\)-.*/\3/p')
 ASTERISK_URL_DOWNLOAD = "http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-${VER}.tar.gz"
@@ -92,7 +100,6 @@ override_dh_auto_build:
 		menuselect.makeopts
 
 	$(FETCH_ENV) dh_auto_build -- $(BUILDFLAGS)
-
 
 override_dh_clean:
 	[ ! -f .version.debian_sav ] || mv .version.debian_sav .version
