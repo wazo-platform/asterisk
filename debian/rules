@@ -93,13 +93,8 @@ override_dh_auto_build:
 
 	$(FETCH_ENV) dh_auto_build -- $(BUILDFLAGS)
 
-# TODO(fblackburn) should we delete this unused step?
-SND_FILE=asterisk-core-sounds-en-gsm-1.4.20.tar.gz
-override_dh_clean:
-	if [ -r sounds/$(SND_FILE) ]; then mv sounds/$($SND_FILE) debian/; fi
-	GREP=grep AWK=awk $(MAKE) distclean
-	if [ -r debian/$(SND_FILE) ]; then mv debian/$(SND_FILE) sounds/; fi
 
+override_dh_clean:
 	[ ! -f .version.debian_sav ] || mv .version.debian_sav .version
 	if [ -f configure.debian_sav ]; then mv configure.debian_sav configure; fi
 	dh_clean
