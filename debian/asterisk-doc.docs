@@ -9,3 +9,5 @@ doc/*.pdf
 configs
 contrib/ast-db-manage/
 contrib/realtime/
+
+doc/json

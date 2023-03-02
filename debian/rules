@@ -98,8 +98,9 @@ override_dh_auto_build:
 		--enable CORE-SOUNDS-FR-GSM \
 		$(MENUSELECT_EXTRA_ARGS) \
 		menuselect.makeopts
-
 	$(FETCH_ENV) dh_auto_build -- $(BUILDFLAGS)
+	mkdir -p doc/json
+	wazo-asterisk-doc-extractor doc/core-en_US.xml > doc/json/pjsip.json
 
 override_dh_clean:
 	[ ! -f .version.debian_sav ] || mv .version.debian_sav .version
