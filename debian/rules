@@ -75,7 +75,22 @@ override_dh_auto_configure:
 
 override_dh_auto_build:
 	$(MAKE) menuselect.makeopts BUILD_CFLAGS="$(CFLAGS) $(CPPFLAGS)" BUILD_LDFLAGS="$(LDFLAGS)"
-	menuselect/menuselect --enable app_macro menuselect.makeopts
+	menuselect/menuselect \
+		--disable-category MENUSELECT_ADDONS \
+		--disable-category MENUSELECT_MOH \
+		--disable BUILD_NATIVE \
+		--disable chan_dahdi \
+		--disable codec_dahdi \
+		--disable res_timing_dahdi \
+		--disable app_flash \
+		--enable codec_opus \
+		--enable res_mwi_external \
+		--enable res_stasis_mailbox \
+		--enable res_ari_mailboxes \
+		--enable CORE-SOUNDS-FR-GSM \
+		$(MENUSELECT_EXTRA_ARGS) \
+		menuselect.makeopts
+
 	$(FETCH_ENV) dh_auto_build -- $(BUILDFLAGS)
 
 # TODO(fblackburn) should we delete this unused step?
