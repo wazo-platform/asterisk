@@ -38,8 +38,7 @@ BUILDFLAGS += AST_FORTIFY_SOURCE= DEBUG= OPTIMIZE=
 # show full gcc arguments instead of [CC] and [LD]
 BUILDFLAGS += NOISY_BUILD=yes
 
-BUILDFLAGS += ASTDATADIR=/usr/share/asterisk ASTVARRUNDIR=/var/run/asterisk
-
+BUILDFLAGS += ASTDATADIR=/usr/share/asterisk ASTVARRUNDIR=/run/asterisk
 
 include /usr/share/dpkg/pkg-info.mk
 DEBVERSION:=$(DEB_VERSION)
