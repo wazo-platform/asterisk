@@ -123,6 +123,8 @@ override_dh_auto_install:
 	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/hashtest*
 	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/refcounter
 
+override_dh_strip:
+	dh_strip -a --dbgsym-migration='asterisk-dbg (<< 8:20.1.0-1~wazo2.deb10)'
 
 .PHONY: get-orig-source
 
