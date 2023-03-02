@@ -105,6 +105,8 @@ override_dh_auto_build:
 override_dh_clean:
 	[ ! -f .version.debian_sav ] || mv .version.debian_sav .version
 	if [ -f configure.debian_sav ]; then mv configure.debian_sav configure; fi
+	$(RM) -f include/asterisk/.gitignore
+	$(RM) -f include/asterisk/autoconfig.h.in*
 	dh_clean
 
 REMOVED_PROTO_CONFS = dundi mgcp skinny unistim
