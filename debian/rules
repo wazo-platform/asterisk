@@ -106,12 +106,6 @@ override_dh_clean:
 
 REMOVED_PROTO_CONFS = dundi mgcp skinny unistim
 REMOVED_PROTO_FILES = $(REMOVED_PROTO_CONFS:%=$(CURDIR)/debian/tmp/etc/asterisk/%.conf)
-SUBPACKS_EXTRA = \
-		 voicemail voicemail-odbcstorage voicemail-imapstorage \
-		 ooh323 mysql mp3
-SUBPACKS_EXTRA += dahdi mobile tests vpb
-SUBPACKS_EXTRA_DIRS = $(SUBPACKS_EXTRA:%=$(CURDIR)/debian/asterisk-%)
-SUBPACKS_EXTRA_DIRS_MOD = $(SUBPACKS_EXTRA_DIRS:%=%/usr/lib/asterisk/modules)
 
 override_dh_auto_install:
 	$(FETCH_ENV) dh_auto_install -- $(BUILDFLAGS) -j1 config samples
@@ -126,17 +120,6 @@ override_dh_auto_install:
 	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/hashtest*
 	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/refcounter
 
-override_dh_install-arch:
-	dh_install
-	extra_packs=`find $(SUBPACKS_EXTRA_DIRS_MOD) -name '*.so' -printf '%f\n'`\
-		    ; cd $(CURDIR)/debian/asterisk-modules/usr/lib/asterisk/modules \
-		    && rm -f $$extra_packs
-
-	# Rename dh_install file for -imapstorage and -odbcstorage.
-	mv $(CURDIR)/debian/asterisk-voicemail-imapstorage/usr/lib/asterisk/modules/app_voicemail_imapstorage.so \
-		$(CURDIR)/debian/asterisk-voicemail-imapstorage/usr/lib/asterisk/modules/app_voicemail.so
-	mv $(CURDIR)/debian/asterisk-voicemail-odbcstorage/usr/lib/asterisk/modules/app_voicemail_odbcstorage.so \
-		$(CURDIR)/debian/asterisk-voicemail-odbcstorage/usr/lib/asterisk/modules/app_voicemail.so
 
 .PHONY: get-orig-source
 
