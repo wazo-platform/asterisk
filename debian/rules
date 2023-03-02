@@ -71,11 +71,8 @@ override_dh_auto_configure:
 		--prefix=/usr				\
 		--mandir=\$${prefix}/share/man		\
 		--infodir=\$${prefix}/share/info	\
-		--disable-asteriskssl			\
-		--with-gsm				\
 		--with-imap=system			\
-		--without-pwlib				\
-#		--with-cap \
+		--with-jansson-bundled
 
 override_dh_auto_build:
 	$(MAKE) menuselect.makeopts BUILD_CFLAGS="$(CFLAGS) $(CPPFLAGS)" BUILD_LDFLAGS="$(LDFLAGS)"
