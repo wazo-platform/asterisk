@@ -8,6 +8,7 @@ usr/share/asterisk/rest-api
 
 usr/lib/asterisk
 usr/share/asterisk/keys /var/lib/asterisk/
+usr/share/asterisk/static-http
 var/lib/asterisk/documentation/thirdparty /usr/share/asterisk/documentation/
 
 debian/asterisk.service lib/systemd/system/
