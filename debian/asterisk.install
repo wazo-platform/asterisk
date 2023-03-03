@@ -1,13 +1,15 @@
-debian/tmp/usr/sbin usr/
-debian/tmp/usr/lib/ usr/
-debian/tmp/var/lib/asterisk/agi-bin var/lib/asterisk
-debian/tmp/var/lib/asterisk/firmware var/lib/asterisk
-debian/tmp/var/lib/asterisk/images var/lib/asterisk
-debian/tmp/var/lib/asterisk/keys var/lib/asterisk
-debian/tmp/var/lib/asterisk/moh var/lib/asterisk
-debian/tmp/var/lib/asterisk/phoneprov var/lib/asterisk
-debian/tmp/var/lib/asterisk/rest-api usr/share/asterisk
-debian/tmp/var/lib/asterisk/sounds var/lib/asterisk
-debian/tmp/var/lib/asterisk/static-http var/lib/asterisk
-debian/tmp/var/log/asterisk var/log/
-debian/tmp/var/spool/asterisk var/spool/
+usr/sbin
+usr/lib/libasterisk*
+usr/share/asterisk/firmware
+usr/share/asterisk/keys
+usr/share/asterisk/conf
+usr/share/asterisk/documentation
+usr/share/asterisk/rest-api
+
+usr/lib/asterisk
+usr/share/asterisk/keys /var/lib/asterisk/
+usr/share/asterisk/static-http
+var/lib/asterisk/documentation/thirdparty /usr/share/asterisk/documentation/
+
+debian/asterisk.service lib/systemd/system/
+debian/asterisk_fix /usr/share/asterisk/bin/

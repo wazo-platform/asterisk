@@ -1,18 +1,14 @@
 #!/usr/bin/make -f
-# -*- mode: makefile; coding: utf-8 -*-
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
 
-PKG  = $(word 2,$(shell dpkg-parsechangelog | grep Source))
-VER ?= $(shell dpkg-parsechangelog | grep Version: | awk -F': ' '{print $$NF}' | sed -ne 's/^\(\([0-9]\+\):\)\?\(.*\)-.*/\3/p')
-ASTERISK_URL_DOWNLOAD = "http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-${VER}.tar.gz"
-
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/autotools.mk
-
-DEB_SHLIBDEPS_INCLUDE := $(CURDIR)/debian/tmp/usr/lib
-DEB_DH_SHLIBDEPS_ARGS_ALL += -u--ignore-missing-info -Xchan_also -Xchan_console -Xchan_mgcp -Xchan_oss -Xchan_phone -Xchan_sip -Xchan_skinny -Xchan_unistim -Xchan_motif -Xcdr_radius -Xcdr_tds -Xcdr_pgsql -Xcel_radius -Xcel_tds -Xapp_jack -Xres_calendar -Xres_calendar_caldav -Xres_calendar_ews -Xres_calendar_exchange -Xres_calendar_icalendar -Xres_xmpp -Xres_snmp
-DEB_DH_INSTALLINIT_ARGS := --no-scripts
-DEB_MAKE_INVOKE = $(DEB_MAKE_ENVVARS) $(MAKE) -C $(DEB_BUILDDIR)
-BUILD_TREE = .
+# Starting with dpkg-dev >= 1.16.1.1 you can use the new buildflags.mk file
+# to set all *FLAGS
+# When building programs that handle untrusted data
+# (parsers, network listeners, etc.),
+#  or run with elevated privileges (PAM, X, etc.),
+#  please enable "PIE" and "BINDNOW" in the build.
+#  The "all" option enables "PIE" and "BINDNOW" and future hardening flags
 
 # uncomment the next line to create a "MALLOC_DEBUG" version of asterisk
 #MENUSELECT_EXTRA_ARGS := --enable MALLOC_DEBUG
@@ -22,90 +18,115 @@ BUILD_TREE = .
 # ...and the next line to be able to use the asterisk test framework
 #MENUSELECT_EXTRA_ARGS += --enable TEST_FRAMEWORK
 
-# Asterisk needs
+PKG  = $(word 2,$(shell dpkg-parsechangelog | grep Source))
+VER ?= $(shell dpkg-parsechangelog | grep Version: | awk -F': ' '{print $$NF}' | sed -ne 's/^\(\([0-9]\+\):\)\?\(.*\)-.*/\3/p')
+ASTERISK_URL_DOWNLOAD = "http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-${VER}.tar.gz"
+
+%:
+	dh $@
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+DPKG_EXPORT_BUILDFLAGS = 1
+include /usr/share/dpkg/buildflags.mk
+
+export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
+  confflags += --build $(DEB_HOST_GNU_TYPE)
+else
+  confflags += --build $(DEB_BUILD_GNU_TYPE) --host $(DEB_HOST_GNU_TYPE)
+endif
+
 export PROC := $(shell dpkg-architecture -qDEB_BUILD_GNU_CPU)
+
+# don't let asterisk mess with build flags
+BUILDFLAGS += AST_FORTIFY_SOURCE= DEBUG= OPTIMIZE=
+
 # show full gcc arguments instead of [CC] and [LD]
-DEB_MAKE_INVOKE += NOISY_BUILD=yes
-# Force music files selection:
-DEB_MAKE_INVOKE += MENUSELECT_MOH= \
-  ASTDATADIR=/usr/share/asterisk \
-  ASTVARRUNDIR=/run/asterisk \
+BUILDFLAGS += NOISY_BUILD=yes
 
-# Debian needs
-DEB_CONFIGURE_EXTRA_FLAGS = --without-misdn --with-jansson-bundled
-DEB_CONFIGURE_SCRIPT_ENV += $(FETCH_ENV)
+BUILDFLAGS += ASTDATADIR=/usr/share/asterisk ASTVARRUNDIR=/run/asterisk
 
+include /usr/share/dpkg/pkg-info.mk
+DEBVERSION:=$(DEB_VERSION)
+DEB_NOEPOCH_VERSION:=$(shell echo $(DEBVERSION) | cut -d':' -f 2)
+
+# make sure we have 'fetch' . We need to have either wget or fetch
 # on the system. However it is generally not a good idea to actually
-# get remote tarballs at build time. So if nither wget nor fetch
+# get remote tarballs at build time. So if neither wget nor fetch 
 # happen to be installed, the configure script will find a dummy
 # fetch script that always returns an error.
-DEB_MAKE_ENVVARS = PATH=$$PATH:$(CURDIR)/debian/dummyprogs
+FETCH_ENV = PATH=$$PATH:$(CURDIR)/debian/dummyprogs
 
-configure/asterisk::
-	# generate proper menuselect.makeopts
-	(cd $(BUILD_TREE); \
-		$(FETCH_ENV) $(MAKE) $(BUILDFLAGS) menuselect.makeopts)
-	(cd $(BUILD_TREE); \
-		menuselect/menuselect \
-			--disable-category MENUSELECT_ADDONS \
-			--disable-category MENUSELECT_MOH \
-			--disable BUILD_NATIVE \
-			--enable app_meetme \
-			--enable codec_opus \
-			--enable res_mwi_external \
-			--enable res_stasis_mailbox \
-			--enable res_ari_mailboxes \
-			--enable CORE-SOUNDS-FR-GSM \
-			$(MENUSELECT_EXTRA_ARGS) \
-			menuselect.makeopts \
-	)
-	# generate asterisk advertised version
-	echo "$(DEB_UPSTREAM_VERSION)" > $(BUILD_TREE)/.version
-	# DONE
-	touch $(BUILD_TREE)/configure-stamp
+override_dh_autoreconf:
+	if [ ! -r configure.debian_sav ]; then cp -a configure configure.debian_sav; fi
+	[ -f .version.debian_sav ] || cp -a .version .version.debian_sav
+	echo $(DEB_NOEPOCH_VERSION) > .version
+	dh_autoreconf -- ./bootstrap.sh
 
-build/asterisk::
-	touch $(BUILD_TREE)/build-stamp
+# Make sure the configure script gets an CFLAGS parameter. Otherwise
+# it will build with -march=native
+# Pass CPPFLAGS in the CFLAGS as otherwise the build system will
+# ignore them.
+override_dh_auto_configure:
+	chmod 755 $(CURDIR)/debian/dummyprogs/fetch
+	$(FETCH_ENV) ./configure			\
+		CFLAGS="-fgnu89-inline $(CFLAGS) $(CPPFLAGS)" LDFLAGS="$(LDFLAGS) -Wl,--as-needed" \
+		--host=$(DEB_HOST_GNU_TYPE)		\
+		--build=$(DEB_BUILD_GNU_TYPE)		\
+		--prefix=/usr				\
+		--mandir=\$${prefix}/share/man		\
+		--infodir=\$${prefix}/share/info	\
+		--with-imap=system			\
+		--with-jansson-bundled
 
-common-install-arch common-install-indep:: common-install-impl
-common-install-impl::
-	$(DEB_MAKE_ENVVARS) $(MAKE) -C $(BUILD_TREE) DESTDIR=$(CURDIR)/debian/tmp/ install samples
+override_dh_auto_build:
+	$(MAKE) menuselect.makeopts BUILD_CFLAGS="$(CFLAGS) $(CPPFLAGS)" BUILD_LDFLAGS="$(LDFLAGS)"
+	menuselect/menuselect \
+		--disable-category MENUSELECT_ADDONS \
+		--disable-category MENUSELECT_MOH \
+		--disable BUILD_NATIVE \
+		--disable chan_dahdi \
+		--disable codec_dahdi \
+		--disable res_timing_dahdi \
+		--disable app_flash \
+		--enable codec_opus \
+		--enable res_mwi_external \
+		--enable res_stasis_mailbox \
+		--enable res_ari_mailboxes \
+		--enable CORE-SOUNDS-FR-GSM \
+		$(MENUSELECT_EXTRA_ARGS) \
+		menuselect.makeopts
+	$(FETCH_ENV) dh_auto_build -- $(BUILDFLAGS)
+	mkdir -p doc/json
+	wazo-asterisk-doc-extractor doc/core-en_US.xml > doc/json/pjsip.json
 
-install/asterisk::
-	$(DEB_MAKE_ENVVARS) $(MAKE) -C $(BUILD_TREE) DESTDIR=$(CURDIR)/debian/tmp/ install
+override_dh_clean:
+	[ ! -f .version.debian_sav ] || mv .version.debian_sav .version
+	if [ -f configure.debian_sav ]; then mv configure.debian_sav configure; fi
+	$(RM) -f include/asterisk/.gitignore
+	$(RM) -f include/asterisk/autoconfig.h.in*
+	dh_clean
 
-install/asterisk-dev::
-	$(DEB_MAKE_ENVVARS) $(MAKE) -C $(BUILD_TREE) DESTDIR=$(CURDIR)/debian/tmp/ install-headers
+REMOVED_PROTO_CONFS = dundi mgcp skinny unistim
+REMOVED_PROTO_FILES = $(REMOVED_PROTO_CONFS:%=$(CURDIR)/debian/tmp/etc/asterisk/%.conf)
 
-binary-install/asterisk::
-	mkdir -p $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/asterisk/bin
-	cp $(CURDIR)/debian/asterisk_fix $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/asterisk/bin/
-	chmod +x $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/asterisk/bin/asterisk_fix
+override_dh_auto_install:
+	$(FETCH_ENV) dh_auto_install -- $(BUILDFLAGS) -j1 config samples
+	cp -a configs $(CURDIR)/debian/tmp/usr/share/asterisk/conf
+	$(RM) -f $(REMOVED_PROTO_FILES)
+	mkdir -p $(CURDIR)/debian/tmp/usr/bin/
+	mkdir -p $(CURDIR)/debian/tmp/usr/share/man/man1
+	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/conf2ael
+	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/muted
+	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/streamplayer
+	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/stereorize
+	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/hashtest*
+	$(RM) -f $(CURDIR)/debian/tmp/usr/sbin/refcounter
 
-binary-install/asterisk::
-	rm -rf debian/$(cdbs_curpkg)/var/spool/asterisk/voicemail/default
-	rm -rf debian/$(cdbs_curpkg)/var/lib/asterisk/sounds/en
-	mkdir -p debian/$(cdbs_curpkg)/usr/share/asterisk
-	mv debian/tmp/var/lib/asterisk/documentation debian/$(cdbs_curpkg)/usr/share/asterisk/
-
-build/asterisk-doc::
-	mkdir -p $(BUILD_TREE)/doc/json
-	wazo-asterisk-doc-extractor $(BUILD_TREE)/doc/core-en_US.xml > $(BUILD_TREE)/doc/json/pjsip.json
-
-install/asterisk-doc::
-	dh_installexamples -p$(cdbs_curpkg) $(BUILD_TREE)/sample.call
-	dh_installexamples -p$(cdbs_curpkg) $(BUILD_TREE)/configs/*
-	dh_installexamples -p$(cdbs_curpkg) $(BUILD_TREE)/agi/agi-test.agi
-	dh_installexamples -p$(cdbs_curpkg) $(BUILD_TREE)/agi/fastagi-test
-	dh_installdocs -p$(cdbs_curpkg) $(BUILD_TREE)/UPGRADE.txt
-	dh_installdocs -p$(cdbs_curpkg) $(BUILD_TREE)/CREDITS
-	dh_installdocs -p$(cdbs_curpkg) $(BUILD_TREE)/doc/*
-	dh_installdocs -p$(cdbs_curpkg) $(BUILD_TREE)/contrib
-	dh_installdocs -p$(cdbs_curpkg) $(BUILD_TREE)/images/*.gif
-	dh_installdocs -p$(cdbs_curpkg) $(BUILD_TREE)/Zaptel-to-DAHDI.txt
-
-clean::
-	rm -f *.cdbs-config_list
+override_dh_strip:
+	dh_strip -a --dbgsym-migration='asterisk-dbg (<< 8:20.1.0-1~wazo2.deb10)'
 
 .PHONY: get-orig-source
 

@@ -1,0 +1,13 @@
+BUGS
+README*
+CREDITS
+CHANGES
+UPGRADE*
+Zaptel-to-DAHDI.txt
+doc/*.txt
+doc/*.pdf
+configs
+contrib/ast-db-manage/
+contrib/realtime/
+
+doc/json
