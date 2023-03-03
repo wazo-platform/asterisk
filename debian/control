@@ -40,7 +40,7 @@ Build-Depends:
  libxslt1-dev,
  portaudio19-dev,
  postgresql-server-dev-all,
- python,
+ python3,
  quilt,
  unixodbc-dev,
  uuid-dev,
