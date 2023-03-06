@@ -20,6 +20,7 @@ var/spool/asterisk/tmp
 var/spool/asterisk/voicemail
 var/spool/asterisk/outgoing
 
-var/spool/asterisk/recording
-var/lib/asterisk/moh/default
 usr/share/asterisk/firmware/iax
+var/lib/asterisk/agi-bin
+var/lib/asterisk/moh/default
+var/spool/asterisk/recording
