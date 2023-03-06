@@ -6,6 +6,7 @@ Build-Depends:
  autoconf,
  automake,
  debhelper (>= 10),
+ dh-systemd,
  freetds-dev,
  libasound2-dev,
  libbluetooth-dev,
