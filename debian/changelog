@@ -1,3 +1,9 @@
+asterisk (8:20.2.1-1~wazo1) wazo-dev-buster; urgency=medium
+
+  * Asterisk 20.2.1
+
+ -- Wazo Maintainers <dev@wazo.community>  Tue, 04 Apr 2023 08:34:12 -0400
+
 asterisk (8:20.1.0-1~wazo5) wazo-dev-buster; urgency=medium
 
   * remove dh-systemd dependency, since already in debhelper 10
