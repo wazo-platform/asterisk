@@ -19,9 +19,10 @@ tar -xf asterisk-$VERSION.tar.gz && cd asterisk-$VERSION
 ln -s ../debian/patches patches
 ```
 
-  * Push the topmost patch with `quilt push`, then resolve the conflicts if necessary, then refresh
-    the patch with `quilt refresh`
-  * Repeat the last step until all patches have been refreshed
+  * Push the topmost patch with `quilt push`
+  * Resolve the conflicts if necessary
+  * Refresh the patch with `quilt refresh` (even if no conflicts)
+  * Repeat the push-resolve-refresh step until all patches have been refreshed
 * Commit and push
 
 To test that it compiles and builds fine (example for 13.10.0 on a remote wazo):
