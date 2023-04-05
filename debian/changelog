@@ -1,3 +1,9 @@
+asterisk (8:20.2.1-1~wazo2) wazo-dev-buster; urgency=medium
+
+  * Include patch refresh for 20.2.1
+
+ -- Wazo Maintainers <dev@wazo.community>  Wed, 05 Apr 2023 09:51:16 -0400
+
 asterisk (8:20.2.1-1~wazo1) wazo-dev-buster; urgency=medium
 
   * Asterisk 20.2.1
