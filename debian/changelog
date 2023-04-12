@@ -1,3 +1,9 @@
+asterisk (8:20.2.1-1~wazo4) wazo-dev-bullseye; urgency=medium
+
+  * rebuild
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 12 Apr 2023 14:38:13 -0400
+
 asterisk (8:20.2.1-1~wazo3) wazo-dev-bullseye; urgency=medium
 
   * Bullseye build
