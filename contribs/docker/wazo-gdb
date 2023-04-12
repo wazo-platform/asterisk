@@ -22,8 +22,10 @@ debian_distribution() {
         echo "jessie"
     elif [ "${wazo_version}" \< "19.13" ] ; then
         echo "stretch"
-    else
+    elif [ "${wazo_version}" \< "23.06" ] ; then
         echo "buster"
+    else
+        echo "bullseye"
     fi
 }
 
