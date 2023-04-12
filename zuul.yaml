@@ -1,6 +1,6 @@
 - project:
     templates:
-      - debian-packaging-template
+      - debian-packaging-bullseye
     check:
       jobs:
         - asterisk-tox-integration
