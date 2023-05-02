@@ -1,0 +1,31 @@
+Index: asterisk-20.2.1/res/res_musiconhold.c
+===================================================================
+--- asterisk-20.2.1.orig/res/res_musiconhold.c
++++ asterisk-20.2.1/res/res_musiconhold.c
+@@ -371,7 +371,9 @@ static int ast_moh_files_next(struct ast
+ 		state->samples = 0;
+ 	}
+ 
++	ast_debug(1, "Got %d files to try.\n", file_count);
+ 	for (tries = 0; tries < file_count; ++tries) {
++		ast_debug(1, "Trying file '%s'\n", AST_VECTOR_GET(files, state->pos));
+ 		if (ast_openstream_full(chan, AST_VECTOR_GET(files, state->pos), ast_channel_language(chan), 1)) {
+ 			break;
+ 		}
+@@ -382,6 +384,8 @@ static int ast_moh_files_next(struct ast
+ 	}
+ 
+ 	if (tries == file_count) {
++		ast_log(LOG_WARNING, "Reached maximum tries. Aborting.");
++		ao2_t_unlink(mohclasses, state->class, "Removing MOH class from container");
+ 		ao2_ref(files, -1);
+ 		return -1;
+ 	}
+@@ -476,6 +480,7 @@ static int moh_files_generator(struct as
+ 		 */
+ 		ast_channel_unlock(chan);
+ 		if (!f) {
++			ast_log(LOG_WARNING, "Could not read frame for '%s'", state->class->name);
+ 			return -1;
+ 		}
+ 
