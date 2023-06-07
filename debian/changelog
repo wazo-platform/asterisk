@@ -1,3 +1,9 @@
+asterisk (8:20.2.1-1~wazo7) wazo-dev-bullseye; urgency=medium
+
+  * Add res_musiconhold patch that fixes invalid file format from stopping moh
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 2 May 2023 11:10:54 -0400
+
 asterisk (8:20.2.1-1~wazo6) wazo-dev-bullseye; urgency=medium
 
   * rebuild
