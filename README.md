@@ -42,9 +42,9 @@ cd asterisk-*
 mv ../debian .
 apt install devscripts
 mk-build-deps -i
-rm asterisk-build-deps_*.deb 
+rm asterisk-build-deps_*.deb
 dpkg-buildpackage -us -uc
-dpkg -i ../asterisk_*.deb 
+dpkg -i ../asterisk_*.deb
 ```
 
 ## asterisk-vanilla and asterisk-debug
@@ -53,7 +53,7 @@ By pushing commit on master, a series of actions will be triggered and other
 repositories will be updated automatically. There are 2 repositories that are
 built automatically:
 
-  * [asterisk-vanilla][github-asterisk-vanilla]: An asterisk without our patches
+  * [asterisk-vanilla][github-asterisk-vanilla]: An asterisk without Wazo patches
   * [asterisk-debug][github-asterisk-vanilla]: An asterisk with debug flag activated
 
 The [asterisk Jenkins job](https://jenkins.wazo.community/job/asterisk) will trigger
