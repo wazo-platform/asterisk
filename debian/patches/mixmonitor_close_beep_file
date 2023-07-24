@@ -1,7 +1,7 @@
-Index: asterisk-20.3.1/apps/app_mixmonitor.c
+Index: asterisk-20.4.0/apps/app_mixmonitor.c
 ===================================================================
---- asterisk-20.3.1.orig/apps/app_mixmonitor.c
-+++ asterisk-20.3.1/apps/app_mixmonitor.c
+--- asterisk-20.4.0.orig/apps/app_mixmonitor.c
++++ asterisk-20.4.0/apps/app_mixmonitor.c
 @@ -829,7 +829,9 @@ static void *mixmonitor_thread(void *obj
  
  	if (ast_test_flag(mixmonitor, MUXFLAG_BEEP_STOP)) {
