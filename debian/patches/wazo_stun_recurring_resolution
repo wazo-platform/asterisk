@@ -1,7 +1,7 @@
-Index: asterisk-20.3.1/main/dns_recurring.c
+Index: asterisk-20.4.0/main/dns_recurring.c
 ===================================================================
---- asterisk-20.3.1.orig/main/dns_recurring.c
-+++ asterisk-20.3.1/main/dns_recurring.c
+--- asterisk-20.4.0.orig/main/dns_recurring.c
++++ asterisk-20.4.0/main/dns_recurring.c
 @@ -41,9 +41,13 @@
  
  /*! \brief Delay between TTL expiration and the next DNS query, to make sure the
@@ -44,10 +44,10 @@ Index: asterisk-20.3.1/main/dns_recurring.c
  		}
  	}
  
-Index: asterisk-20.3.1/res/res_rtp_asterisk.c
+Index: asterisk-20.4.0/res/res_rtp_asterisk.c
 ===================================================================
---- asterisk-20.3.1.orig/res/res_rtp_asterisk.c
-+++ asterisk-20.3.1/res/res_rtp_asterisk.c
+--- asterisk-20.4.0.orig/res/res_rtp_asterisk.c
++++ asterisk-20.4.0/res/res_rtp_asterisk.c
 @@ -230,7 +230,7 @@ static int dtls_mtu = DEFAULT_DTLS_MTU;
  #ifdef HAVE_PJPROJECT
  static int icesupport = DEFAULT_ICESUPPORT;

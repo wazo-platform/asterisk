@@ -1,8 +1,8 @@
-Index: asterisk-20.3.1/apps/app_queue.c
+Index: asterisk-20.4.0/apps/app_queue.c
 ===================================================================
---- asterisk-20.3.1.orig/apps/app_queue.c
-+++ asterisk-20.3.1/apps/app_queue.c
-@@ -1701,6 +1701,7 @@ struct queue_ent {
+--- asterisk-20.4.0.orig/apps/app_queue.c
++++ asterisk-20.4.0/apps/app_queue.c
+@@ -1707,6 +1707,7 @@ struct queue_ent {
  	char announce[PATH_MAX];               /*!< Announcement to play for member when call is answered */
  	char context[AST_MAX_CONTEXT];         /*!< Context when user exits queue */
  	char digits[AST_MAX_EXTENSION];        /*!< Digits entered while in queue */
@@ -10,7 +10,7 @@ Index: asterisk-20.3.1/apps/app_queue.c
  	const char *predial_callee;            /*!< Gosub app arguments for outgoing calls.  NULL if not supplied. */
  	int valid_digits;                      /*!< Digits entered correspond to valid extension. Exited */
  	int pos;                               /*!< Where we are in the queue */
-@@ -2246,6 +2247,20 @@ static struct ast_manager_event_blob *qu
+@@ -2252,6 +2253,20 @@ static struct ast_manager_event_blob *qu
  	RAII_VAR(struct ast_str *, event_string, NULL, ast_free);
  
  	channel_string = ast_manager_build_channel_state_string(obj->snapshot);
@@ -31,7 +31,7 @@ Index: asterisk-20.3.1/apps/app_queue.c
  	event_string = ast_manager_str_from_json_object(obj->blob, NULL);
  	if (!channel_string || !event_string) {
  		return NULL;
-@@ -4586,10 +4601,11 @@ static void leave_queue(struct queue_ent
+@@ -4599,10 +4614,11 @@ static void leave_queue(struct queue_ent
  				ast_devstate_changed(AST_DEVICE_NOT_INUSE, AST_DEVSTATE_CACHABLE, "Queue:%s", q->name);
  			}
  
@@ -45,7 +45,7 @@ Index: asterisk-20.3.1/apps/app_queue.c
  			ast_channel_publish_cached_blob(qe->chan, queue_caller_leave_type(), blob);
  			ast_debug(1, "Queue '%s' Leave, Channel '%s'\n", q->name, ast_channel_name(qe->chan));
  			/* Take us out of the queue */
-@@ -8816,6 +8832,8 @@ static int queue_exec(struct ast_channel
+@@ -8892,6 +8908,8 @@ static int queue_exec(struct ast_channel
  	} else {
  		raise_penalty = INT_MAX;
  	}
