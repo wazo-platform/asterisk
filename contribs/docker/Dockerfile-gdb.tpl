@@ -16,7 +16,7 @@ RUN true && \
     wget http://mirror.wazo.community/wazo_current.key -O - | apt-key add - && \
     apt-get -q update && \
     apt-get -q -y install asterisk \
-                          asterisk-dbg \
+                          asterisk-dbgsym \
                           dpkg-dev \
                           gdb \
                           libc6-dbg \
