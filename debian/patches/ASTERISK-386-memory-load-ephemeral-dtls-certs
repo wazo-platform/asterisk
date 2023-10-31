@@ -1,0 +1,33 @@
+commit deeb1acffef4ecab7b797b10fa8f37f781a2d9b3
+Author: Sean Bright <sean@seanbright.com>
+Date:   Wed Oct 25 18:19:13 2023 -0400
+
+    res_rtp_asterisk.c: Fix memory leak in ephemeral certificate creation.
+    
+    Fixes #386
+
+Index: asterisk-20.4.0/res/res_rtp_asterisk.c
+===================================================================
+--- asterisk-20.4.0.orig/res/res_rtp_asterisk.c
++++ asterisk-20.4.0/res/res_rtp_asterisk.c
+@@ -2032,9 +2032,12 @@ static int create_ephemeral_certificate(
+ 	if (!(serial = BN_new())
+ 	   || !BN_rand(serial, SERIAL_RAND_BITS, -1, 0)
+ 	   || !BN_to_ASN1_INTEGER(serial, X509_get_serialNumber(cert))) {
++		BN_free(serial);
+ 		goto error;
+ 	}
+ 
++	BN_free(serial);
++
+ 	/*
+ 	 * Validity period - Current Chrome & Firefox make it 31 days starting
+ 	 * with yesterday at the current time, so we will do the same.
+@@ -2069,7 +2072,6 @@ static int create_ephemeral_certificate(
+ 	return 0;
+ 
+ error:
+-	BN_free(serial);
+ 	X509_free(cert);
+ 
+ 	return -1;
