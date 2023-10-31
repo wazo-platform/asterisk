@@ -1,7 +1,7 @@
-Index: asterisk-20.4.0/apps/app_mixmonitor.c
+Index: asterisk-20.5.0/apps/app_mixmonitor.c
 ===================================================================
---- asterisk-20.4.0.orig/apps/app_mixmonitor.c
-+++ asterisk-20.4.0/apps/app_mixmonitor.c
+--- asterisk-20.5.0.orig/apps/app_mixmonitor.c
++++ asterisk-20.5.0/apps/app_mixmonitor.c
 @@ -968,6 +968,8 @@ static int launch_monitor_thread(struct
  	struct mixmonitor *mixmonitor;
  	char postprocess2[1024] = "";
@@ -91,10 +91,10 @@ Index: asterisk-20.4.0/apps/app_mixmonitor.c
  	return 0;
  }
  
-Index: asterisk-20.4.0/main/cel.c
+Index: asterisk-20.5.0/main/cel.c
 ===================================================================
---- asterisk-20.4.0.orig/main/cel.c
-+++ asterisk-20.4.0/main/cel.c
+--- asterisk-20.5.0.orig/main/cel.c
++++ asterisk-20.5.0/main/cel.c
 @@ -323,6 +323,8 @@ static const char * const cel_event_type
  	[AST_CEL_LINKEDID_END]     = "LINKEDID_END",
  	[AST_CEL_LOCAL_OPTIMIZE]   = "LOCAL_OPTIMIZE",
@@ -155,10 +155,10 @@ Index: asterisk-20.4.0/main/cel.c
  		ast_local_optimization_end_type(),
  		cel_local_optimization_end_cb,
  		NULL);
-Index: asterisk-20.4.0/include/asterisk/cel.h
+Index: asterisk-20.5.0/include/asterisk/cel.h
 ===================================================================
---- asterisk-20.4.0.orig/include/asterisk/cel.h
-+++ asterisk-20.4.0/include/asterisk/cel.h
+--- asterisk-20.5.0.orig/include/asterisk/cel.h
++++ asterisk-20.5.0/include/asterisk/cel.h
 @@ -77,6 +77,10 @@ enum ast_cel_event_type {
  	AST_CEL_LOCAL_OPTIMIZE = 17,
  	/*! \brief A local channel optimization has begun */
