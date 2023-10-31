@@ -6,10 +6,10 @@ Date:   Wed Oct 25 18:19:13 2023 -0400
     
     Fixes #386
 
-Index: asterisk-20.4.0/res/res_rtp_asterisk.c
+Index: asterisk-20.5.0/res/res_rtp_asterisk.c
 ===================================================================
---- asterisk-20.4.0.orig/res/res_rtp_asterisk.c
-+++ asterisk-20.4.0/res/res_rtp_asterisk.c
+--- asterisk-20.5.0.orig/res/res_rtp_asterisk.c
++++ asterisk-20.5.0/res/res_rtp_asterisk.c
 @@ -2032,9 +2032,12 @@ static int create_ephemeral_certificate(
  	if (!(serial = BN_new())
  	   || !BN_rand(serial, SERIAL_RAND_BITS, -1, 0)

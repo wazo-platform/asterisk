@@ -1,7 +1,7 @@
-Index: asterisk-20.4.0/main/dns_recurring.c
+Index: asterisk-20.5.0/main/dns_recurring.c
 ===================================================================
---- asterisk-20.4.0.orig/main/dns_recurring.c
-+++ asterisk-20.4.0/main/dns_recurring.c
+--- asterisk-20.5.0.orig/main/dns_recurring.c
++++ asterisk-20.5.0/main/dns_recurring.c
 @@ -41,9 +41,13 @@
  
  /*! \brief Delay between TTL expiration and the next DNS query, to make sure the
@@ -44,10 +44,10 @@ Index: asterisk-20.4.0/main/dns_recurring.c
  		}
  	}
  
-Index: asterisk-20.4.0/res/res_rtp_asterisk.c
+Index: asterisk-20.5.0/res/res_rtp_asterisk.c
 ===================================================================
---- asterisk-20.4.0.orig/res/res_rtp_asterisk.c
-+++ asterisk-20.4.0/res/res_rtp_asterisk.c
+--- asterisk-20.5.0.orig/res/res_rtp_asterisk.c
++++ asterisk-20.5.0/res/res_rtp_asterisk.c
 @@ -230,7 +230,7 @@ static int dtls_mtu = DEFAULT_DTLS_MTU;
  #ifdef HAVE_PJPROJECT
  static int icesupport = DEFAULT_ICESUPPORT;
@@ -113,7 +113,7 @@ Index: asterisk-20.4.0/res/res_rtp_asterisk.c
  
  	/* If configured to use a STUN server to get our external mapped address do so */
  	if (stunaddr_copy.sin_addr.s_addr && !stun_address_is_blacklisted(addr) &&
-@@ -9426,70 +9427,175 @@ static int ast_rtp_bundle(struct ast_rtp
+@@ -9422,70 +9423,175 @@ static int ast_rtp_bundle(struct ast_rtp
  }
  
  #ifdef HAVE_PJPROJECT
@@ -335,7 +335,7 @@ Index: asterisk-20.4.0/res/res_rtp_asterisk.c
  }
  #endif
  
-@@ -9626,10 +9732,9 @@ static char *handle_cli_rtp_settings(str
+@@ -9622,10 +9728,9 @@ static char *handle_cli_rtp_settings(str
  #ifdef HAVE_PJPROJECT
  	ast_cli(a->fd, "  ICE support:     %s\n", AST_CLI_YESNO(icesupport));
  
@@ -349,7 +349,7 @@ Index: asterisk-20.4.0/res/res_rtp_asterisk.c
  #endif
  	return CLI_SUCCESS;
  }
-@@ -9878,7 +9983,8 @@ static int rtp_reload(int reload, int by
+@@ -9874,7 +9979,8 @@ static int rtp_reload(int reload, int by
  	icesupport = DEFAULT_ICESUPPORT;
  	stun_software_attribute = DEFAULT_STUN_SOFTWARE_ATTRIBUTE;
  	turnport = DEFAULT_TURN_PORT;
@@ -359,7 +359,7 @@ Index: asterisk-20.4.0/res/res_rtp_asterisk.c
  	turnaddr = pj_str(NULL);
  	turnusername = pj_str(NULL);
  	turnpassword = pj_str(NULL);
-@@ -9956,36 +10062,8 @@ static int rtp_reload(int reload, int by
+@@ -9952,36 +10058,8 @@ static int rtp_reload(int reload, int by
  		stun_software_attribute = ast_true(s);
  	}
  	if ((s = ast_variable_retrieve(cfg, "general", "stunaddr"))) {
@@ -398,7 +398,7 @@ Index: asterisk-20.4.0/res/res_rtp_asterisk.c
  	}
  	if ((s = ast_variable_retrieve(cfg, "general", "turnaddr"))) {
  		struct sockaddr_in addr;
-@@ -10251,7 +10329,7 @@ static int unload_module(void)
+@@ -10247,7 +10325,7 @@ static int unload_module(void)
  	acl_change_sub = stasis_unsubscribe_and_join(acl_change_sub);
  	rtp_unload_acl(&ice_acl_lock, &ice_acl);
  	rtp_unload_acl(&stun_acl_lock, &stun_acl);
