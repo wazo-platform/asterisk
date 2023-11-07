@@ -29,7 +29,7 @@ Build-Depends:
  libspeex-dev,
  libspeexdsp-dev,
  libsqlite3-dev,
- libsrtp0-dev (>= 1.5.4),
+ libsrtp2-dev,
  libssl-dev,
  libunbound-dev,
  liburiparser-dev,
