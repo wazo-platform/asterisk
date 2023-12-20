@@ -31,7 +31,7 @@ pipeline {
       steps {
         build job: 'build-package-multi-arch', parameters: [
           string(name: 'PACKAGE', value: "${JOB_NAME}"),
-          string(name: 'FORCED_VERSION', value: "${version}"),
+          string(name: 'VERSION', value: "${version}"),
         ]
       }
     }
