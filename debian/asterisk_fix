@@ -5,7 +5,6 @@
 # Make sure all (possibly) used dirs exist and is owned by asterisk
 
 dirs="
-	/var/spool/asterisk
 	/var/lib/asterisk
 	/etc/asterisk
 "
@@ -13,12 +12,6 @@ dirs="
 subdirs="
 	/var/lib/asterisk/sounds/priv-callerintros
 	/var/lib/asterisk/sounds/meetme
-	/var/spool/asterisk/dictate
-	/var/spool/asterisk/meetme
-	/var/spool/asterisk/monitor
-	/var/spool/asterisk/system
-	/var/spool/asterisk/tmp
-	/var/spool/asterisk/voicemail
 "
 
 for dir in $subdirs $dirs; do
