@@ -2,20 +2,6 @@
 # Copyright 2020-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Update from /usr/share/asterisk/sounds/priv-callerintros to
-#             /var/lib/asterisk/sounds/priv-callerintros
-if [ -d /usr/share/asterisk/sounds/priv-callerintros ] && [ ! -L /usr/share/asterisk/sounds/priv-callerintros ];then
-	if [ ! -d /var/lib/asterisk/sounds/priv-callerintros ];then
-		mkdir -p /var/lib/asterisk/sounds/priv-callerintros
-	fi
-
-	echo -n "Updating private callerintros location to /var/lib/asterisk/sounds/priv-callerintros"
-	find /usr/share/asterisk/sounds/priv-callerintros -mindepth 1 -maxdepth 1 -exec mv '{}' /var/lib/asterisk/sounds/priv-callerintros \;
-	rmdir /usr/share/asterisk/sounds/priv-callerintros
-	ln -s /var/lib/asterisk/sounds/priv-callerintros /usr/share/asterisk/sounds/priv-callerintros
-	echo "."
-fi
-
 # Make sure all (possibly) used dirs exist and is owned by asterisk
 
 dirs="
