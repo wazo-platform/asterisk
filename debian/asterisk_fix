@@ -1,29 +1,6 @@
 #! /bin/sh
-# Copyright 2020 The Wazo Authors  (see the AUTHORS file)
+# Copyright 2020-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
-
-if getent passwd asterisk >/dev/null ;then
-	# Some halfbaked Sarge versions needed their home dir fixed:
-	if [ "`getent passwd asterisk|awk -F: '{print $6}'`" = \
-		"/run/asterisk" ];then
-		usermod -d /var/lib/asterisk asterisk
-	fi
-else
-	adduser_extra_opts=""
-	# Cosmetic noise reduction
-	if [ -d "/var/lib/asterisk" ]; then
-		adduser_extra_opts="--no-create-home"
-	fi
-	adduser --system --group --home /var/lib/asterisk \
-		$adduser_extra_opts \
-		--gecos "Asterisk PBX daemon" asterisk
-fi
-
-for group in dialout audio; do
-	if groups asterisk | grep -w -q -v $group; then
-		adduser asterisk $group
-	fi
-done
 
 # Update from /usr/share/asterisk/sounds/priv-callerintros to
 #             /var/lib/asterisk/sounds/priv-callerintros
