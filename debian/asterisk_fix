@@ -2,32 +2,7 @@
 # Copyright 2020-2024 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Make sure all (possibly) used dirs exist and is owned by asterisk
-
-dirs="
-"
-
-subdirs="
-"
-
-for dir in $subdirs $dirs; do
-	mkdir -p "$dir"
-done
-
-for dir in $dirs; do
-	chown -R asterisk: "$dir"
-done
-
-###################################
-asterisk_dirs="/etc/asterisk /var/lib/asterisk /var/spool/asterisk/monitor"
-
-chown -R asterisk:asterisk $asterisk_dirs
-for dir in $asterisk_dirs; do
-	find $dir -type d -exec chmod 2775 {} \;
-	find $dir -name 'agi-bin' -prune -o -type f -exec chmod 660 {} \;
-done
-
-####################################
+###############find $dir -name 'agi-bin' -prune -o -type f#####################
 # If asterisk in running, reload it
 if [ -f "/lib/systemd/system/asterisk.service" ];then
 	if [ -f /run/asterisk/asterisk.pid ];then

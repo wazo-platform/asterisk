@@ -89,6 +89,15 @@ case "$1" in
 			2>/dev/null
 	done
 
+    # WAZO: Do a more aggressive chmod/chown on asterisk files
+    asterisk_dirs="/etc/asterisk /var/lib/asterisk /var/spool/asterisk/monitor"
+
+    chown -R asterisk:asterisk $asterisk_dirs
+    for dir in $asterisk_dirs; do
+        find $dir -type d -exec chmod 2775 {} \;
+        find $dir -name 'agi-bin' -prune -o -type f -exec chmod 660 {} \;
+    done
+
     # cancel systemd unit masking when changing from asterisk to asterisk-vanilla
     deb-systemd-helper unmask asterisk.service
     ;;
