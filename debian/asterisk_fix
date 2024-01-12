@@ -8,8 +8,6 @@ dirs="
 "
 
 subdirs="
-	/var/lib/asterisk/sounds/priv-callerintros
-	/var/lib/asterisk/sounds/meetme
 "
 
 for dir in $subdirs $dirs; do
