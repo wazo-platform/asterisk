@@ -5,8 +5,6 @@
 # Make sure all (possibly) used dirs exist and is owned by asterisk
 
 dirs="
-	/var/lib/asterisk
-	/etc/asterisk
 "
 
 subdirs="
