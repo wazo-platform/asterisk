@@ -5,18 +5,14 @@
 # Make sure all (possibly) used dirs exist and is owned by asterisk
 
 dirs="
-	/var/log/asterisk
 	/var/spool/asterisk
 	/var/lib/asterisk
-	/run/asterisk
 	/etc/asterisk
 "
 
 subdirs="
 	/var/lib/asterisk/sounds/priv-callerintros
 	/var/lib/asterisk/sounds/meetme
-	/var/log/asterisk/cdr-csv
-	/var/log/asterisk/cdr-custom
 	/var/spool/asterisk/dictate
 	/var/spool/asterisk/meetme
 	/var/spool/asterisk/monitor
