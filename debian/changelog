@@ -1,3 +1,9 @@
+asterisk (8:20.5.2-1~wazo3) wazo-dev-bullseye; urgency=medium
+
+  * Remove asterisk_fix script
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 12 Jan 2024 15:51:36 -0500
+
 asterisk (8:20.5.2-1~wazo2) wazo-dev-bullseye; urgency=medium
 
   * Asterisk 20.5.2

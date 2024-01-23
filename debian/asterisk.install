@@ -10,5 +10,3 @@ usr/lib/asterisk
 usr/share/asterisk/keys /var/lib/asterisk/
 usr/share/asterisk/static-http
 var/lib/asterisk/documentation/thirdparty /usr/share/asterisk/documentation/
-
-debian/asterisk_fix /usr/share/asterisk/bin/
