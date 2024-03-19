@@ -6,7 +6,6 @@ xivo_queue_agent_talking
 wazo_banner
 xivo_skill_queues
 xivo_agent_complete_wrapup
-xivo_sip_tel_uri
 xivo_channel_check_lock
 xivo_senddigit_begin
 xivo_ccss_exten_context_var
@@ -26,4 +25,3 @@ wazo_stun_recurring_resolution
 increase-max-sdp-media
 mixmonitor_close_beep_file
 fix-invalid-moh
-ASTERISK-386-memory-load-ephemeral-dtls-certs
