@@ -1,3 +1,9 @@
+asterisk (8:21.1.0-1~wazo3) wazo-dev-bullseye; urgency=medium
+
+  * update copyright file
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 23 Apr 2024 11:44:04 -0400
+
 asterisk (8:21.1.0-1~wazo2) wazo-dev-bullseye; urgency=medium
 
   * force rebuild for asterisk-vanilla
