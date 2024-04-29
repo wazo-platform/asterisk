@@ -355,14 +355,6 @@ Files: main/sha1.c include/asterisk/sha1.h
 Copyright: 2011 IETF Trust and the persons identified as authors of the code.
 License: BSD-3-Clause~IETF
 
-Files: debian/patches/mpglib
-Copyright: 1995,1996,1997 by Michael Hipp
-License-Grant:
- you may use this source under GPL terms!
-License: GPL-2
-Comment:
- Version of license not mentioned.  Assumed to be version 2.
-
 Files: funcs/func_pitchshift.c
 Copyright: 1999-2009, Stephan M. Bernsee <smb@dspdimension.com>
   2010, Digium, Inc.
