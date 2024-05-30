@@ -6,6 +6,7 @@ Before=monit.service
 
 [Service]
 Type=forking
+Environment=LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4
 ExecStartPre=install -d -o asterisk -g asterisk /run/asterisk
 ExecStartPre=install -d -o asterisk -g asterisk /var/log/asterisk
 ExecStartPre=install -d -o asterisk -g asterisk /var/log/asterisk/cdr-csv
