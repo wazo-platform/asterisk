@@ -31,6 +31,7 @@ Build-Depends:
  libsqlite3-dev,
  libsrtp2-dev,
  libssl-dev,
+ libtcmalloc-minimal4,
  libunbound-dev,
  liburiparser-dev,
  libvorbis-dev,

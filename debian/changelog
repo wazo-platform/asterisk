@@ -1,3 +1,9 @@
+asterisk (8:21.1.0-1~wazo4) wazo-dev-bullseye; urgency=medium
+
+  * switch to TCMalloc memory allocator
+
+ -- Wazo Maintainers <dev@wazo.community>  Thu, 30 May 2024 11:33:08 -0400
+
 asterisk (8:21.1.0-1~wazo3) wazo-dev-bullseye; urgency=medium
 
   * update copyright file
