@@ -1,3 +1,9 @@
+asterisk (8:21.1.0-1~wazo6) wazo-dev-bullseye; urgency=medium
+
+  * remove obselete version key for docker compose files
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 25 Jun 2024 13:23:53 -0400
+
 asterisk (8:21.1.0-1~wazo5) wazo-dev-bullseye; urgency=medium
 
   * fix TCMalloc dependency
