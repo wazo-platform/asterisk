@@ -1,8 +1,8 @@
-Index: asterisk-21.1.0/apps/app_queue.c
+Index: asterisk-21.4.1/apps/app_queue.c
 ===================================================================
---- asterisk-21.1.0.orig/apps/app_queue.c
-+++ asterisk-21.1.0/apps/app_queue.c
-@@ -6328,7 +6328,7 @@ enum agent_complete_reason {
+--- asterisk-21.4.1.orig/apps/app_queue.c
++++ asterisk-21.4.1/apps/app_queue.c
+@@ -6333,7 +6333,7 @@ enum agent_complete_reason {
  /*! \brief Send out AMI message with member call completion status information */
  static void send_agent_complete(const char *queuename, struct ast_channel_snapshot *caller,
  	struct ast_channel_snapshot *peer, const struct member *member, time_t holdstart,
@@ -11,7 +11,7 @@ Index: asterisk-21.1.0/apps/app_queue.c
  {
  	const char *reason = NULL;	/* silence dumb compilers */
  	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
-@@ -6345,16 +6345,21 @@ static void send_agent_complete(const ch
+@@ -6350,16 +6350,21 @@ static void send_agent_complete(const ch
  		break;
  	}
  
@@ -34,7 +34,7 @@ Index: asterisk-21.1.0/apps/app_queue.c
  }
  
  static void queue_agent_cb(void *userdata, struct stasis_subscription *sub,
-@@ -6649,7 +6654,7 @@ static void handle_blind_transfer(void *
+@@ -6654,7 +6659,7 @@ static void handle_blind_transfer(void *
  			(long) (time(NULL) - queue_data->starttime), queue_data->caller_pos);
  
  	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
@@ -43,7 +43,7 @@ Index: asterisk-21.1.0/apps/app_queue.c
  	update_queue(queue_data->queue, queue_data->member, queue_data->callcompletedinsl,
  			queue_data->starttime);
  	remove_stasis_subscriptions(queue_data);
-@@ -6707,7 +6712,7 @@ static void handle_attended_transfer(voi
+@@ -6712,7 +6717,7 @@ static void handle_attended_transfer(voi
  	log_attended_transfer(queue_data, atxfer_msg);
  
  	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
@@ -52,7 +52,7 @@ Index: asterisk-21.1.0/apps/app_queue.c
  	update_queue(queue_data->queue, queue_data->member, queue_data->callcompletedinsl,
  			queue_data->starttime);
  	remove_stasis_subscriptions(queue_data);
-@@ -6905,7 +6910,7 @@ static void handle_hangup(void *userdata
+@@ -6910,7 +6915,7 @@ static void handle_hangup(void *userdata
  		(long) (time(NULL) - queue_data->starttime), queue_data->caller_pos);
  
  	send_agent_complete(queue_data->queue->name, caller_snapshot, member_snapshot, queue_data->member,
