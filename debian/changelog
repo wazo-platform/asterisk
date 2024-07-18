@@ -1,3 +1,9 @@
+asterisk (8:21.4.1-1~wazo2) wazo-dev-bullseye; urgency=medium
+
+  * Asterisk 21.4.1
+
+ -- Wazo Maintainers <dev@wazo.community>  Thu, 18 Jul 2024 14:57:24 -0400
+
 asterisk (8:21.1.0-1~wazo6) wazo-dev-bullseye; urgency=medium
 
   * remove obselete version key for docker compose files
