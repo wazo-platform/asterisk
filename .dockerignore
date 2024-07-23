@@ -1,2 +1,3 @@
 .git
+.mypy_cache
 asterisk*
