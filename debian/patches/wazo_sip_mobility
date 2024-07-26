@@ -1,7 +1,7 @@
-Index: asterisk-21.1.0/res/res_pjsip/location.c
+Index: asterisk-21.4.1/res/res_pjsip/location.c
 ===================================================================
---- asterisk-21.1.0.orig/res/res_pjsip/location.c
-+++ asterisk-21.1.0/res/res_pjsip/location.c
+--- asterisk-21.4.1.orig/res/res_pjsip/location.c
++++ asterisk-21.4.1/res/res_pjsip/location.c
 @@ -355,7 +355,7 @@ struct ast_sip_contact *ast_sip_location
  struct ast_sip_contact *ast_sip_location_create_contact(struct ast_sip_aor *aor,
  	const char *uri, struct timeval expiration_time, const char *path_info,
@@ -41,10 +41,10 @@ Index: asterisk-21.1.0/res/res_pjsip/location.c
  
  	ast_sorcery_object_field_register(sorcery, "aor", "type", "", OPT_NOOP_T, 0, 0);
  	ast_sorcery_object_field_register(sorcery, "aor", "minimum_expiration", "60", OPT_UINT_T, 0, FLDSET(struct ast_sip_aor, minimum_expiration));
-Index: asterisk-21.1.0/res/res_pjsip_registrar.c
+Index: asterisk-21.4.1/res/res_pjsip_registrar.c
 ===================================================================
---- asterisk-21.1.0.orig/res/res_pjsip_registrar.c
-+++ asterisk-21.1.0/res/res_pjsip_registrar.c
+--- asterisk-21.4.1.orig/res/res_pjsip_registrar.c
++++ asterisk-21.4.1/res/res_pjsip_registrar.c
 @@ -553,6 +553,35 @@ static int vec_contact_add(void *obj, vo
  	return 0;
  }
@@ -190,11 +190,11 @@ Index: asterisk-21.1.0/res/res_pjsip_registrar.c
  	response_contact = ao2_callback(contacts, 0, NULL, NULL);
  
  	/* Send a response containing all of the contacts (including static) that are present on this AOR */
-Index: asterisk-21.1.0/include/asterisk/res_pjsip.h
+Index: asterisk-21.4.1/include/asterisk/res_pjsip.h
 ===================================================================
---- asterisk-21.1.0.orig/include/asterisk/res_pjsip.h
-+++ asterisk-21.1.0/include/asterisk/res_pjsip.h
-@@ -419,6 +419,8 @@ struct ast_sip_contact {
+--- asterisk-21.4.1.orig/include/asterisk/res_pjsip.h
++++ asterisk-21.4.1/include/asterisk/res_pjsip.h
+@@ -411,6 +411,8 @@ struct ast_sip_contact {
  		AST_STRING_FIELD(call_id);
  		/*! The name of the endpoint that added the contact */
  		AST_STRING_FIELD(endpoint_name);
@@ -203,7 +203,7 @@ Index: asterisk-21.1.0/include/asterisk/res_pjsip.h
  	);
  	/*! Absolute time that this contact is no longer valid after */
  	struct timeval expiration_time;
-@@ -1733,7 +1735,7 @@ int ast_sip_location_add_contact_nolock(
+@@ -1716,7 +1718,7 @@ int ast_sip_location_add_contact_nolock(
  struct ast_sip_contact *ast_sip_location_create_contact(struct ast_sip_aor *aor,
  	const char *uri, struct timeval expiration_time, const char *path_info,
  	const char *user_agent, const char *via_addr, int via_port, const char *call_id,
@@ -212,11 +212,11 @@ Index: asterisk-21.1.0/include/asterisk/res_pjsip.h
  
  /*!
   * \brief Update a contact
-Index: asterisk-21.1.0/res/res_pjsip/pjsip_config.xml
+Index: asterisk-21.4.1/res/res_pjsip/pjsip_config.xml
 ===================================================================
---- asterisk-21.1.0.orig/res/res_pjsip/pjsip_config.xml
-+++ asterisk-21.1.0/res/res_pjsip/pjsip_config.xml
-@@ -1975,6 +1975,12 @@
+--- asterisk-21.4.1.orig/res/res_pjsip/pjsip_config.xml
++++ asterisk-21.4.1/res/res_pjsip/pjsip_config.xml
+@@ -2007,6 +2007,12 @@
  						on a reliable transport and is not intended to be configured manually.
  					</para></description>
  				</configOption>
