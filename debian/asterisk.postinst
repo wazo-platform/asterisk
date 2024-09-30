@@ -90,8 +90,15 @@ case "$1" in
 	done
 
     # WAZO: Do a more aggressive chmod/chown on asterisk files
-    asterisk_dirs="/etc/asterisk /var/lib/asterisk /var/spool/asterisk/monitor"
+    asterisk_dirs="/etc/asterisk /var/lib/asterisk /var/spool/asterisk/monitor /var/lib/asterisk/moh /var/lib/asterisk/sounds/custom /usr/share/asterisk/moh /var/spool/asterisk/fax"
+    # NOTE(afournier): originally missing dirs:
+    # /var/lib/asterisk/moh
+    # /var/lib/asterisk/sounds/custom
+    # /usr/share/asterisk/moh
+    # /var/spool/asterisk/fax
 
+    # NOTE(afournier): the user:group was overridden for asterisk:www-data by the xivo-fix-paths-rights script
+    # However, the asterisk user is a member of the www-data group so that does not change a lot
     chown -R asterisk:asterisk $asterisk_dirs
     for dir in $asterisk_dirs; do
         find $dir -type d -exec chmod 2775 {} \;
