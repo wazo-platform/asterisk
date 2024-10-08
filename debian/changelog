@@ -1,3 +1,9 @@
+asterisk (8:21.4.1-1~wazo5) wazo-dev-bullseye; urgency=medium
+
+  * backport sigchild patch
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 08 Oct 2024 09:22:40 -0400
+
 asterisk (8:21.4.1-1~wazo3) wazo-dev-bullseye; urgency=medium
 
   * fix more directories permissions on postinst script
