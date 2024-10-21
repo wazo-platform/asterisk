@@ -1,7 +1,7 @@
-Index: asterisk-21.4.1/main/ccss.c
+Index: asterisk-22.0.0/main/ccss.c
 ===================================================================
---- asterisk-21.4.1.orig/main/ccss.c
-+++ asterisk-21.4.1/main/ccss.c
+--- asterisk-22.0.0.orig/main/ccss.c
++++ asterisk-22.0.0/main/ccss.c
 @@ -2647,6 +2647,8 @@ struct cc_generic_agent_pvt {
  static int cc_generic_agent_init(struct ast_cc_agent *agent, struct ast_channel *chan)
  {

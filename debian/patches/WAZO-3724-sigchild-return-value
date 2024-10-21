@@ -19,11 +19,11 @@ Date:   Mon Sep 30 11:48:56 2024 -0400
     
     Fixes #922
 
-Index: asterisk-21.4.1/apps/app_voicemail.c
+Index: asterisk-22.0.0/apps/app_voicemail.c
 ===================================================================
---- asterisk-21.4.1.orig/apps/app_voicemail.c
-+++ asterisk-21.4.1/apps/app_voicemail.c
-@@ -15808,7 +15808,6 @@ AST_TEST_DEFINE(test_voicemail_msgcount)
+--- asterisk-22.0.0.orig/apps/app_voicemail.c
++++ asterisk-22.0.0/apps/app_voicemail.c
+@@ -15811,7 +15811,6 @@ AST_TEST_DEFINE(test_voicemail_msgcount)
  	if (!(vmu = find_user(&svm, testcontext, testmailbox)) &&
  		!(vmu = find_or_create(testcontext, testmailbox))) {
  		ast_test_status_update(test, "Cannot create vmu structure\n");
@@ -31,7 +31,7 @@ Index: asterisk-21.4.1/apps/app_voicemail.c
  #ifdef IMAP_STORAGE
  		chan = ast_channel_unref(chan);
  #endif
-@@ -15830,7 +15829,6 @@ AST_TEST_DEFINE(test_voicemail_msgcount)
+@@ -15833,7 +15832,6 @@ AST_TEST_DEFINE(test_voicemail_msgcount)
  			if ((syserr = ast_safe_system(syscmd))) {
  				ast_test_status_update(test, "Unable to create test voicemail: %s\n",
  					syserr > 0 ? strerror(syserr) : "unable to fork()");
@@ -39,10 +39,10 @@ Index: asterisk-21.4.1/apps/app_voicemail.c
  #ifdef IMAP_STORAGE
  				chan = ast_channel_unref(chan);
  #endif
-Index: asterisk-21.4.1/include/asterisk/app.h
+Index: asterisk-22.0.0/include/asterisk/app.h
 ===================================================================
---- asterisk-21.4.1.orig/include/asterisk/app.h
-+++ asterisk-21.4.1/include/asterisk/app.h
+--- asterisk-22.0.0.orig/include/asterisk/app.h
++++ asterisk-22.0.0/include/asterisk/app.h
 @@ -1549,6 +1549,10 @@ int ast_safe_fork(int stop_reaper);
  
  /*!
@@ -54,10 +54,10 @@ Index: asterisk-21.4.1/include/asterisk/app.h
   * \since 1.6.1
   */
  void ast_safe_fork_cleanup(void);
-Index: asterisk-21.4.1/main/asterisk.c
+Index: asterisk-22.0.0/main/asterisk.c
 ===================================================================
---- asterisk-21.4.1.orig/main/asterisk.c
-+++ asterisk-21.4.1/main/asterisk.c
+--- asterisk-22.0.0.orig/main/asterisk.c
++++ asterisk-22.0.0/main/asterisk.c
 @@ -1122,6 +1122,10 @@ void ast_unreplace_sigchld(void)
  	unsigned int level;
  
@@ -69,10 +69,10 @@ Index: asterisk-21.4.1/main/asterisk.c
  	level = --safe_system_level;
  
  	/* only restore the handler if we are the last one */
-Index: asterisk-21.4.1/res/res_agi.c
+Index: asterisk-22.0.0/res/res_agi.c
 ===================================================================
---- asterisk-21.4.1.orig/res/res_agi.c
-+++ asterisk-21.4.1/res/res_agi.c
+--- asterisk-22.0.0.orig/res/res_agi.c
++++ asterisk-22.0.0/res/res_agi.c
 @@ -2192,12 +2192,15 @@ static enum agi_result launch_ha_netscri
  	return AGI_RESULT_FAILURE;
  }
