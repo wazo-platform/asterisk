@@ -26,3 +26,4 @@ increase-max-sdp-media
 mixmonitor_close_beep_file
 fix-invalid-moh
 WAZO-3724-sigchild-return-value
+asterisk-PR-888-crash-res-rtp-asterisk
