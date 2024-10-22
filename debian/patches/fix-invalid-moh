@@ -1,7 +1,7 @@
-Index: asterisk-21.4.1/res/res_musiconhold.c
+Index: asterisk-22.0.0/res/res_musiconhold.c
 ===================================================================
---- asterisk-21.4.1.orig/res/res_musiconhold.c
-+++ asterisk-21.4.1/res/res_musiconhold.c
+--- asterisk-22.0.0.orig/res/res_musiconhold.c
++++ asterisk-22.0.0/res/res_musiconhold.c
 @@ -377,7 +377,9 @@ static int ast_moh_files_next(struct ast
  		state->samples = 0;
  	}

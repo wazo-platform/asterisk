@@ -1,3 +1,15 @@
+asterisk (8:22.0.0-1~wazo2) wazo-dev-bullseye; urgency=medium
+
+  *  backport RTP segfault patch
+
+ -- Wazo Maintainers <dev@wazo.community>  Mon, 21 Oct 2024 14:30:37 -0400
+
+asterisk (8:22.0.0-1~wazo1) wazo-dev-bullseye; urgency=medium
+
+  * Asterisk 22.0.0
+
+ -- Wazo Maintainers <dev@wazo.community>  Mon, 21 Oct 2024 12:03:20 -0400
+
 asterisk (8:21.4.1-1~wazo5) wazo-dev-bullseye; urgency=medium
 
   * backport sigchild patch
