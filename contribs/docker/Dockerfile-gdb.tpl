@@ -1,7 +1,7 @@
 FROM debian:${DEBIAN_DISTRIBUTION}
-MAINTAINER dev+docker@wazo.community
+LABEL org.opencontainers.image.authors="dev+docker@wazo.community"
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /usr/src
 RUN true && \
@@ -25,4 +25,4 @@ RUN true && \
     apt-get -q source asterisk && \
     true
 
-CMD gdb asterisk -batch -ex 'bt full' -ex 'thread apply all bt' /core $(find /usr/src/asterisk-* -type d -printf '-d %p ')
+CMD ["gdb", "asterisk", "-batch", "-ex", "bt full", "-ex", "thread apply all bt", "/core", "$(find /usr/src/asterisk-* -type d -printf '-d %p ')"]
