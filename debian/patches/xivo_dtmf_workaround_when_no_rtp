@@ -1,7 +1,7 @@
-Index: asterisk-22.0.0/main/features.c
+Index: asterisk-22.1.1/main/features.c
 ===================================================================
---- asterisk-22.0.0.orig/main/features.c
-+++ asterisk-22.0.0/main/features.c
+--- asterisk-22.1.1.orig/main/features.c
++++ asterisk-22.1.1/main/features.c
 @@ -635,6 +635,14 @@ int ast_bridge_call_with_flags(struct as
  
  	ast_bridge_basic_set_flags(bridge, flags);

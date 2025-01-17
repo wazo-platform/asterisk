@@ -1,7 +1,7 @@
-Index: asterisk-22.0.0/main/dns_recurring.c
+Index: asterisk-22.1.1/main/dns_recurring.c
 ===================================================================
---- asterisk-22.0.0.orig/main/dns_recurring.c
-+++ asterisk-22.0.0/main/dns_recurring.c
+--- asterisk-22.1.1.orig/main/dns_recurring.c
++++ asterisk-22.1.1/main/dns_recurring.c
 @@ -41,9 +41,13 @@
  
  /*! \brief Delay between TTL expiration and the next DNS query, to make sure the
@@ -44,10 +44,10 @@ Index: asterisk-22.0.0/main/dns_recurring.c
  		}
  	}
  
-Index: asterisk-22.0.0/res/res_rtp_asterisk.c
+Index: asterisk-22.1.1/res/res_rtp_asterisk.c
 ===================================================================
---- asterisk-22.0.0.orig/res/res_rtp_asterisk.c
-+++ asterisk-22.0.0/res/res_rtp_asterisk.c
+--- asterisk-22.1.1.orig/res/res_rtp_asterisk.c
++++ asterisk-22.1.1/res/res_rtp_asterisk.c
 @@ -228,7 +228,7 @@ static int dtls_mtu = DEFAULT_DTLS_MTU;
  #ifdef HAVE_PJPROJECT
  static int icesupport = DEFAULT_ICESUPPORT;
@@ -93,7 +93,7 @@ Index: asterisk-22.0.0/res/res_rtp_asterisk.c
  #endif
  
  #if defined(HAVE_OPENSSL) && (OPENSSL_VERSION_NUMBER >= 0x10001000L) && !defined(OPENSSL_NO_SRTP)
-@@ -3662,7 +3665,7 @@ static void rtp_add_candidates_to_ice(st
+@@ -3723,7 +3726,7 @@ static void rtp_add_candidates_to_ice(st
  	pj_sockaddr pjtmp;
  	struct ast_ice_host_candidate *candidate;
  	int af_inet_ok = 0, af_inet6_ok = 0;
@@ -102,7 +102,7 @@ Index: asterisk-22.0.0/res/res_rtp_asterisk.c
  
  	if (ast_sockaddr_is_ipv4(addr)) {
  		af_inet_ok = 1;
-@@ -3772,9 +3775,7 @@ static void rtp_add_candidates_to_ice(st
+@@ -3833,9 +3836,7 @@ static void rtp_add_candidates_to_ice(st
  		freeifaddrs(ifa);
  	}
  
@@ -113,7 +113,7 @@ Index: asterisk-22.0.0/res/res_rtp_asterisk.c
  
  	/* If configured to use a STUN server to get our external mapped address do so */
  	if (stunaddr_copy.sin_addr.s_addr && !stun_address_is_blacklisted(addr) &&
-@@ -9540,70 +9541,175 @@ static int ast_rtp_bundle(struct ast_rtp
+@@ -9601,70 +9602,175 @@ static int ast_rtp_bundle(struct ast_rtp
  }
  
  #ifdef HAVE_PJPROJECT
@@ -335,7 +335,7 @@ Index: asterisk-22.0.0/res/res_rtp_asterisk.c
  }
  #endif
  
-@@ -9740,10 +9846,9 @@ static char *handle_cli_rtp_settings(str
+@@ -9801,10 +9907,9 @@ static char *handle_cli_rtp_settings(str
  #ifdef HAVE_PJPROJECT
  	ast_cli(a->fd, "  ICE support:     %s\n", AST_CLI_YESNO(icesupport));
  
@@ -349,7 +349,7 @@ Index: asterisk-22.0.0/res/res_rtp_asterisk.c
  #endif
  	return CLI_SUCCESS;
  }
-@@ -9992,7 +10097,8 @@ static int rtp_reload(int reload, int by
+@@ -10053,7 +10158,8 @@ static int rtp_reload(int reload, int by
  	icesupport = DEFAULT_ICESUPPORT;
  	stun_software_attribute = DEFAULT_STUN_SOFTWARE_ATTRIBUTE;
  	turnport = DEFAULT_TURN_PORT;
@@ -359,7 +359,7 @@ Index: asterisk-22.0.0/res/res_rtp_asterisk.c
  	turnaddr = pj_str(NULL);
  	turnusername = pj_str(NULL);
  	turnpassword = pj_str(NULL);
-@@ -10070,36 +10176,8 @@ static int rtp_reload(int reload, int by
+@@ -10131,36 +10237,8 @@ static int rtp_reload(int reload, int by
  		stun_software_attribute = ast_true(s);
  	}
  	if ((s = ast_variable_retrieve(cfg, "general", "stunaddr"))) {
@@ -398,7 +398,7 @@ Index: asterisk-22.0.0/res/res_rtp_asterisk.c
  	}
  	if ((s = ast_variable_retrieve(cfg, "general", "turnaddr"))) {
  		struct sockaddr_in addr;
-@@ -10365,7 +10443,7 @@ static int unload_module(void)
+@@ -10426,7 +10504,7 @@ static int unload_module(void)
  	acl_change_sub = stasis_unsubscribe_and_join(acl_change_sub);
  	rtp_unload_acl(&ice_acl_lock, &ice_acl);
  	rtp_unload_acl(&stun_acl_lock, &stun_acl);
