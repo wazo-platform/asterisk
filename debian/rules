@@ -79,7 +79,8 @@ override_dh_auto_configure:
 		--mandir=\$${prefix}/share/man		\
 		--infodir=\$${prefix}/share/info	\
 		--with-imap=system			\
-		--with-jansson-bundled
+		--with-jansson-bundled	\
+		--enable-dev-mode
 
 override_dh_auto_build:
 	$(MAKE) menuselect.makeopts BUILD_CFLAGS="$(CFLAGS) $(CPPFLAGS)" BUILD_LDFLAGS="$(LDFLAGS)"
