@@ -1743,7 +1743,7 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
  };
  
  static const struct ast_vm_greeter_functions vm_greeter_table = {
-@@ -17798,6 +17813,193 @@ play2_msg_cleanup:
+@@ -17798,6 +17813,197 @@ play2_msg_cleanup:
  	return res;
  }
  
@@ -1758,6 +1758,7 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 +	char dir_path[PATH_MAX];
 +	char file_path[PATH_MAX];
 +	FILE *f = NULL;
++	size_t num_bytes_written = 0;
 +
 +	int make_path_success = get_vm_greeting_path(full_path, context, voicemail, greeting, format);
 +	if (make_path_success != 0) {
@@ -1781,8 +1782,8 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 +		ast_log(LOG_ERROR, "unable to open file at path %s\n", full_path);
 +		return -2;
 +	}
-+	int num_bytes_written = fwrite(raw_greeting_audio, length, sizeof(char), f);
 +
++	num_bytes_written = fwrite(raw_greeting_audio, length, sizeof(char), f);
 +	if (num_bytes_written < 0) {
 +		ast_log(LOG_ERROR, "unable to write file at path %s\n", full_path);
 +		fclose(f);
@@ -1803,6 +1804,7 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 +	char full_path[PATH_MAX];
 +	char file_path[PATH_MAX];
 +	FILE *f = NULL;
++	size_t num_bytes_written = 0;
 +
 +	int make_path_success = get_vm_greeting_path(full_path, context, voicemail, greeting, format);
 +	if (make_path_success != 0) {
@@ -1821,8 +1823,8 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 +		ast_log(LOG_ERROR, "unable to open file at path %s\n", full_path);
 +		return -2;
 +	}
-+	int num_bytes_written = fwrite(raw_greeting_audio, length, sizeof(char), f);
 +
++	num_bytes_written = fwrite(raw_greeting_audio, length, sizeof(char), f);
 +	if (num_bytes_written < 0) {
 +		ast_log(LOG_ERROR, "unable to write file at path %s\n", full_path);
 +		fclose(f);
@@ -1841,6 +1843,8 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 + {
 +	char path[PATH_MAX];
 +	FILE *f = NULL;
++	long f_size = 0;
++	size_t n = 0;
 +
 +	int make_path_success = get_vm_greeting_path(path, context, voicemail, greeting, format);
 +	if (make_path_success != 0) {
@@ -1854,7 +1858,7 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 +	}
 +
 +	fseek(f, 0, SEEK_END);
-+	long f_size = ftell(f);
++	f_size = ftell(f);
 +	rewind(f);
 +	*raw_greeting_audio = ast_calloc(f_size + 1, sizeof(char));
 +	if (!*raw_greeting_audio) {
@@ -1862,7 +1866,7 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 +		fclose(f);
 +		return -3;
 +	}
-+	int n = fread(*raw_greeting_audio, sizeof(char), f_size, f);
++	n = fread(*raw_greeting_audio, sizeof(char), f_size, f);
 +	fclose(f);
 +	return n;
 +}
