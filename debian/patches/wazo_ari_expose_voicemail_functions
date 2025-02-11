@@ -1743,7 +1743,7 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
  };
  
  static const struct ast_vm_greeter_functions vm_greeter_table = {
-@@ -17798,6 +17813,191 @@ play2_msg_cleanup:
+@@ -17798,6 +17813,193 @@ play2_msg_cleanup:
  	return res;
  }
  
@@ -1757,6 +1757,7 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 +	char full_path[PATH_MAX];
 +	char dir_path[PATH_MAX];
 +	char file_path[PATH_MAX];
++	FILE *f = NULL;
 +
 +	int make_path_success = get_vm_greeting_path(full_path, context, voicemail, greeting, format);
 +	if (make_path_success != 0) {
@@ -1775,7 +1776,7 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 +		return -4;
 +	}
 +
-+	FILE *f = fopen(full_path, "wb");
++	f = fopen(full_path, "wb");
 +	if (!f) {
 +		ast_log(LOG_ERROR, "unable to open file at path %s\n", full_path);
 +		return -2;
@@ -1801,6 +1802,7 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 +{
 +	char full_path[PATH_MAX];
 +	char file_path[PATH_MAX];
++	FILE *f = NULL;
 +
 +	int make_path_success = get_vm_greeting_path(full_path, context, voicemail, greeting, format);
 +	if (make_path_success != 0) {
@@ -1814,7 +1816,7 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 +		return -4;
 +	}
 +
-+	FILE *f = fopen(full_path, "wb");
++	f = fopen(full_path, "wb");
 +	if (!f) {
 +		ast_log(LOG_ERROR, "unable to open file at path %s\n", full_path);
 +		return -2;
@@ -1838,14 +1840,14 @@ Index: asterisk-22.1.1/apps/app_voicemail.c
 +	const char *format)
 + {
 +	char path[PATH_MAX];
++	FILE *f = NULL;
 +
 +	int make_path_success = get_vm_greeting_path(path, context, voicemail, greeting, format);
 +	if (make_path_success != 0) {
 +		return -1;
 +	}
 +
-+	FILE *f = fopen(path, "r");
-+
++	f = fopen(path, "r");
 +	if (!f) {
 +		ast_log(LOG_ERROR, "unable to read file at path %s\n", path);
 +		return -2;
