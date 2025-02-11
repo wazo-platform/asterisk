@@ -630,7 +630,7 @@ Index: asterisk-22.1.1/res/res_ari_wazo.c
 ===================================================================
 --- /dev/null
 +++ asterisk-22.1.1/res/res_ari_wazo.c
-@@ -0,0 +1,596 @@
+@@ -0,0 +1,608 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -693,9 +693,11 @@ Index: asterisk-22.1.1/res/res_ari_wazo.c
 +
 +/*!
 + * \brief Parameter parsing callback for /wazo/internal/voicemails/delete_msg.
++ * \param ser TCP/TLS session object
 + * \param get_params GET parameters in the HTTP request.
 + * \param path_vars Path variables extracted from the request.
 + * \param headers HTTP headers.
++ * \param body
 + * \param[out] response Response to the HTTP request.
 + */
 +static void ast_ari_wazo_delete_voicemail_message_cb(
@@ -753,9 +755,11 @@ Index: asterisk-22.1.1/res/res_ari_wazo.c
 +
 +/*!
 + * \brief Parameter parsing callback for /wazo/internal/voicemails/move_msg.
++ * \param ser TCP/TLS session object
 + * \param get_params GET parameters in the HTTP request.
 + * \param path_vars Path variables extracted from the request.
 + * \param headers HTTP headers.
++ * \param body
 + * \param[out] response Response to the HTTP request.
 + */
 +static void ast_ari_wazo_move_voicemail_message_cb(
@@ -818,9 +822,11 @@ Index: asterisk-22.1.1/res/res_ari_wazo.c
 +
 +/*!
 + * \brief Parameter parsing callback for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}.
++ * \param ser TCP/TLS session object
 + * \param get_params GET parameters in the HTTP request.
 + * \param path_vars Path variables extracted from the request.
 + * \param headers HTTP headers.
++ * \param body
 + * \param[out] response Response to the HTTP request.
 + */
 +static void ast_ari_wazo_change_voicemail_greeting_cb(
@@ -903,9 +909,11 @@ Index: asterisk-22.1.1/res/res_ari_wazo.c
 +
 +/*!
 + * \brief Parameter parsing callback for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}.
++ * \param ser TCP/TLS session object
 + * \param get_params GET parameters in the HTTP request.
 + * \param path_vars Path variables extracted from the request.
 + * \param headers HTTP headers.
++ * \param body
 + * \param[out] response Response to the HTTP request.
 + */
 +static void ast_ari_wazo_create_voicemail_greeting_cb(
@@ -951,6 +959,7 @@ Index: asterisk-22.1.1/res/res_ari_wazo.c
 +	case 501: /* Not Implemented */
 +	case 400: /* Invalid parameters were passed */
 +	case 404: /* Unable to create the voicemail message */
++	case 409: /* Greeting already exists */
 +		is_valid = 1;
 +		break;
 +	default:
@@ -988,9 +997,11 @@ Index: asterisk-22.1.1/res/res_ari_wazo.c
 +
 +/*!
 + * \brief Parameter parsing callback for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}.
++ * \param ser TCP/TLS session object
 + * \param get_params GET parameters in the HTTP request.
 + * \param path_vars Path variables extracted from the request.
 + * \param headers HTTP headers.
++ * \param body
 + * \param[out] response Response to the HTTP request.
 + */
 +static void ast_ari_wazo_get_voicemail_greeting_cb(
@@ -1039,7 +1050,6 @@ Index: asterisk-22.1.1/res/res_ari_wazo.c
 +	case 501: /* Not Implemented */
 +	case 400: /* Invalid parameters were passed */
 +	case 404: /* Requested file was not found */
-+	case 500: /* Internal server error */
 +		is_valid = 1;
 +		break;
 +	default:
@@ -1064,9 +1074,11 @@ Index: asterisk-22.1.1/res/res_ari_wazo.c
 +}
 +/*!
 + * \brief Parameter parsing callback for /wazo/internal/voicemails/{context}/{voicemail}/{greeting}.
++ * \param ser TCP/TLS session object
 + * \param get_params GET parameters in the HTTP request.
 + * \param path_vars Path variables extracted from the request.
 + * \param headers HTTP headers.
++ * \param body
 + * \param[out] response Response to the HTTP request.
 + */
 +static void ast_ari_wazo_remove_voicemail_greeting_cb(
@@ -1231,7 +1243,7 @@ Index: asterisk-22.1.1/rest-api/api-docs/wazo.json
 ===================================================================
 --- /dev/null
 +++ asterisk-22.1.1/rest-api/api-docs/wazo.json
-@@ -0,0 +1,300 @@
+@@ -0,0 +1,296 @@
 +{
 +	"_copyright": "Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)",
 +	"_author": "Etienne Lessard",
@@ -1470,10 +1482,6 @@ Index: asterisk-22.1.1/rest-api/api-docs/wazo.json
 +						{
 +							"code": 404,
 +							"reason": "Requested file was not found"
-+						},
-+						{
-+							"code": 500,
-+							"reason": "Internal server error"
 +						}
 +					]
 +				},
