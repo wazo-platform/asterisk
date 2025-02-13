@@ -25,3 +25,4 @@ wazo_stun_recurring_resolution
 increase-max-sdp-media
 mixmonitor_close_beep_file
 fix-invalid-moh
+mix_monitor_announce_file

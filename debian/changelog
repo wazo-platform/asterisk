@@ -1,3 +1,9 @@
+asterisk (8:22.1.1-1~wazo3) wazo-dev-bullseye; urgency=medium
+
+  * change beep sound
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 04 Feb 2025 14:04:38 -0500
+
 asterisk (8:22.1.1-1~wazo2) wazo-dev-bullseye; urgency=medium
 
   * Asterisk 22.1.1
