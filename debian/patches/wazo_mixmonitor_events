@@ -52,7 +52,7 @@ Index: asterisk-22.1.1/apps/app_mixmonitor.c
  	char *parse = "";
  	struct mixmonitor_ds *mixmonitor_ds;
  	const char *beep_id = NULL;
-+	const char *datastore_id = NULL;
++	char *datastore_id = NULL;
  	RAII_VAR(struct stasis_message *, message, NULL, ao2_cleanup);
 +	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
  

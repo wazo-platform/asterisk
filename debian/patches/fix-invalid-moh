@@ -6,7 +6,7 @@ Index: asterisk-22.1.1/res/res_musiconhold.c
  		state->samples = 0;
  	}
  
-+	ast_debug(1, "Got %d files to try.\n", file_count);
++	ast_debug(1, "Got %zu files to try.\n", file_count);
  	for (tries = 0; tries < file_count; ++tries) {
 +		ast_debug(1, "Trying file '%s'\n", AST_VECTOR_GET(files, state->pos));
  		if (ast_openstream_full(chan, AST_VECTOR_GET(files, state->pos), ast_channel_language(chan), 1)) {

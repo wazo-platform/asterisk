@@ -779,8 +779,8 @@ Index: asterisk-22.1.1/main/stasis_bridges.c
 +{
 +	struct stasis_message *msg;
 +
-+	ast_assert(name != NULL);
-+	ast_assert(value != NULL);
++	ast_assert(varname != NULL);
++	ast_assert(varvalue != NULL);
 +
 +	msg = bridge_varset_msg_create(bridge, varname, varvalue);
 +	if (!msg) {

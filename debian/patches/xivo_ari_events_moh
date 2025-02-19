@@ -114,3 +114,309 @@ Index: asterisk-22.1.1/rest-api/api-docs/events.json
  		}
  	}
  }
+Index: asterisk-22.1.1/res/ari/ari_model_validators.c
+===================================================================
+--- asterisk-22.1.1.orig/res/ari/ari_model_validators.c
++++ asterisk-22.1.1/res/ari/ari_model_validators.c
+@@ -4614,6 +4614,212 @@ ari_validator ast_ari_validate_channel_l
+ 	return ast_ari_validate_channel_left_bridge;
+ }
+ 
++int ast_ari_validate_channel_moh_start(struct ast_json *json)
++{
++	int res = 1;
++	struct ast_json_iter *iter;
++	int has_type = 0;
++	int has_application = 0;
++	int has_timestamp = 0;
++	int has_channel = 0;
++	int has_moh_class = 0;
++
++	for (iter = ast_json_object_iter(json); iter; iter = ast_json_object_iter_next(json, iter)) {
++		if (strcmp("asterisk_id", ast_json_object_iter_key(iter)) == 0) {
++			int prop_is_valid;
++			prop_is_valid = ast_ari_validate_string(
++				ast_json_object_iter_value(iter));
++			if (!prop_is_valid) {
++				ast_log(LOG_ERROR, "ARI ChannelMohStart field asterisk_id failed validation\n");
++				res = 0;
++			}
++		} else
++		if (strcmp("type", ast_json_object_iter_key(iter)) == 0) {
++			int prop_is_valid;
++			has_type = 1;
++			prop_is_valid = ast_ari_validate_string(
++				ast_json_object_iter_value(iter));
++			if (!prop_is_valid) {
++				ast_log(LOG_ERROR, "ARI ChannelMohStart field type failed validation\n");
++				res = 0;
++			}
++		} else
++		if (strcmp("application", ast_json_object_iter_key(iter)) == 0) {
++			int prop_is_valid;
++			has_application = 1;
++			prop_is_valid = ast_ari_validate_string(
++				ast_json_object_iter_value(iter));
++			if (!prop_is_valid) {
++				ast_log(LOG_ERROR, "ARI ChannelMohStart field application failed validation\n");
++				res = 0;
++			}
++		} else
++		if (strcmp("timestamp", ast_json_object_iter_key(iter)) == 0) {
++			int prop_is_valid;
++			has_timestamp = 1;
++			prop_is_valid = ast_ari_validate_date(
++				ast_json_object_iter_value(iter));
++			if (!prop_is_valid) {
++				ast_log(LOG_ERROR, "ARI ChannelMohStart field timestamp failed validation\n");
++				res = 0;
++			}
++		} else
++		if (strcmp("channel", ast_json_object_iter_key(iter)) == 0) {
++			int prop_is_valid;
++			has_channel = 1;
++			prop_is_valid = ast_ari_validate_channel(
++				ast_json_object_iter_value(iter));
++			if (!prop_is_valid) {
++				ast_log(LOG_ERROR, "ARI ChannelMohStart field channel failed validation\n");
++				res = 0;
++			}
++		} else
++		if (strcmp("moh_class", ast_json_object_iter_key(iter)) == 0) {
++			int prop_is_valid;
++			has_moh_class = 1;
++			prop_is_valid = ast_ari_validate_string(
++				ast_json_object_iter_value(iter));
++			if (!prop_is_valid) {
++				ast_log(LOG_ERROR, "ARI ChannelMohStart field moh_class failed validation\n");
++				res = 0;
++			}
++		} else
++		{
++			ast_log(LOG_ERROR,
++				"ARI ChannelMohStart has undocumented field %s\n",
++				ast_json_object_iter_key(iter));
++			res = 0;
++		}
++	}
++
++	if (!has_type) {
++		ast_log(LOG_ERROR, "ARI ChannelMohStart missing required field type\n");
++		res = 0;
++	}
++
++	if (!has_application) {
++		ast_log(LOG_ERROR, "ARI ChannelMohStart missing required field application\n");
++		res = 0;
++	}
++
++	if (!has_timestamp) {
++		ast_log(LOG_ERROR, "ARI ChannelMohStart missing required field timestamp\n");
++		res = 0;
++	}
++
++	if (!has_channel) {
++		ast_log(LOG_ERROR, "ARI ChannelMohStart missing required field channel\n");
++		res = 0;
++	}
++
++	if (!has_moh_class) {
++		ast_log(LOG_ERROR, "ARI ChannelMohStart missing required field moh_class\n");
++		res = 0;
++	}
++
++	return res;
++}
++
++ari_validator ast_ari_validate_channel_moh_start_fn(void)
++{
++	return ast_ari_validate_channel_moh_start;
++}
++
++int ast_ari_validate_channel_moh_stop(struct ast_json *json)
++{
++	int res = 1;
++	struct ast_json_iter *iter;
++	int has_type = 0;
++	int has_application = 0;
++	int has_timestamp = 0;
++	int has_channel = 0;
++
++	for (iter = ast_json_object_iter(json); iter; iter = ast_json_object_iter_next(json, iter)) {
++		if (strcmp("asterisk_id", ast_json_object_iter_key(iter)) == 0) {
++			int prop_is_valid;
++			prop_is_valid = ast_ari_validate_string(
++				ast_json_object_iter_value(iter));
++			if (!prop_is_valid) {
++				ast_log(LOG_ERROR, "ARI ChannelMohStop field asterisk_id failed validation\n");
++				res = 0;
++			}
++		} else
++		if (strcmp("type", ast_json_object_iter_key(iter)) == 0) {
++			int prop_is_valid;
++			has_type = 1;
++			prop_is_valid = ast_ari_validate_string(
++				ast_json_object_iter_value(iter));
++			if (!prop_is_valid) {
++				ast_log(LOG_ERROR, "ARI ChannelMohStop field type failed validation\n");
++				res = 0;
++			}
++		} else
++		if (strcmp("application", ast_json_object_iter_key(iter)) == 0) {
++			int prop_is_valid;
++			has_application = 1;
++			prop_is_valid = ast_ari_validate_string(
++				ast_json_object_iter_value(iter));
++			if (!prop_is_valid) {
++				ast_log(LOG_ERROR, "ARI ChannelMohStop field application failed validation\n");
++				res = 0;
++			}
++		} else
++		if (strcmp("timestamp", ast_json_object_iter_key(iter)) == 0) {
++			int prop_is_valid;
++			has_timestamp = 1;
++			prop_is_valid = ast_ari_validate_date(
++				ast_json_object_iter_value(iter));
++			if (!prop_is_valid) {
++				ast_log(LOG_ERROR, "ARI ChannelMohStop field timestamp failed validation\n");
++				res = 0;
++			}
++		} else
++		if (strcmp("channel", ast_json_object_iter_key(iter)) == 0) {
++			int prop_is_valid;
++			has_channel = 1;
++			prop_is_valid = ast_ari_validate_channel(
++				ast_json_object_iter_value(iter));
++			if (!prop_is_valid) {
++				ast_log(LOG_ERROR, "ARI ChannelMohStop field channel failed validation\n");
++				res = 0;
++			}
++		} else
++		{
++			ast_log(LOG_ERROR,
++				"ARI ChannelMohStop has undocumented field %s\n",
++				ast_json_object_iter_key(iter));
++			res = 0;
++		}
++	}
++
++	if (!has_type) {
++		ast_log(LOG_ERROR, "ARI ChannelMohStop missing required field type\n");
++		res = 0;
++	}
++
++	if (!has_application) {
++		ast_log(LOG_ERROR, "ARI ChannelMohStop missing required field application\n");
++		res = 0;
++	}
++
++	if (!has_timestamp) {
++		ast_log(LOG_ERROR, "ARI ChannelMohStop missing required field timestamp\n");
++		res = 0;
++	}
++
++	if (!has_channel) {
++		ast_log(LOG_ERROR, "ARI ChannelMohStop missing required field channel\n");
++		res = 0;
++	}
++
++	return res;
++}
++
++ari_validator ast_ari_validate_channel_moh_stop_fn(void)
++{
++	return ast_ari_validate_channel_moh_stop;
++}
++
+ int ast_ari_validate_channel_state_change(struct ast_json *json)
+ {
+ 	int res = 1;
+@@ -5962,6 +6168,12 @@ int ast_ari_validate_event(struct ast_js
+ 	if (strcmp("ChannelLeftBridge", discriminator) == 0) {
+ 		return ast_ari_validate_channel_left_bridge(json);
+ 	} else
++	if (strcmp("ChannelMohStart", discriminator) == 0) {
++		return ast_ari_validate_channel_moh_start(json);
++	} else
++	if (strcmp("ChannelMohStop", discriminator) == 0) {
++		return ast_ari_validate_channel_moh_stop(json);
++	} else
+ 	if (strcmp("ChannelStateChange", discriminator) == 0) {
+ 		return ast_ari_validate_channel_state_change(json);
+ 	} else
+@@ -6172,6 +6384,12 @@ int ast_ari_validate_message(struct ast_
+ 	if (strcmp("ChannelLeftBridge", discriminator) == 0) {
+ 		return ast_ari_validate_channel_left_bridge(json);
+ 	} else
++	if (strcmp("ChannelMohStart", discriminator) == 0) {
++		return ast_ari_validate_channel_moh_start(json);
++	} else
++	if (strcmp("ChannelMohStop", discriminator) == 0) {
++		return ast_ari_validate_channel_moh_stop(json);
++	} else
+ 	if (strcmp("ChannelStateChange", discriminator) == 0) {
+ 		return ast_ari_validate_channel_state_change(json);
+ 	} else
+Index: asterisk-22.1.1/res/ari/ari_model_validators.h
+===================================================================
+--- asterisk-22.1.1.orig/res/ari/ari_model_validators.h
++++ asterisk-22.1.1/res/ari/ari_model_validators.h
+@@ -864,6 +864,38 @@ int ast_ari_validate_channel_left_bridge
+ ari_validator ast_ari_validate_channel_left_bridge_fn(void);
+ 
+ /*!
++ * \brief Validator for ChannelMohStart.
++ *
++ * MOH started on the channel.
++ *
++ * \param json JSON object to validate.
++ * \retval True (non-zero) if valid.
++ * \retval False (zero) if invalid.
++ */
++int ast_ari_validate_channel_moh_start(struct ast_json *json);
++
++/*!
++ * \brief Function pointer to ast_ari_validate_channel_moh_start().
++ */
++ari_validator ast_ari_validate_channel_moh_start_fn(void);
++
++/*!
++ * \brief Validator for ChannelMohStop.
++ *
++ * MOH stopped on the channel.
++ *
++ * \param json JSON object to validate.
++ * \retval True (non-zero) if valid.
++ * \retval False (zero) if invalid.
++ */
++int ast_ari_validate_channel_moh_stop(struct ast_json *json);
++
++/*!
++ * \brief Function pointer to ast_ari_validate_channel_moh_stop().
++ */
++ari_validator ast_ari_validate_channel_moh_stop_fn(void);
++
++/*!
+  * \brief Validator for ChannelStateChange.
+  *
+  * Notification of a channel's state change.
+@@ -1603,6 +1635,19 @@ ari_validator ast_ari_validate_applicati
+  * - timestamp: Date (required)
+  * - bridge: Bridge (required)
+  * - channel: Channel (required)
++ * ChannelMohStart
++ * - asterisk_id: string
++ * - type: string (required)
++ * - application: string (required)
++ * - timestamp: Date (required)
++ * - channel: Channel (required)
++ * - moh_class: string (required)
++ * ChannelMohStop
++ * - asterisk_id: string
++ * - type: string (required)
++ * - application: string (required)
++ * - timestamp: Date (required)
++ * - channel: Channel (required)
+  * ChannelStateChange
+  * - asterisk_id: string
+  * - type: string (required)
