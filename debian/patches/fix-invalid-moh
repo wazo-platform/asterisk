@@ -1,8 +1,8 @@
-Index: asterisk-22.1.1/res/res_musiconhold.c
+Index: asterisk-22.2.0/res/res_musiconhold.c
 ===================================================================
---- asterisk-22.1.1.orig/res/res_musiconhold.c
-+++ asterisk-22.1.1/res/res_musiconhold.c
-@@ -377,7 +377,9 @@ static int ast_moh_files_next(struct ast
+--- asterisk-22.2.0.orig/res/res_musiconhold.c
++++ asterisk-22.2.0/res/res_musiconhold.c
+@@ -380,7 +380,9 @@ static int ast_moh_files_next(struct ast
  		state->samples = 0;
  	}
  
@@ -12,7 +12,7 @@ Index: asterisk-22.1.1/res/res_musiconhold.c
  		if (ast_openstream_full(chan, AST_VECTOR_GET(files, state->pos), ast_channel_language(chan), 1)) {
  			break;
  		}
-@@ -388,6 +390,8 @@ static int ast_moh_files_next(struct ast
+@@ -391,6 +393,8 @@ static int ast_moh_files_next(struct ast
  	}
  
  	if (tries == file_count) {
@@ -21,7 +21,7 @@ Index: asterisk-22.1.1/res/res_musiconhold.c
  		ao2_ref(files, -1);
  		return -1;
  	}
-@@ -479,6 +483,7 @@ static int moh_files_generator(struct as
+@@ -482,6 +486,7 @@ static int moh_files_generator(struct as
  		ast_channel_lock(chan);
  		f = moh_files_readframe(chan);
  		if (!f) {
