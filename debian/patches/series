@@ -26,3 +26,4 @@ increase-max-sdp-media
 mixmonitor_close_beep_file
 fix-invalid-moh
 mix_monitor_announce_file
+fix-application-playback-update

@@ -1,0 +1,37 @@
+Index: asterisk-22.2.0/res/res_stasis_playback.c
+===================================================================
+--- asterisk-22.2.0.orig/res/res_stasis_playback.c
++++ asterisk-22.2.0/res/res_stasis_playback.c
+@@ -344,7 +344,8 @@ static void play_on_channel(struct stasi
+ 			if (!recording) {
+ 				ast_log(LOG_ERROR, "Attempted to play recording '%s' on channel '%s' but recording does not exist",
+ 					relname, ast_channel_name(chan));
+-				continue;
++				res = -1;
++				goto out;
+ 			}
+ 
+ 			playback->controllable = 1;
+@@ -358,7 +359,8 @@ static void play_on_channel(struct stasi
+ 			if (sscanf(playback->media + strlen(NUMBER_URI_SCHEME), "%30d", &number) != 1) {
+ 				ast_log(LOG_ERROR, "Attempted to play number '%s' on channel '%s' but number is invalid",
+ 					playback->media + strlen(NUMBER_URI_SCHEME), ast_channel_name(chan));
+-				continue;
++				res = -1;
++				goto out;
+ 			}
+ 
+ 			res = ast_say_number(chan, number, stop, playback->language, NULL);
+@@ -375,9 +377,11 @@ static void play_on_channel(struct stasi
+ 			/* Play URL */
+ 			ast_log(LOG_ERROR, "Attempted to play URI '%s' on channel '%s' but scheme is unsupported\n",
+ 				playback->media, ast_channel_name(chan));
+-			continue;
++			res = -1;
++			goto out;
+ 		}
+ 
++	out:
+ 		hangup = ast_check_hangup(chan);
+ 
+ 		playback_final_update(playback, offsetms, res, hangup,
