@@ -1,3 +1,9 @@
+asterisk (8:22.2.0-1~wazo5) wazo-dev-bullseye; urgency=medium
+
+  * backport revert RTP set mark
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 20 Mar 2025 09:12:04 -0400
+
 asterisk (8:22.2.0-1~wazo3) wazo-dev-bullseye; urgency=medium
 
   * Fix stasis application playback event
