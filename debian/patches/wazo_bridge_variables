@@ -1,8 +1,8 @@
-Index: asterisk-22.2.0/include/asterisk/bridge.h
+Index: asterisk-22.3.0/include/asterisk/bridge.h
 ===================================================================
---- asterisk-22.2.0.orig/include/asterisk/bridge.h
-+++ asterisk-22.2.0/include/asterisk/bridge.h
-@@ -249,6 +249,31 @@ typedef void (*ast_bridge_notify_masquer
+--- asterisk-22.3.0.orig/include/asterisk/bridge.h
++++ asterisk-22.3.0/include/asterisk/bridge.h
+@@ -253,6 +253,31 @@ typedef void (*ast_bridge_notify_masquer
  typedef int (*ast_bridge_merge_priority_fn)(struct ast_bridge *self);
  
  /*!
@@ -34,7 +34,7 @@ Index: asterisk-22.2.0/include/asterisk/bridge.h
   * \brief Bridge virtual methods table definition.
   *
   * \note Any changes to this struct must be reflected in
-@@ -271,6 +296,10 @@ struct ast_bridge_methods {
+@@ -275,6 +300,10 @@ struct ast_bridge_methods {
  	ast_bridge_merge_priority_fn get_merge_priority;
  	/*! Peek at swap channel before it can hang up, prior to push. */
  	ast_bridge_push_channel_fn push_peek;
@@ -45,7 +45,7 @@ Index: asterisk-22.2.0/include/asterisk/bridge.h
  };
  
  /*! Softmix technology parameters. */
-@@ -406,6 +435,8 @@ struct ast_bridge {
+@@ -410,6 +439,8 @@ struct ast_bridge {
  	struct ast_bridge_snapshot *current_snapshot;
  	/*! The time of bridge creation */
  	struct timeval creationtime;
@@ -54,7 +54,7 @@ Index: asterisk-22.2.0/include/asterisk/bridge.h
  };
  
  /*! \brief Bridge base class virtual method table. */
-@@ -1278,6 +1309,30 @@ void ast_bridge_features_remove(struct a
+@@ -1282,6 +1313,30 @@ void ast_bridge_features_remove(struct a
   */
  struct ast_bridge *ast_bridge_find_by_id(const char *bridge_id);
  
@@ -85,10 +85,10 @@ Index: asterisk-22.2.0/include/asterisk/bridge.h
  #if defined(__cplusplus) || defined(c_plusplus)
  }
  #endif
-Index: asterisk-22.2.0/main/bridge.c
+Index: asterisk-22.3.0/main/bridge.c
 ===================================================================
---- asterisk-22.2.0.orig/main/bridge.c
-+++ asterisk-22.2.0/main/bridge.c
+--- asterisk-22.3.0.orig/main/bridge.c
++++ asterisk-22.3.0/main/bridge.c
 @@ -127,6 +127,8 @@
  #include "asterisk/core_local.h"
  #include "asterisk/core_unreal.h"
@@ -98,7 +98,7 @@ Index: asterisk-22.2.0/main/bridge.c
  
  /*! All bridges container. */
  static struct ao2_container *bridges;
-@@ -929,6 +931,28 @@ static int bridge_base_push_peek(struct
+@@ -985,6 +987,28 @@ static int bridge_base_push_peek(struct
  	return 0;
  }
  
@@ -127,7 +127,7 @@ Index: asterisk-22.2.0/main/bridge.c
  struct ast_bridge_methods ast_bridge_base_v_table = {
  	.name = "base",
  	.destroy = bridge_base_destroy,
-@@ -938,6 +962,8 @@ struct ast_bridge_methods ast_bridge_bas
+@@ -994,6 +1018,8 @@ struct ast_bridge_methods ast_bridge_bas
  	.notify_masquerade = bridge_base_notify_masquerade,
  	.get_merge_priority = bridge_base_get_merge_priority,
  	.push_peek = bridge_base_push_peek,
@@ -136,7 +136,7 @@ Index: asterisk-22.2.0/main/bridge.c
  };
  
  struct ast_bridge *ast_bridge_base_new(uint32_t capabilities, unsigned int flags, const char *creator, const char *name, const char *id)
-@@ -5466,6 +5492,14 @@ static int manager_bridge_tech_unsuspend
+@@ -5527,6 +5553,14 @@ static int manager_bridge_tech_unsuspend
  	return handle_manager_bridge_tech_suspend(s, m, 0);
  }
  
@@ -151,10 +151,10 @@ Index: asterisk-22.2.0/main/bridge.c
  static int manager_bridge_tech_list(struct mansession *s, const struct message *m)
  {
  	const char *id = astman_get_header(m, "ActionID");
-Index: asterisk-22.2.0/res/ari/resource_bridges.c
+Index: asterisk-22.3.0/res/ari/resource_bridges.c
 ===================================================================
---- asterisk-22.2.0.orig/res/ari/resource_bridges.c
-+++ asterisk-22.2.0/res/ari/resource_bridges.c
+--- asterisk-22.3.0.orig/res/ari/resource_bridges.c
++++ asterisk-22.3.0/res/ari/resource_bridges.c
 @@ -44,6 +44,10 @@
  #include "asterisk/file.h"
  #include "asterisk/musiconhold.h"
@@ -166,7 +166,7 @@ Index: asterisk-22.2.0/res/ari/resource_bridges.c
  
  /*!
   * \brief Finds a bridge, filling the response with an error, if appropriate.
-@@ -1086,3 +1090,120 @@ void ast_ari_bridges_clear_video_source(
+@@ -1081,3 +1085,120 @@ void ast_ari_bridges_clear_video_source(
  	ao2_ref(bridge, -1);
  	ast_ari_response_no_content(response);
  }
@@ -288,10 +288,10 @@ Index: asterisk-22.2.0/res/ari/resource_bridges.c
 +	ast_ari_response_ok(response, response->message);
 +}
 \ No newline at end of file
-Index: asterisk-22.2.0/res/ari/resource_bridges.h
+Index: asterisk-22.3.0/res/ari/resource_bridges.h
 ===================================================================
---- asterisk-22.2.0.orig/res/ari/resource_bridges.h
-+++ asterisk-22.2.0/res/ari/resource_bridges.h
+--- asterisk-22.3.0.orig/res/ari/resource_bridges.h
++++ asterisk-22.3.0/res/ari/resource_bridges.h
 @@ -395,5 +395,59 @@ int ast_ari_bridges_record_parse_body(
   * \param[out] response HTTP response
   */
@@ -352,11 +352,11 @@ Index: asterisk-22.2.0/res/ari/resource_bridges.h
 +void ast_ari_bridges_set_bridge_var(struct ast_variable *headers, struct ast_ari_bridges_set_bridge_var_args *args, struct ast_ari_response *response);
  
  #endif /* _ASTERISK_RESOURCE_BRIDGES_H */
-Index: asterisk-22.2.0/res/res_ari_bridges.c
+Index: asterisk-22.3.0/res/res_ari_bridges.c
 ===================================================================
---- asterisk-22.2.0.orig/res/res_ari_bridges.c
-+++ asterisk-22.2.0/res/res_ari_bridges.c
-@@ -1489,6 +1489,179 @@ static void ast_ari_bridges_record_cb(
+--- asterisk-22.3.0.orig/res/res_ari_bridges.c
++++ asterisk-22.3.0/res/res_ari_bridges.c
+@@ -1491,6 +1491,179 @@ static void ast_ari_bridges_record_cb(
  fin: __attribute__((unused))
  	return;
  }
@@ -536,7 +536,7 @@ Index: asterisk-22.2.0/res/res_ari_bridges.c
  
  /*! \brief REST handler for /api-docs/bridges.json */
  static struct stasis_rest_handlers bridges_bridgeId_addChannel = {
-@@ -1566,6 +1739,16 @@ static struct stasis_rest_handlers bridg
+@@ -1568,6 +1741,16 @@ static struct stasis_rest_handlers bridg
  	.children = {  }
  };
  /*! \brief REST handler for /api-docs/bridges.json */
@@ -553,7 +553,7 @@ Index: asterisk-22.2.0/res/res_ari_bridges.c
  static struct stasis_rest_handlers bridges_bridgeId = {
  	.path_segment = "bridgeId",
  	.is_wildcard = 1,
-@@ -1574,8 +1757,8 @@ static struct stasis_rest_handlers bridg
+@@ -1576,8 +1759,8 @@ static struct stasis_rest_handlers bridg
  		[AST_HTTP_GET] = ast_ari_bridges_get_cb,
  		[AST_HTTP_DELETE] = ast_ari_bridges_destroy_cb,
  	},
@@ -564,11 +564,11 @@ Index: asterisk-22.2.0/res/res_ari_bridges.c
  };
  /*! \brief REST handler for /api-docs/bridges.json */
  static struct stasis_rest_handlers bridges = {
-Index: asterisk-22.2.0/rest-api/api-docs/bridges.json
+Index: asterisk-22.3.0/rest-api/api-docs/bridges.json
 ===================================================================
---- asterisk-22.2.0.orig/rest-api/api-docs/bridges.json
-+++ asterisk-22.2.0/rest-api/api-docs/bridges.json
-@@ -574,7 +574,6 @@
+--- asterisk-22.3.0.orig/rest-api/api-docs/bridges.json
++++ asterisk-22.3.0/rest-api/api-docs/bridges.json
+@@ -630,7 +630,6 @@
  							"reason": "Bridge not in a Stasis application"
  						}
  					]
@@ -576,7 +576,7 @@ Index: asterisk-22.2.0/rest-api/api-docs/bridges.json
  				}
  			]
  		},
-@@ -704,6 +703,96 @@
+@@ -763,6 +762,96 @@
                      ]
  				}
  			]
@@ -673,7 +673,7 @@ Index: asterisk-22.2.0/rest-api/api-docs/bridges.json
  		}
  	],
  	"models": {
-@@ -767,6 +856,11 @@
+@@ -826,6 +915,11 @@
  					"required": true,
  					"type": "Date",
  					"description": "Timestamp when bridge was created"
@@ -685,11 +685,11 @@ Index: asterisk-22.2.0/rest-api/api-docs/bridges.json
  				}
  			}
  		}
-Index: asterisk-22.2.0/include/asterisk/stasis_bridges.h
+Index: asterisk-22.3.0/include/asterisk/stasis_bridges.h
 ===================================================================
---- asterisk-22.2.0.orig/include/asterisk/stasis_bridges.h
-+++ asterisk-22.2.0/include/asterisk/stasis_bridges.h
-@@ -94,6 +94,9 @@ struct ast_bridge_merge_message {
+--- asterisk-22.3.0.orig/include/asterisk/stasis_bridges.h
++++ asterisk-22.3.0/include/asterisk/stasis_bridges.h
+@@ -103,6 +103,9 @@ struct ast_bridge_merge_message {
  	struct ast_bridge_snapshot *to;		/*!< Bridge to which channels will be added during the merge */
  };
  
@@ -699,7 +699,7 @@ Index: asterisk-22.2.0/include/asterisk/stasis_bridges.h
  /*!
   * \since 12
   * \brief Message type for \ref ast_bridge_merge_message.
-@@ -115,6 +118,17 @@ void ast_bridge_publish_merge(struct ast
+@@ -124,6 +127,17 @@ void ast_bridge_publish_merge(struct ast
  
  /*!
   * \since 12
@@ -717,10 +717,10 @@ Index: asterisk-22.2.0/include/asterisk/stasis_bridges.h
   * \brief Blob of data associated with a bridge.
   *
   * The \c blob is actually a JSON object of structured data. It has a "type" field
-Index: asterisk-22.2.0/main/stasis_bridges.c
+Index: asterisk-22.3.0/main/stasis_bridges.c
 ===================================================================
---- asterisk-22.2.0.orig/main/stasis_bridges.c
-+++ asterisk-22.2.0/main/stasis_bridges.c
+--- asterisk-22.3.0.orig/main/stasis_bridges.c
++++ asterisk-22.3.0/main/stasis_bridges.c
 @@ -37,6 +37,7 @@
  #include "asterisk/stasis_channels.h"
  #include "asterisk/bridge.h"
@@ -729,7 +729,7 @@ Index: asterisk-22.2.0/main/stasis_bridges.c
  
  /* The container of channel snapshots in a bridge snapshot should always be
     equivalent to a linked list; otherwise things (like CDRs) that depend on some
-@@ -156,6 +157,9 @@ static struct ast_json *ast_channel_left
+@@ -161,6 +162,9 @@ static struct ast_json *ast_channel_left
  static struct ast_json *ast_bridge_merge_message_to_json(
  	struct stasis_message *msg,
  	const struct stasis_message_sanitizer *sanitize);
@@ -739,7 +739,7 @@ Index: asterisk-22.2.0/main/stasis_bridges.c
  
  static struct stasis_topic *bridge_topic_all;
  static struct stasis_topic_pool *bridge_topic_pool;
-@@ -170,6 +174,8 @@ STASIS_MESSAGE_TYPE_DEFN(ast_channel_ent
+@@ -175,6 +179,8 @@ STASIS_MESSAGE_TYPE_DEFN(ast_channel_ent
  	.to_json = ast_channel_entered_bridge_to_json);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_left_bridge_type,
  	.to_json = ast_channel_left_bridge_to_json);
@@ -748,7 +748,7 @@ Index: asterisk-22.2.0/main/stasis_bridges.c
  STASIS_MESSAGE_TYPE_DEFN(ast_blind_transfer_type,
  	.to_json = blind_transfer_to_json,
  	.to_ami = blind_transfer_to_ami);
-@@ -628,6 +634,49 @@ void ast_bridge_publish_leave(struct ast
+@@ -664,6 +670,49 @@ void ast_bridge_publish_leave(struct ast
  	ao2_ref(msg, -1);
  }
  
@@ -798,7 +798,7 @@ Index: asterisk-22.2.0/main/stasis_bridges.c
  static struct ast_json *simple_bridge_channel_event(
  	const char *type,
  	struct ast_bridge_snapshot *bridge_snapshot,
-@@ -672,6 +721,46 @@ struct ast_json *ast_channel_left_bridge
+@@ -708,6 +757,46 @@ struct ast_json *ast_channel_left_bridge
  		obj->channel, stasis_message_timestamp(msg), sanitize);
  }
  
@@ -845,7 +845,7 @@ Index: asterisk-22.2.0/main/stasis_bridges.c
  static struct ast_json *container_to_json_array(struct ao2_container *items,
  	const struct stasis_message_sanitizer *sanitize)
  {
-@@ -1399,6 +1488,7 @@ static void stasis_bridging_cleanup(void
+@@ -1435,6 +1524,7 @@ static void stasis_bridging_cleanup(void
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_channel_left_bridge_type);
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_blind_transfer_type);
  	STASIS_MESSAGE_TYPE_CLEANUP(ast_attended_transfer_type);
@@ -853,7 +853,7 @@ Index: asterisk-22.2.0/main/stasis_bridges.c
  
  	ao2_cleanup(bridge_topic_pool);
  	bridge_topic_pool = NULL;
-@@ -1427,6 +1517,7 @@ int ast_stasis_bridging_init(void)
+@@ -1463,6 +1553,7 @@ int ast_stasis_bridging_init(void)
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_channel_left_bridge_type);
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_blind_transfer_type);
  	res |= STASIS_MESSAGE_TYPE_INIT(ast_attended_transfer_type);
@@ -861,11 +861,11 @@ Index: asterisk-22.2.0/main/stasis_bridges.c
  
  	return res;
  }
-Index: asterisk-22.2.0/rest-api/api-docs/events.json
+Index: asterisk-22.3.0/rest-api/api-docs/events.json
 ===================================================================
---- asterisk-22.2.0.orig/rest-api/api-docs/events.json
-+++ asterisk-22.2.0/rest-api/api-docs/events.json
-@@ -162,6 +162,7 @@
+--- asterisk-22.3.0.orig/rest-api/api-docs/events.json
++++ asterisk-22.3.0/rest-api/api-docs/events.json
+@@ -171,6 +171,7 @@
  				"ApplicationMoveFailed",
  				"ApplicationReplaced",
  				"BridgeCreated",
@@ -873,7 +873,7 @@ Index: asterisk-22.2.0/rest-api/api-docs/events.json
  				"BridgeDestroyed",
  				"BridgeMerged",
  				"BridgeBlindTransfer",
-@@ -735,6 +736,27 @@
+@@ -745,6 +746,27 @@
  				}
  			}
  		},

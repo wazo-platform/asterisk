@@ -1,7 +1,7 @@
-Index: asterisk-22.2.0/res/res_pjsip/location.c
+Index: asterisk-22.3.0/res/res_pjsip/location.c
 ===================================================================
---- asterisk-22.2.0.orig/res/res_pjsip/location.c
-+++ asterisk-22.2.0/res/res_pjsip/location.c
+--- asterisk-22.3.0.orig/res/res_pjsip/location.c
++++ asterisk-22.3.0/res/res_pjsip/location.c
 @@ -355,7 +355,7 @@ struct ast_sip_contact *ast_sip_location
  struct ast_sip_contact *ast_sip_location_create_contact(struct ast_sip_aor *aor,
  	const char *uri, struct timeval expiration_time, const char *path_info,
@@ -41,11 +41,11 @@ Index: asterisk-22.2.0/res/res_pjsip/location.c
  
  	ast_sorcery_object_field_register(sorcery, "aor", "type", "", OPT_NOOP_T, 0, 0);
  	ast_sorcery_object_field_register(sorcery, "aor", "minimum_expiration", "60", OPT_UINT_T, 0, FLDSET(struct ast_sip_aor, minimum_expiration));
-Index: asterisk-22.2.0/res/res_pjsip_registrar.c
+Index: asterisk-22.3.0/res/res_pjsip_registrar.c
 ===================================================================
---- asterisk-22.2.0.orig/res/res_pjsip_registrar.c
-+++ asterisk-22.2.0/res/res_pjsip_registrar.c
-@@ -560,6 +560,35 @@ static int vec_contact_add(void *obj, vo
+--- asterisk-22.3.0.orig/res/res_pjsip_registrar.c
++++ asterisk-22.3.0/res/res_pjsip_registrar.c
+@@ -625,6 +625,35 @@ static int vec_contact_add(void *obj, vo
  	return 0;
  }
  
@@ -81,7 +81,7 @@ Index: asterisk-22.2.0/res/res_pjsip_registrar.c
  /*!
   * \internal
   * \brief Remove excess existing contacts that are unavailable or expire soonest.
-@@ -612,6 +641,51 @@ static void remove_excess_contacts(struc
+@@ -677,6 +706,51 @@ static void remove_excess_contacts(struc
  	AST_VECTOR_FREE(&contact_vec);
  }
  
@@ -133,7 +133,7 @@ Index: asterisk-22.2.0/res/res_pjsip_registrar.c
  /*! \brief Callback function which adds non-permanent contacts to a container */
  static int registrar_add_non_permanent(void *obj, void *arg, int flags)
  {
-@@ -671,6 +745,7 @@ static void register_aor_core(pjsip_rx_d
+@@ -736,6 +810,7 @@ static void register_aor_core(pjsip_rx_d
  	int deleted = 0;
  	int permanent = 0;
  	int contact_count;
@@ -141,7 +141,7 @@ Index: asterisk-22.2.0/res/res_pjsip_registrar.c
  	struct ao2_container *existing_contacts = NULL;
  	struct ao2_container *unavail_contacts = NULL;
  	pjsip_contact_hdr *contact_hdr = (pjsip_contact_hdr *)&rdata->msg_info.msg->hdr;
-@@ -850,6 +925,9 @@ static void register_aor_core(pjsip_rx_d
+@@ -915,6 +990,9 @@ static void register_aor_core(pjsip_rx_d
  
  		if (!contact) {
  			int prune_on_boot;
@@ -151,7 +151,7 @@ Index: asterisk-22.2.0/res/res_pjsip_registrar.c
  
  			/* If they are actually trying to delete a contact that does not exist... be forgiving */
  			if (!expiration) {
-@@ -858,12 +936,20 @@ static void register_aor_core(pjsip_rx_d
+@@ -923,12 +1001,20 @@ static void register_aor_core(pjsip_rx_d
  				continue;
  			}
  
@@ -173,7 +173,7 @@ Index: asterisk-22.2.0/res/res_pjsip_registrar.c
  			if (!contact) {
  				ast_log(LOG_ERROR, "Unable to bind contact '%s' to AOR '%s'\n",
  					contact_uri, aor_name);
-@@ -976,9 +1062,16 @@ static void register_aor_core(pjsip_rx_d
+@@ -1041,9 +1127,16 @@ static void register_aor_core(pjsip_rx_d
  			remove_excess_contacts(existing_contacts, contacts, contact_count - aor->max_contacts,
  				aor->remove_existing);
  		}
@@ -190,10 +190,10 @@ Index: asterisk-22.2.0/res/res_pjsip_registrar.c
  	response_contact = ao2_callback(contacts, 0, NULL, NULL);
  
  	/* Send a response containing all of the contacts (including static) that are present on this AOR */
-Index: asterisk-22.2.0/include/asterisk/res_pjsip.h
+Index: asterisk-22.3.0/include/asterisk/res_pjsip.h
 ===================================================================
---- asterisk-22.2.0.orig/include/asterisk/res_pjsip.h
-+++ asterisk-22.2.0/include/asterisk/res_pjsip.h
+--- asterisk-22.3.0.orig/include/asterisk/res_pjsip.h
++++ asterisk-22.3.0/include/asterisk/res_pjsip.h
 @@ -409,6 +409,8 @@ struct ast_sip_contact {
  		AST_STRING_FIELD(call_id);
  		/*! The name of the endpoint that added the contact */
@@ -212,11 +212,11 @@ Index: asterisk-22.2.0/include/asterisk/res_pjsip.h
  
  /*!
   * \brief Update a contact
-Index: asterisk-22.2.0/res/res_pjsip/pjsip_config.xml
+Index: asterisk-22.3.0/res/res_pjsip/pjsip_config.xml
 ===================================================================
---- asterisk-22.2.0.orig/res/res_pjsip/pjsip_config.xml
-+++ asterisk-22.2.0/res/res_pjsip/pjsip_config.xml
-@@ -2281,6 +2281,12 @@
+--- asterisk-22.3.0.orig/res/res_pjsip/pjsip_config.xml
++++ asterisk-22.3.0/res/res_pjsip/pjsip_config.xml
+@@ -2720,6 +2720,12 @@
  						on a reliable transport and is not intended to be configured manually.
  					</para></description>
  				</configOption>
@@ -228,4 +228,4 @@ Index: asterisk-22.2.0/res/res_pjsip/pjsip_config.xml
 +				</configOption>
  			</configObject>
  			<configObject name="aor">
- 				<since><version>13.35.0</version><version>16.12.0</version><version>17.6.0</version></since>
+ 				<since>

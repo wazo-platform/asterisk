@@ -1,16 +1,16 @@
-Index: asterisk-22.2.0/res/ari.make
+Index: asterisk-22.3.0/res/ari.make
 ===================================================================
---- asterisk-22.2.0.orig/res/ari.make
-+++ asterisk-22.2.0/res/ari.make
+--- asterisk-22.3.0.orig/res/ari.make
++++ asterisk-22.3.0/res/ari.make
 @@ -28,3 +28,4 @@ $(call MOD_ADD_C,res_ari_device_states,a
  $(call MOD_ADD_C,res_ari_mailboxes,ari/resource_mailboxes.c)
  $(call MOD_ADD_C,res_ari_events,ari/resource_events.c)
  $(call MOD_ADD_C,res_ari_applications,ari/resource_applications.c)
 +$(call MOD_ADD_C,res_ari_wazo,ari/resource_wazo.c)
-Index: asterisk-22.2.0/res/ari/resource_wazo.c
+Index: asterisk-22.3.0/res/ari/resource_wazo.c
 ===================================================================
 --- /dev/null
-+++ asterisk-22.2.0/res/ari/resource_wazo.c
++++ asterisk-22.3.0/res/ari/resource_wazo.c
 @@ -0,0 +1,417 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -429,10 +429,10 @@ Index: asterisk-22.2.0/res/ari/resource_wazo.c
 +static int validate_greeting(const char *greeting) {
 +      return !strcmp(greeting, "unavailable") || !strcmp(greeting, "busy") || !strcmp(greeting, "name");
 +}
-Index: asterisk-22.2.0/res/ari/resource_wazo.h
+Index: asterisk-22.3.0/res/ari/resource_wazo.h
 ===================================================================
 --- /dev/null
-+++ asterisk-22.2.0/res/ari/resource_wazo.h
++++ asterisk-22.3.0/res/ari/resource_wazo.h
 @@ -0,0 +1,200 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -634,10 +634,10 @@ Index: asterisk-22.2.0/res/ari/resource_wazo.h
 +void ast_ari_wazo_remove_voicemail_greeting(struct ast_variable *headers, struct ast_ari_wazo_remove_voicemail_greeting_args *args, struct ast_ari_response *response);
 +
 +#endif /* _ASTERISK_RESOURCE_WAZO_H */
-Index: asterisk-22.2.0/res/res_ari_wazo.c
+Index: asterisk-22.3.0/res/res_ari_wazo.c
 ===================================================================
 --- /dev/null
-+++ asterisk-22.2.0/res/res_ari_wazo.c
++++ asterisk-22.3.0/res/res_ari_wazo.c
 @@ -0,0 +1,608 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
@@ -1247,10 +1247,10 @@ Index: asterisk-22.2.0/res/res_ari_wazo.c
 +	.unload = unload_module,
 +	.requires = "res_ari,res_ari_model,res_stasis",
 +);
-Index: asterisk-22.2.0/rest-api/api-docs/wazo.json
+Index: asterisk-22.3.0/rest-api/api-docs/wazo.json
 ===================================================================
 --- /dev/null
-+++ asterisk-22.2.0/rest-api/api-docs/wazo.json
++++ asterisk-22.3.0/rest-api/api-docs/wazo.json
 @@ -0,0 +1,296 @@
 +{
 +	"_copyright": "Copyright 2016-2019 The Wazo Authors  (see the AUTHORS file)",
@@ -1548,10 +1548,10 @@ Index: asterisk-22.2.0/rest-api/api-docs/wazo.json
 +		}
 +	}
 +}
-Index: asterisk-22.2.0/rest-api/resources.json
+Index: asterisk-22.3.0/rest-api/resources.json
 ===================================================================
---- asterisk-22.2.0.orig/rest-api/resources.json
-+++ asterisk-22.2.0/rest-api/resources.json
+--- asterisk-22.3.0.orig/rest-api/resources.json
++++ asterisk-22.3.0/rest-api/resources.json
 @@ -49,6 +49,10 @@
  		{
  			"path": "/api-docs/applications.{format}",
@@ -1563,10 +1563,10 @@ Index: asterisk-22.2.0/rest-api/resources.json
  		}
  	]
  }
-Index: asterisk-22.2.0/include/asterisk/app.h
+Index: asterisk-22.3.0/include/asterisk/app.h
 ===================================================================
---- asterisk-22.2.0.orig/include/asterisk/app.h
-+++ asterisk-22.2.0/include/asterisk/app.h
+--- asterisk-22.3.0.orig/include/asterisk/app.h
++++ asterisk-22.3.0/include/asterisk/app.h
 @@ -518,6 +518,19 @@ typedef int (ast_vm_msg_forward_fn)(cons
  typedef int (ast_vm_msg_play_fn)(struct ast_channel *chan, const char *mailbox,
  	const char *context, const char *folder, const char *msg_num, ast_vm_msg_play_cb *cb);
@@ -1656,10 +1656,10 @@ Index: asterisk-22.2.0/include/asterisk/app.h
  /*!
   * \brief Initialize the application core
   * \retval 0 Success
-Index: asterisk-22.2.0/main/app.c
+Index: asterisk-22.3.0/main/app.c
 ===================================================================
---- asterisk-22.2.0.orig/main/app.c
-+++ asterisk-22.2.0/main/app.c
+--- asterisk-22.3.0.orig/main/app.c
++++ asterisk-22.3.0/main/app.c
 @@ -736,6 +736,58 @@ int ast_vm_msg_play(struct ast_channel *
  	return res;
  }
@@ -1719,11 +1719,11 @@ Index: asterisk-22.2.0/main/app.c
  #ifdef TEST_FRAMEWORK
  int ast_vm_test_create_user(const char *context, const char *mailbox)
  {
-Index: asterisk-22.2.0/apps/app_voicemail.c
+Index: asterisk-22.3.0/apps/app_voicemail.c
 ===================================================================
---- asterisk-22.2.0.orig/apps/app_voicemail.c
-+++ asterisk-22.2.0/apps/app_voicemail.c
-@@ -697,6 +697,10 @@ static AST_LIST_HEAD_STATIC(vmstates, vm
+--- asterisk-22.3.0.orig/apps/app_voicemail.c
++++ asterisk-22.3.0/apps/app_voicemail.c
+@@ -713,6 +713,10 @@ static AST_LIST_HEAD_STATIC(vmstates, vm
  #define ENDL "\n"
  #endif
  
@@ -1734,7 +1734,7 @@ Index: asterisk-22.2.0/apps/app_voicemail.c
  #define MAX_DATETIME_FORMAT	512
  #define MAX_NUM_CID_CONTEXTS 10
  
-@@ -1248,6 +1252,13 @@ static int vm_msg_forward(const char *fr
+@@ -1264,6 +1268,13 @@ static int vm_msg_forward(const char *fr
  static int vm_msg_move(const char *mailbox, const char *context, size_t num_msgs, const char *oldfolder, const char *old_msg_ids[], const char *newfolder);
  static int vm_msg_remove(const char *mailbox, const char *context, size_t num_msgs, const char *folder, const char *msgs[]);
  static int vm_msg_play(struct ast_channel *chan, const char *mailbox, const char *context, const char *folder, const char *msg_num, ast_vm_msg_play_cb cb);
@@ -1748,7 +1748,7 @@ Index: asterisk-22.2.0/apps/app_voicemail.c
  
  #ifdef TEST_FRAMEWORK
  static int vm_test_destroy_user(const char *context, const char *mailbox);
-@@ -16242,6 +16253,10 @@ static const struct ast_vm_functions vm_
+@@ -16258,6 +16269,10 @@ static const struct ast_vm_functions vm_
  	.msg_remove = vm_msg_remove,
  	.msg_forward = vm_msg_forward,
  	.msg_play = vm_msg_play,
@@ -1759,7 +1759,7 @@ Index: asterisk-22.2.0/apps/app_voicemail.c
  };
  
  static const struct ast_vm_greeter_functions vm_greeter_table = {
-@@ -17830,6 +17845,197 @@ play2_msg_cleanup:
+@@ -17846,6 +17861,197 @@ play2_msg_cleanup:
  	return res;
  }
  
@@ -1957,10 +1957,10 @@ Index: asterisk-22.2.0/apps/app_voicemail.c
  /* This is a workaround so that menuselect displays a proper description
   * AST_MODULE_INFO(, , "Comedian Mail (Voicemail System)"
   */
-Index: asterisk-22.2.0/main/http.c
+Index: asterisk-22.3.0/main/http.c
 ===================================================================
---- asterisk-22.2.0.orig/main/http.c
-+++ asterisk-22.2.0/main/http.c
+--- asterisk-22.3.0.orig/main/http.c
++++ asterisk-22.3.0/main/http.c
 @@ -82,7 +82,7 @@
  
  /*! Maximum application/json or application/x-www-form-urlencoded body content length. */
@@ -1970,11 +1970,11 @@ Index: asterisk-22.2.0/main/http.c
  #else
  #define MAX_CONTENT_LENGTH 1024
  #endif	/* !defined(LOW_MEMORY) */
-Index: asterisk-22.2.0/res/ari/ari_model_validators.c
+Index: asterisk-22.3.0/res/ari/ari_model_validators.c
 ===================================================================
---- asterisk-22.2.0.orig/res/ari/ari_model_validators.c
-+++ asterisk-22.2.0/res/ari/ari_model_validators.c
-@@ -7784,3 +7784,41 @@ ari_validator ast_ari_validate_applicati
+--- asterisk-22.3.0.orig/res/ari/ari_model_validators.c
++++ asterisk-22.3.0/res/ari/ari_model_validators.c
+@@ -8135,3 +8135,41 @@ ari_validator ast_ari_validate_applicati
  {
  	return ast_ari_validate_application;
  }
@@ -2016,11 +2016,11 @@ Index: asterisk-22.2.0/res/ari/ari_model_validators.c
 +{
 +	return ast_ari_validate_encoded_file;
 +}
-Index: asterisk-22.2.0/res/ari/ari_model_validators.h
+Index: asterisk-22.3.0/res/ari/ari_model_validators.h
 ===================================================================
---- asterisk-22.2.0.orig/res/ari/ari_model_validators.h
-+++ asterisk-22.2.0/res/ari/ari_model_validators.h
-@@ -1327,6 +1327,22 @@ int ast_ari_validate_application(struct
+--- asterisk-22.3.0.orig/res/ari/ari_model_validators.h
++++ asterisk-22.3.0/res/ari/ari_model_validators.h
+@@ -1407,6 +1407,22 @@ int ast_ari_validate_application(struct
   */
  ari_validator ast_ari_validate_application_fn(void);
  
@@ -2043,7 +2043,7 @@ Index: asterisk-22.2.0/res/ari/ari_model_validators.h
  /*
   * JSON models
   *
-@@ -1822,6 +1838,8 @@ ari_validator ast_ari_validate_applicati
+@@ -1926,6 +1942,8 @@ ari_validator ast_ari_validate_applicati
   * - events_allowed: List[object] (required)
   * - events_disallowed: List[object] (required)
   * - name: string (required)
