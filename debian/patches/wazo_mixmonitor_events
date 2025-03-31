@@ -1,8 +1,8 @@
-Index: asterisk-22.2.0/apps/app_mixmonitor.c
+Index: asterisk-22.3.0/apps/app_mixmonitor.c
 ===================================================================
---- asterisk-22.2.0.orig/apps/app_mixmonitor.c
-+++ asterisk-22.2.0/apps/app_mixmonitor.c
-@@ -1024,6 +1024,8 @@ static int launch_monitor_thread(struct
+--- asterisk-22.3.0.orig/apps/app_mixmonitor.c
++++ asterisk-22.3.0/apps/app_mixmonitor.c
+@@ -1039,6 +1039,8 @@ static int launch_monitor_thread(struct
  	struct mixmonitor *mixmonitor;
  	char postprocess2[1024] = "";
  	char *datastore_id = NULL;
@@ -11,7 +11,7 @@ Index: asterisk-22.2.0/apps/app_mixmonitor.c
  
  	postprocess2[0] = 0;
  	/* If a post process system command is given attach it to the structure */
-@@ -1161,6 +1163,15 @@ static int launch_monitor_thread(struct
+@@ -1176,6 +1178,15 @@ static int launch_monitor_thread(struct
  		mixmonitor_free(mixmonitor);
  		return -1;
  	}
@@ -27,7 +27,7 @@ Index: asterisk-22.2.0/apps/app_mixmonitor.c
  
  	ast_free(datastore_id);
  
-@@ -1224,7 +1235,6 @@ static int mixmonitor_exec(struct ast_ch
+@@ -1239,7 +1250,6 @@ static int mixmonitor_exec(struct ast_ch
  	struct ast_flags flags = { 0 };
  	char *recipients = NULL;
  	char *parse;
@@ -35,7 +35,7 @@ Index: asterisk-22.2.0/apps/app_mixmonitor.c
  	AST_DECLARE_APP_ARGS(args,
  		AST_APP_ARG(filename);
  		AST_APP_ARG(options);
-@@ -1345,12 +1355,6 @@ static int mixmonitor_exec(struct ast_ch
+@@ -1360,12 +1370,6 @@ static int mixmonitor_exec(struct ast_ch
  		ast_module_unref(ast_module_info->self);
  	}
  
@@ -48,7 +48,7 @@ Index: asterisk-22.2.0/apps/app_mixmonitor.c
  	return 0;
  }
  
-@@ -1360,7 +1364,9 @@ static int stop_mixmonitor_full(struct a
+@@ -1375,7 +1379,9 @@ static int stop_mixmonitor_full(struct a
  	char *parse = "";
  	struct mixmonitor_ds *mixmonitor_ds;
  	const char *beep_id = NULL;
@@ -58,7 +58,7 @@ Index: asterisk-22.2.0/apps/app_mixmonitor.c
  
  	AST_DECLARE_APP_ARGS(args,
  		AST_APP_ARG(mixmonid);
-@@ -1384,6 +1390,12 @@ static int stop_mixmonitor_full(struct a
+@@ -1399,6 +1405,12 @@ static int stop_mixmonitor_full(struct a
  
  	ast_mutex_lock(&mixmonitor_ds->lock);
  
@@ -71,7 +71,7 @@ Index: asterisk-22.2.0/apps/app_mixmonitor.c
  	/* closing the filestream here guarantees the file is available to the dialplan
  	 * after calling StopMixMonitor */
  	mixmonitor_ds_close_fs(mixmonitor_ds);
-@@ -1418,13 +1430,17 @@ static int stop_mixmonitor_full(struct a
+@@ -1433,13 +1445,17 @@ static int stop_mixmonitor_full(struct a
  		ast_beep_stop(chan, beep_id);
  	}
  
@@ -91,11 +91,11 @@ Index: asterisk-22.2.0/apps/app_mixmonitor.c
  	return 0;
  }
  
-Index: asterisk-22.2.0/main/cel.c
+Index: asterisk-22.3.0/main/cel.c
 ===================================================================
---- asterisk-22.2.0.orig/main/cel.c
-+++ asterisk-22.2.0/main/cel.c
-@@ -328,6 +328,8 @@ static const char * const cel_event_type
+--- asterisk-22.3.0.orig/main/cel.c
++++ asterisk-22.3.0/main/cel.c
+@@ -338,6 +338,8 @@ static const char * const cel_event_type
  	[AST_CEL_LINKEDID_END]     = "LINKEDID_END",
  	[AST_CEL_LOCAL_OPTIMIZE]   = "LOCAL_OPTIMIZE",
  	[AST_CEL_LOCAL_OPTIMIZE_BEGIN]   = "LOCAL_OPTIMIZE_BEGIN",
@@ -104,7 +104,7 @@ Index: asterisk-22.2.0/main/cel.c
  };
  
  struct cel_backend {
-@@ -1399,6 +1401,33 @@ static void cel_pickup_cb(
+@@ -1409,6 +1411,33 @@ static void cel_pickup_cb(
  }
  
  
@@ -138,7 +138,7 @@ Index: asterisk-22.2.0/main/cel.c
  static void cel_local_optimization_cb_helper(
  	void *data, struct stasis_subscription *sub,
  	struct stasis_message *message,
-@@ -1582,6 +1611,16 @@ static int create_routes(void)
+@@ -1592,6 +1621,16 @@ static int create_routes(void)
  		NULL);
  
  	ret |= stasis_message_router_add(cel_state_router,
@@ -155,10 +155,10 @@ Index: asterisk-22.2.0/main/cel.c
  		ast_local_optimization_end_type(),
  		cel_local_optimization_end_cb,
  		NULL);
-Index: asterisk-22.2.0/include/asterisk/cel.h
+Index: asterisk-22.3.0/include/asterisk/cel.h
 ===================================================================
---- asterisk-22.2.0.orig/include/asterisk/cel.h
-+++ asterisk-22.2.0/include/asterisk/cel.h
+--- asterisk-22.3.0.orig/include/asterisk/cel.h
++++ asterisk-22.3.0/include/asterisk/cel.h
 @@ -77,6 +77,10 @@ enum ast_cel_event_type {
  	AST_CEL_LOCAL_OPTIMIZE = 17,
  	/*! \brief A local channel optimization has begun */
