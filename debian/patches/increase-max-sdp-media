@@ -1,7 +1,7 @@
-Index: asterisk-22.3.0/third-party/pjproject/patches/config_site.h
+Index: asterisk-22.2.0/third-party/pjproject/patches/config_site.h
 ===================================================================
---- asterisk-22.3.0.orig/third-party/pjproject/patches/config_site.h
-+++ asterisk-22.3.0/third-party/pjproject/patches/config_site.h
+--- asterisk-22.2.0.orig/third-party/pjproject/patches/config_site.h
++++ asterisk-22.2.0/third-party/pjproject/patches/config_site.h
 @@ -86,8 +86,8 @@
  /* Increase limits to allow more formats */
  #define	PJMEDIA_MAX_SDP_FMT   64
