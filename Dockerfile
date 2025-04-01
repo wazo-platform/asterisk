@@ -1,7 +1,7 @@
 FROM debian:bullseye
 LABEL maintainer="Wazo Maintainers <dev@wazo.community>"
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get -q update && apt-get -q -y install \
     apt-utils \
