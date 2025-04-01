@@ -1,9 +1,9 @@
-Index: asterisk-22.3.0/main/stasis_channels.c
+Index: asterisk-22.2.0/main/stasis_channels.c
 ===================================================================
---- asterisk-22.3.0.orig/main/stasis_channels.c
-+++ asterisk-22.3.0/main/stasis_channels.c
-@@ -1812,6 +1812,47 @@ struct ast_ari_transfer_message *ast_ari
- 	return msg;
+--- asterisk-22.2.0.orig/main/stasis_channels.c
++++ asterisk-22.2.0/main/stasis_channels.c
+@@ -1628,6 +1628,47 @@ static struct ast_json *unhold_to_json(s
+ 		"channel", json_channel);
  }
  
 +static struct ast_json *moh_start_to_json(struct stasis_message *message,
@@ -50,7 +50,7 @@ Index: asterisk-22.3.0/main/stasis_channels.c
  /*!
   * @{ \brief Define channel message types.
   */
-@@ -1843,8 +1884,12 @@ STASIS_MESSAGE_TYPE_DEFN(ast_channel_cha
+@@ -1659,8 +1700,12 @@ STASIS_MESSAGE_TYPE_DEFN(ast_channel_cha
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_chanspy_stop_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_fax_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_hangup_handler_type);
@@ -65,26 +65,60 @@ Index: asterisk-22.3.0/main/stasis_channels.c
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_mixmonitor_start_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_mixmonitor_stop_type);
  STASIS_MESSAGE_TYPE_DEFN(ast_channel_mixmonitor_mute_type);
-Index: asterisk-22.3.0/rest-api/api-docs/events.json
+Index: asterisk-22.2.0/rest-api/api-docs/events.json
 ===================================================================
---- asterisk-22.3.0.orig/rest-api/api-docs/events.json
-+++ asterisk-22.3.0/rest-api/api-docs/events.json
-@@ -200,7 +200,9 @@
+--- asterisk-22.2.0.orig/rest-api/api-docs/events.json
++++ asterisk-22.2.0/rest-api/api-docs/events.json
+@@ -190,7 +190,9 @@
+ 				"StasisStart",
  				"TextMessageReceived",
  				"ChannelConnectedLine",
- 				"PeerStatusChange",
--				"ChannelTransfer"
-+				"ChannelTransfer",
+-				"PeerStatusChange"
++				"PeerStatusChange",
 +				"ChannelMohStart",
 +				"ChannelMohStop"
  			]
  		},
  		"ContactInfo": {
-Index: asterisk-22.3.0/res/ari/ari_model_validators.c
+@@ -925,6 +927,33 @@
+ 					"description": "The channel whose connected line has changed."
+ 				}
+ 			}
++		},
++		"ChannelMohStart": {
++			"id": "ChannelMohStart",
++			"description": "MOH started on the channel.",
++			"properties": {
++				"channel": {
++					"required": true,
++					"type": "Channel",
++					"description": "The channel on which the MOH started."
++				},
++				"moh_class": {
++					"required": true,
++					"type": "string",
++					"description": "The name of the MOH class that started"
++				}
++			}
++		},
++		"ChannelMohStop": {
++			"id": "ChannelMohStop",
++			"description": "MOH stopped on the channel.",
++			"properties": {
++				"channel": {
++					"required": true,
++					"type": "Channel",
++					"description": "The channel on which the MOH stopped."
++				}
++			}
+ 		}
+ 	}
+ }
+Index: asterisk-22.2.0/res/ari/ari_model_validators.c
 ===================================================================
---- asterisk-22.3.0.orig/res/ari/ari_model_validators.c
-+++ asterisk-22.3.0/res/ari/ari_model_validators.c
-@@ -4668,6 +4668,212 @@ ari_validator ast_ari_validate_channel_l
+--- asterisk-22.2.0.orig/res/ari/ari_model_validators.c
++++ asterisk-22.2.0/res/ari/ari_model_validators.c
+@@ -4614,6 +4614,212 @@ ari_validator ast_ari_validate_channel_l
  	return ast_ari_validate_channel_left_bridge;
  }
  
@@ -297,7 +331,7 @@ Index: asterisk-22.3.0/res/ari/ari_model_validators.c
  int ast_ari_validate_channel_state_change(struct ast_json *json)
  {
  	int res = 1;
-@@ -6136,6 +6342,12 @@ int ast_ari_validate_event(struct ast_js
+@@ -5962,6 +6168,12 @@ int ast_ari_validate_event(struct ast_js
  	if (strcmp("ChannelLeftBridge", discriminator) == 0) {
  		return ast_ari_validate_channel_left_bridge(json);
  	} else
@@ -310,7 +344,7 @@ Index: asterisk-22.3.0/res/ari/ari_model_validators.c
  	if (strcmp("ChannelStateChange", discriminator) == 0) {
  		return ast_ari_validate_channel_state_change(json);
  	} else
-@@ -6349,6 +6561,12 @@ int ast_ari_validate_message(struct ast_
+@@ -6172,6 +6384,12 @@ int ast_ari_validate_message(struct ast_
  	if (strcmp("ChannelLeftBridge", discriminator) == 0) {
  		return ast_ari_validate_channel_left_bridge(json);
  	} else
@@ -323,11 +357,11 @@ Index: asterisk-22.3.0/res/ari/ari_model_validators.c
  	if (strcmp("ChannelStateChange", discriminator) == 0) {
  		return ast_ari_validate_channel_state_change(json);
  	} else
-Index: asterisk-22.3.0/res/ari/ari_model_validators.h
+Index: asterisk-22.2.0/res/ari/ari_model_validators.h
 ===================================================================
---- asterisk-22.3.0.orig/res/ari/ari_model_validators.h
-+++ asterisk-22.3.0/res/ari/ari_model_validators.h
-@@ -880,6 +880,38 @@ int ast_ari_validate_channel_left_bridge
+--- asterisk-22.2.0.orig/res/ari/ari_model_validators.h
++++ asterisk-22.2.0/res/ari/ari_model_validators.h
+@@ -864,6 +864,38 @@ int ast_ari_validate_channel_left_bridge
  ari_validator ast_ari_validate_channel_left_bridge_fn(void);
  
  /*!
@@ -366,7 +400,7 @@ Index: asterisk-22.3.0/res/ari/ari_model_validators.h
   * \brief Validator for ChannelStateChange.
   *
   * Notification of a channel's state change.
-@@ -1686,6 +1718,19 @@ ari_validator ast_ari_validate_applicati
+@@ -1603,6 +1635,19 @@ ari_validator ast_ari_validate_applicati
   * - timestamp: Date (required)
   * - bridge: Bridge (required)
   * - channel: Channel (required)
