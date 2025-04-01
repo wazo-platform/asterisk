@@ -1,3 +1,9 @@
+asterisk (8:22.2.0-1~wazo6) wazo-dev-bullseye; urgency=medium
+
+  * Rebuild
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 01 Apr 2025 11:31:54 -0400
+
 asterisk (8:22.2.0-1~wazo5) wazo-dev-bullseye; urgency=medium
 
   * backport revert RTP set mark
