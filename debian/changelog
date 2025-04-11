@@ -1,3 +1,9 @@
+asterisk (8:22.2.0-1~wazo7) wazo-dev-bullseye; urgency=medium
+
+  * Add queue deadlock patch
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 11 Apr 2025 10:41:32 -0400
+
 asterisk (8:22.2.0-1~wazo6) wazo-dev-bullseye; urgency=medium
 
   * Rebuild
