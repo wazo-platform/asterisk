@@ -1,0 +1,46 @@
+Index: asterisk-22.2.0/apps/app_queue.c
+===================================================================
+--- asterisk-22.2.0.orig/apps/app_queue.c
++++ asterisk-22.2.0/apps/app_queue.c
+@@ -2138,6 +2138,9 @@ static int op_value_get(struct op_value
+ static void op_value_set(struct op_value *op_value, int value);
+ static void op_value_undef(struct op_value *op_value);
+ 
++/* Added for res-freeze-check - NOTE non-static, needs to be accessible from symbol table */
++struct ao2_container* ast_queues_get_container(void);
++
+ /*! \brief sets the QUEUESTATUS channel variable */
+ static void set_queue_result(struct ast_channel *chan, enum queue_result res)
+ {
+@@ -13331,6 +13334,11 @@ static void op_value_undef(struct op_val
+ 	op_value->defined = 0;
+ }
+ 
++struct ao2_container* ast_queues_get_container()
++{
++	return queues;
++}
++
+ static struct ast_cli_entry cli_queue[] = {
+ 	AST_CLI_DEFINE(queue_show, "Show status of a specified queue"),
+ 	AST_CLI_DEFINE(handle_queue_rule_show, "Show the rules defined in queuerules.conf"),
+@@ -13577,7 +13585,7 @@ static int load_module(void)
+ 	return AST_MODULE_LOAD_SUCCESS;
+ }
+ 
+-AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_LOAD_ORDER, "True Call Queueing",
++AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_GLOBAL_SYMBOLS | AST_MODFLAG_LOAD_ORDER, "True Call Queueing",
+ 	.support_level = AST_MODULE_SUPPORT_CORE,
+ 	.load = load_module,
+ 	.unload = unload_module,
+Index: asterisk-22.2.0/apps/app_queue.exports.in
+===================================================================
+--- /dev/null
++++ asterisk-22.2.0/apps/app_queue.exports.in
+@@ -0,0 +1,6 @@
++{
++	global:
++		LINKER_SYMBOL_PREFIXast_queues_get_container;
++	local:
++		*;
++};
