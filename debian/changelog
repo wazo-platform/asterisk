@@ -1,8 +1,8 @@
-asterisk (8:22.2.0-1~wazo10) wazo-dev-bullseye; urgency=medium
+asterisk (8:22.2.0-1~wazo12) wazo-dev-bullseye; urgency=medium
 
   * Add queue deadlock detection
 
- -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 14 May 2025 16:20:15 -0400
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 29 May 2025 16:20:15 -0400
 
 asterisk (8:22.2.0-1~wazo9) wazo-dev-bullseye; urgency=medium
 

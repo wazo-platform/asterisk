@@ -2,6 +2,15 @@ Index: asterisk-22.2.0/apps/app_queue.c
 ===================================================================
 --- asterisk-22.2.0.orig/apps/app_queue.c
 +++ asterisk-22.2.0/apps/app_queue.c
+@@ -2096,7 +2096,7 @@ struct rule_list {
+ 
+ static AST_LIST_HEAD_STATIC(rule_lists, rule_list);
+ 
+-static struct ao2_container *queues;
++struct ao2_container *queues;
+ 
+ static void update_realtime_members(struct call_queue *q);
+ static struct member *interface_exists(struct call_queue *q, const char *interface);
 @@ -2138,6 +2138,9 @@ static int op_value_get(struct op_value
  static void op_value_set(struct op_value *op_value, int value);
  static void op_value_undef(struct op_value *op_value);
