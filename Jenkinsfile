@@ -1,3 +1,5 @@
+def version = null
+
 pipeline {
   agent any
   triggers {
@@ -21,7 +23,7 @@ pipeline {
     stage ('Prepare') {
       steps {
         script {
-          def version = sh(script: 'dpkg-parsechangelog --show-field version', returnStdout: true).trim()
+          version = sh(script: 'dpkg-parsechangelog --show-field version', returnStdout: true).trim()
           currentBuild.displayName = "${JOB_NAME} ${version}"
           currentBuild.description = "Build Debian package ${JOB_NAME} ${version}"
         }
