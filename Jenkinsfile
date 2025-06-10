@@ -21,7 +21,7 @@ pipeline {
     stage ('Prepare') {
       steps {
         script {
-          version = sh(script: 'dpkg-parsechangelog --show-field version', returnStdout: true).trim()
+          def version = sh(script: 'dpkg-parsechangelog --show-field version', returnStdout: true).trim()
           currentBuild.displayName = "${JOB_NAME} ${version}"
           currentBuild.description = "Build Debian package ${JOB_NAME} ${version}"
         }
