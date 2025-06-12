@@ -1,4 +1,4 @@
-asterisk (8:22.2.0-1~wazo13) wazo-dev-bullseye; urgency=medium
+asterisk (8:22.2.0-1~wazo14) wazo-dev-bullseye; urgency=medium
 
   * Add queue deadlock prevention
 
