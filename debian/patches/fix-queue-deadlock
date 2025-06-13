@@ -1,0 +1,546 @@
+Index: asterisk-22.2.0/apps/app_queue.c
+===================================================================
+--- asterisk-22.2.0.orig/apps/app_queue.c
++++ asterisk-22.2.0/apps/app_queue.c
+@@ -1918,6 +1918,15 @@ struct skills_group {
+ 
+ static AST_LIST_HEAD_STATIC(skills_groups, skills_group);
+ 
++struct shared_info {
++	ast_mutex_t lock;                   /*!< Lock */
++	time_t lastcall;                     /*!< When last successful call was hungup */
++	int callcompletedinsl;               /*!< Whether the current call was completed within service level */
++	int calls;                           /*!< Number of calls serviced by this member */
++	time_t starttime;                    /*!< The time at which the member answered the current caller. */
++	struct call_queue *lastqueue;        /*!< Last queue we received a call */
++};
++
+ struct member {
+ 	char interface[AST_CHANNEL_NAME];    /*!< Technology/Location to dial to reach this member*/
+ 	char state_exten[AST_MAX_EXTENSION]; /*!< Extension to get state from (if using hint) */
+@@ -1946,6 +1955,7 @@ struct member {
+ 	unsigned int delme:1;                /*!< Flag to delete entry on reload */
+ 	char rt_uniqueid[80];                /*!< Unique id of realtime member entry */
+ 	unsigned int ringinuse:1;            /*!< Flag to ring queue members even if their status is 'inuse' */
++	struct shared_info *unique;          /*!< Shared information between queues */
+ };
+ 
+ enum empty_conditions {
+@@ -2098,6 +2108,18 @@ static AST_LIST_HEAD_STATIC(rule_lists,
+ 
+ static struct ao2_container *queues;
+ 
++static struct shared_info *create_shared_info();
++static void update_lastcall(struct member *mem, time_t val);
++static void update_callcompletedinsl(struct member *mem, int val);
++static void update_calls(struct member *mem, int val);
++static void update_starttime(struct member *mem, time_t val);
++static void update_lastqueue(struct member *mem, struct call_queue *val);
++static time_t get_lastcall(struct member *mem);
++static int get_callcompletedinsl(struct member *mem);
++static int get_calls(struct member *mem);
++static time_t get_starttime(struct member *mem);
++static struct call_queue *get_lastqueue(struct member *mem);
++
+ static void update_realtime_members(struct call_queue *q);
+ static struct member *interface_exists(struct call_queue *q, const char *interface);
+ static int set_member_paused(const char *queuename, const char *interface, const char *reason, int paused);
+@@ -2662,11 +2684,11 @@ static struct ast_json *queue_member_blo
+ 		"StateInterface", mem->state_interface,
+ 		"Membership", (mem->dynamic ? "dynamic" : (mem->realtime ? "realtime" : "static")),
+ 		"Penalty", mem->penalty,
+-		"CallsTaken", mem->calls,
+-		"LastCall", (int)mem->lastcall,
++		"CallsTaken", get_calls(mem),
++		"LastCall", (int)get_lastcall(mem),
+ 		"LastPause", (int)mem->lastpause,
+ 		"LoginTime", (int)mem->logintime,
+-		"InCall", mem->starttime ? 1 : 0,
++		"InCall", get_starttime(mem) ? 1 : 0,
+ 		"Status", mem->status,
+ 		"Paused", mem->paused,
+ 		"PausedReason", mem->reason_paused,
+@@ -2743,11 +2765,11 @@ static int get_member_status(struct call
+ 				ast_debug(4, "%s is unavailable because he is paused'\n", member->membername);
+ 				break;
+ 			} else if ((conditions & QUEUE_EMPTY_WRAPUP)
+-				&& member->lastcall
++				&& get_lastcall(member)
+ 				&& get_wrapuptime(q, member)
+-				&& (time(NULL) - get_wrapuptime(q, member) < member->lastcall)) {
++				&& (time(NULL) - get_wrapuptime(q, member) < get_lastcall(member))) {
+ 				ast_debug(4, "%s is unavailable because it has only been %d seconds since his last call (wrapup time is %d)\n",
+-					member->membername, (int) (time(NULL) - member->lastcall), get_wrapuptime(q, member));
++					member->membername, (int) (time(NULL) - get_lastcall(member)), get_wrapuptime(q, member));
+ 				break;
+ 			} else {
+ 				ao2_ref(member, -1);
+@@ -2847,7 +2869,7 @@ static void update_status(struct call_qu
+ 		 * considered done and the call finished.
+ 		 */
+ 		if (status == AST_DEVICE_NOT_INUSE) {
+-			update_queue(q, m, m->callcompletedinsl, m->starttime);
++			update_queue(q, m, get_callcompletedinsl(m), get_starttime(m));
+ 		}
+ 
+ 		m->status = status;
+@@ -2875,6 +2897,7 @@ static int is_member_available(struct ca
+ {
+ 	int available = 0;
+ 	int wrapuptime;
++	time_t lastcall;
+ 
+ 	switch (mem->status) {
+ 		case AST_DEVICE_INVALID:
+@@ -2900,7 +2923,8 @@ static int is_member_available(struct ca
+ 
+ 	/* Let wrapuptimes override device state availability */
+ 	wrapuptime = get_wrapuptime(q, mem);
+-	if (mem->lastcall && wrapuptime && (time(NULL) - wrapuptime < mem->lastcall)) {
++	lastcall = get_lastcall(mem);
++	if (lastcall && wrapuptime && (time(NULL) - wrapuptime < lastcall)) {
+ 		available = 0;
+ 	}
+ 	return available;
+@@ -3128,12 +3152,28 @@ static void destroy_queue_member_cb(void
+ 	if (mem->state_id != -1) {
+ 		ast_extension_state_del(mem->state_id, extension_state_cb);
+ 	}
++	ao2_ref(mem->unique, -1);
++}
++
++static struct shared_info *create_shared_info()
++{
++	struct shared_info *member_shared = NULL;
++
++	if (!(member_shared = ao2_alloc(sizeof(*member_shared), NULL))) {
++		return NULL;
++	}
++	ast_mutex_init(&member_shared->lock);
++	return member_shared;
+ }
+ 
+ /*! \brief allocate space for new queue member and set fields based on parameters passed */
+ static struct member *create_queue_member(const char *interface, const char *membername, int penalty, int paused, const char *state_interface, int ringinuse, int wrapuptime, const char *skills)
+ {
+-	struct member *cur;
++	struct member *cur, *mem;
++	struct shared_info *member_shared = NULL;
++	struct call_queue *q;
++	struct ao2_iterator queue_iter;
++	int found = 0;
+ 
+ 	if ((cur = ao2_alloc(sizeof(*cur), destroy_queue_member_cb))) {
+ 		cur->ringinuse = ringinuse;
+@@ -3174,6 +3214,34 @@ static struct member *create_queue_membe
+ 			ast_copy_string(cur->skills, skills, sizeof(cur->skills));
+ 		else
+ 			cur->skills[0] = '\0';
++
++		queue_iter = ao2_iterator_init(queues, 0);
++		while ((q = ao2_t_iterator_next(&queue_iter, "Iterate through queues"))) {
++			ao2_lock(q);
++			mem = ao2_find(q->members, interface, OBJ_KEY);
++			if (mem != NULL) {
++				ast_debug(1, "Found matching member %s in queue '%s'\n", mem->interface, q->name);
++				member_shared = mem->unique;
++				ao2_ref(mem, -1);
++				found = 1;
++				ao2_ref(member_shared, 1);
++			}
++			ao2_unlock(q);
++			queue_t_unref(q, "Done with iterator");
++			if (found)
++				break;
++		}
++		ao2_iterator_destroy(&queue_iter);
++		if (member_shared == NULL) {
++			member_shared = create_shared_info();
++			if (member_shared == NULL) {
++				ast_log(LOG_WARNING, "Failed to create shared info for member %s\n", interface);
++				ao2_ref(cur, -1);
++				return NULL;
++			}
++		}
++
++		cur->unique = member_shared;
+ 	}
+ 
+ 	return cur;
+@@ -3334,10 +3402,10 @@ static void clear_queue(struct call_queu
+ 		struct member *mem;
+ 		struct ao2_iterator mem_iter = ao2_iterator_init(q->members, 0);
+ 		while ((mem = ao2_iterator_next(&mem_iter))) {
+-			mem->calls = 0;
+-			mem->callcompletedinsl = 0;
+-			mem->lastcall = 0;
+-			mem->starttime = 0;
++			update_calls(mem, 0);
++			update_callcompletedinsl(mem, 0);
++			update_lastcall(mem, 0);
++			update_starttime(mem, 0);
+ 			ao2_ref(mem, -1);
+ 		}
+ 		ao2_iterator_destroy(&mem_iter);
+@@ -4980,6 +5048,7 @@ static int member_status_available(int s
+ static int can_ring_entry(struct queue_ent *qe, struct callattempt *call, int *busies)
+ {
+ 	struct member *memberp = call->member;
++	struct call_queue *lastqueue =  get_lastqueue(memberp);
+ 	int wrapuptime;
+ 
+ 	if (memberp->paused) {
+@@ -4992,14 +5061,14 @@ static int can_ring_entry(struct queue_e
+ 		return 0;
+ 	}
+ 
+-	if (memberp->lastqueue) {
+-		wrapuptime = get_wrapuptime(memberp->lastqueue, memberp);
++	if (lastqueue) {
++		wrapuptime = get_wrapuptime(lastqueue, memberp);
+ 	} else {
+ 		wrapuptime = get_wrapuptime(qe->parent, memberp);
+ 	}
+-	if (wrapuptime && (time(NULL) - memberp->lastcall) < wrapuptime) {
++	if (wrapuptime && (time(NULL) - get_lastcall(memberp)) < wrapuptime) {
+ 		ast_debug(1, "Wrapuptime not yet expired on queue %s for %s\n",
+-			(memberp->lastqueue ? memberp->lastqueue->name : qe->parent->name),
++			(lastqueue ? lastqueue->name : qe->parent->name),
+ 			call->interface);
+ 		return 0;
+ 	}
+@@ -5462,8 +5531,8 @@ static void rna(int rnatime, struct queu
+ 			struct member *mem;
+ 			ao2_lock(qe->parent);
+ 			if ((mem = interface_exists(qe->parent, interface))) {
+-				time_t idletime = time(&idletime)-mem->lastcall;
+-				if ((mem->lastcall != 0) && (qe->parent->autopausedelay > idletime)) {
++				time_t idletime = time(&idletime) - get_lastcall(mem);
++				if ((get_lastcall(mem) != 0) && (qe->parent->autopausedelay > idletime)) {
+ 					ao2_unlock(qe->parent);
+ 					ao2_ref(mem, -1);
+ 					return;
+@@ -6303,6 +6372,141 @@ static int wait_our_turn(struct queue_en
+ }
+ 
+ /*!
++ * \brief update lastcall and shared value of a queue member.
++ * If val is -1, use time() to find it
++*/
++static void update_lastcall(struct member *mem, time_t val)
++{
++	time_t real_val = val;
++	if (val == -1) {
++		time(&real_val);
++	}
++	mem->lastcall = real_val;
++	ast_mutex_lock(&mem->unique->lock);
++	mem->unique->lastcall = real_val;
++	ast_mutex_unlock(&mem->unique->lock);
++}
++
++/*!
++ * \brief update call completed in service level and shared value of a queue member
++*/
++static void update_callcompletedinsl(struct member *mem, int val)
++{
++	mem->callcompletedinsl = val;
++	ast_mutex_lock(&mem->unique->lock);
++	mem->unique->callcompletedinsl = val;
++	ast_mutex_unlock(&mem->unique->lock);
++}
++
++/*!
++ * \brief update call number and shared value of a queue member
++*/
++static void update_calls(struct member *mem, int val)
++{
++	mem->calls = val;
++	ast_mutex_lock(&mem->unique->lock);
++	mem->unique->calls = val;
++	ast_mutex_unlock(&mem->unique->lock);
++}
++
++/*!
++ * \brief update starttime and shared value of a queue member
++*/
++static void update_starttime(struct member *mem, time_t val)
++{
++	mem->starttime = val;
++	ast_mutex_lock(&mem->unique->lock);
++	mem->unique->starttime = val;
++	ast_mutex_unlock(&mem->unique->lock);
++}
++
++/*!
++ * \brief update lastqueue and shared value of a queue member
++*/
++static void update_lastqueue(struct member *mem, struct call_queue *val)
++{
++	mem->lastqueue = val;
++	ast_mutex_lock(&mem->unique->lock);
++	mem->unique->lastqueue = val;
++	ast_mutex_unlock(&mem->unique->lock);
++}
++
++/*!
++ * \brief return the lastcall value of a queue member
++ * \retval lastcall value of member. If `shared_lastcall` is enabled, the shared value is returned.
++*/
++static time_t get_lastcall(struct member *mem)
++{
++	time_t lastcall = mem->lastcall;
++	if (shared_lastcall) {
++		ast_mutex_lock(&mem->unique->lock);
++		lastcall = mem->unique->lastcall;
++		ast_mutex_unlock(&mem->unique->lock);
++	}
++	return lastcall;
++}
++
++/*!
++ * \brief return the callcompletedinsl value of a queue member
++ * \retval callcompletedinsl value of member. If `shared_lastcall` is enabled, the shared value is returned.
++*/
++static int get_callcompletedinsl(struct member *mem)
++{
++	int callcompletedinsl = mem->callcompletedinsl;
++	if (shared_lastcall) {
++		ast_mutex_lock(&mem->unique->lock);
++		callcompletedinsl = mem->unique->callcompletedinsl;
++		ast_mutex_unlock(&mem->unique->lock);
++	}
++	return callcompletedinsl;
++}
++
++/*!
++ * \brief return the calls value of a queue member
++ * \retval calls value of member. If `shared_lastcall` is enabled, the shared value is returned.
++*/
++static int get_calls(struct member *mem)
++{
++	int calls = mem->calls;
++	if (shared_lastcall) {
++		ast_mutex_lock(&mem->unique->lock);
++		calls = mem->unique->calls;
++		ast_mutex_unlock(&mem->unique->lock);
++	}
++	return calls;
++}
++
++/*!
++ * \brief return the starttime value of a queue member
++ * \retval starttime value of member. If `shared_lastcall` is enabled, the shared value is returned.
++*/
++static time_t get_starttime(struct member *mem)
++{
++	time_t starttime = mem->starttime;
++	if (shared_lastcall) {
++		ast_mutex_lock(&mem->unique->lock);
++		starttime = mem->unique->starttime;
++		ast_mutex_unlock(&mem->unique->lock);
++	}
++	return starttime;
++}
++
++/*!
++ * \brief return the lastqueue value of a queue member
++ * \retval lastqueue value of member. If `shared_lastcall` is enabled, the shared value is returned.
++*/
++static struct call_queue *get_lastqueue(struct member *mem)
++{
++	struct call_queue *lastqueue = mem->lastqueue;
++	if (shared_lastcall) {
++		ast_mutex_lock(&mem->unique->lock);
++		lastqueue = mem->unique->lastqueue;
++		ast_mutex_unlock(&mem->unique->lock);
++	}
++	return lastqueue;
++}
++
++/*!
+  * \brief update the queue status
+  * \retval 0 always
+ */
+@@ -6310,43 +6514,23 @@ static int update_queue(struct call_queu
+ {
+ 	int oldtalktime;
+ 	int newtalktime = time(NULL) - starttime;
+-	struct member *mem;
+-	struct call_queue *qtmp;
+-	struct ao2_iterator queue_iter;
+ 
+ 	/* It is possible for us to be called when a call has already been considered terminated
+ 	 * and data updated, so to ensure we only act on the call that the agent is currently in
+ 	 * we check when the call was bridged.
+ 	 */
+-	if (!starttime || (member->starttime != starttime)) {
++	if (!starttime || (get_starttime(member) != starttime)) {
+ 		return 0;
+ 	}
+ 
+-	if (shared_lastcall) {
+-		queue_iter = ao2_iterator_init(queues, 0);
+-		while ((qtmp = ao2_t_iterator_next(&queue_iter, "Iterate through queues"))) {
+-			ao2_lock(qtmp);
+-			if ((mem = ao2_find(qtmp->members, member, OBJ_POINTER))) {
+-				time(&mem->lastcall);
+-				mem->calls++;
+-				mem->callcompletedinsl = 0;
+-				mem->starttime = 0;
+-				mem->lastqueue = q;
+-				ao2_ref(mem, -1);
+-			}
+-			ao2_unlock(qtmp);
+-			queue_t_unref(qtmp, "Done with iterator");
+-		}
+-		ao2_iterator_destroy(&queue_iter);
+-	} else {
+-		ao2_lock(q);
+-		time(&member->lastcall);
+-		member->callcompletedinsl = 0;
+-		member->calls++;
+-		member->starttime = 0;
+-		member->lastqueue = q;
+-		ao2_unlock(q);
+-	}
++	ao2_lock(q);
++	update_lastcall(member, -1);
++	update_callcompletedinsl(member, 0);
++	update_calls(member, get_calls(member) + 1);
++	update_starttime(member, 0);
++	update_lastqueue(member, q);
++	ao2_unlock(q);
++
+ 	/* Member might never experience any direct status change (local
+ 	 * channel with forwarding in particular). If that's the case,
+ 	 * this is the last chance to remove it from pending or subsequent
+@@ -6438,14 +6622,14 @@ static int calc_metric(struct call_queue
+ 		tmp->metric = ast_random() % ((1 + penalty) * 1000);
+ 		break;
+ 	case QUEUE_STRATEGY_FEWESTCALLS:
+-		tmp->metric = mem->calls;
++		tmp->metric = get_calls(mem);
+ 		tmp->metric += penalty * 1000000 * usepenalty;
+ 		break;
+ 	case QUEUE_STRATEGY_LEASTRECENT:
+-		if (!mem->lastcall) {
++		if (!get_lastcall(mem)) {
+ 			tmp->metric = 0;
+ 		} else {
+-			tmp->metric = 1000000 - (time(NULL) - mem->lastcall);
++			tmp->metric = 1000000 - (time(NULL) - get_lastcall(mem));
+ 		}
+ 		tmp->metric += penalty * 1000000 * usepenalty;
+ 		break;
+@@ -7532,7 +7716,8 @@ static int try_calling(struct queue_ent
+ 		recalc_holdtime(qe, (now - qe->start));
+ 		member = lpeer->member;
+ 		ao2_lock(qe->parent);
+-		callcompletedinsl = member->callcompletedinsl = ((now - qe->start) <= qe->parent->servicelevel);
++		callcompletedinsl = ((now - qe->start) <= qe->parent->servicelevel);
++		update_callcompletedinsl(member, callcompletedinsl);
+ 		ao2_unlock(qe->parent);
+ 		/* Increment the refcount for this member, since we're going to be using it for awhile in here. */
+ 		ao2_ref(member, 1);
+@@ -7641,7 +7826,7 @@ static int try_calling(struct queue_ent
+ 		/* use  pbx_builtin_setvar to set a load of variables with one call */
+ 		if (qe->parent->setinterfacevar && interfacevar) {
+ 			ast_str_set(&interfacevar, 0, "MEMBERINTERFACE=%s,MEMBERNAME=%s,MEMBERCALLS=%d,MEMBERLASTCALL=%ld,MEMBERPENALTY=%d,MEMBERDYNAMIC=%d,MEMBERREALTIME=%d",
+-				member->interface, member->membername, member->calls, (long)member->lastcall, member->penalty, member->dynamic, member->realtime);
++				member->interface, member->membername, get_calls(member), (long)get_lastcall(member), member->penalty, member->dynamic, member->realtime);
+ 			pbx_builtin_setvar_multiple(qe->chan, ast_str_buffer(interfacevar));
+ 			pbx_builtin_setvar_multiple(peer, ast_str_buffer(interfacevar));
+ 		}
+@@ -7765,8 +7950,8 @@ static int try_calling(struct queue_ent
+ 		}
+ 
+ 		ao2_lock(qe->parent);
+-		time(&member->starttime);
+-		starttime = member->starttime;
++		time(&starttime);
++		update_starttime(member, starttime);
+ 		ao2_unlock(qe->parent);
+ 		/* As a queue member may end up in multiple calls at once if a transfer occurs with
+ 		 * a Local channel in the mix we pass the current call information (starttime) to the
+@@ -9067,7 +9252,7 @@ static int queue_exec(struct ast_channel
+ 	}
+ 
+ 	cid_allow = qe.parent->log_restricted_caller_id || ((ast_party_id_presentation(&ast_channel_caller(chan)->id) & AST_PRES_RESTRICTION) == AST_PRES_ALLOWED);
+-	
++
+ 	ast_queue_log(args.queuename, ast_channel_uniqueid(chan), "NONE", "ENTERQUEUE", "%s|%s|%d",
+ 		S_OR(args.url, ""),
+ 		S_COR(cid_allow && ast_channel_caller(chan)->id.number.valid, ast_channel_caller(chan)->id.number.str, ""),
+@@ -9466,7 +9651,7 @@ static int queue_function_mem_read(struc
+ 			while ((m = ao2_iterator_next(&mem_iter))) {
+ 				/* Count the agents who are logged in, not paused and not wrapping up */
+ 				if ((m->status == AST_DEVICE_NOT_INUSE) && (!m->paused) &&
+-						!(m->lastcall && get_wrapuptime(q, m) && ((now - get_wrapuptime(q, m)) < m->lastcall))) {
++						!(get_lastcall(m) && get_wrapuptime(q, m) && ((now - get_wrapuptime(q, m)) < get_lastcall(m)))) {
+ 					count++;
+ 				}
+ 				ao2_ref(m, -1);
+@@ -10132,8 +10317,8 @@ static void reload_single_member(const c
+ 			/* Round Robin Queue Position must be copied if this is replacing an existing member */
+ 			newm->queuepos = cur->queuepos;
+ 			/* Don't reset agent stats either */
+-			newm->calls = cur->calls;
+-			newm->lastcall = cur->lastcall;
++			update_calls(newm, get_calls(cur));
++			update_lastcall(newm, get_lastcall(cur));
+ 
+ 			ao2_link(q->members, newm);
+ 			ao2_unlink(q->members, cur);
+@@ -10512,7 +10697,7 @@ static void print_queue(struct mansessio
+ 			ast_str_append(&out, 0, "%s%s%s%s%s%s%s%s%s",
+ 				mem->dynamic ? ast_term_color(COLOR_CYAN, COLOR_BLACK) : "", mem->dynamic ? " (dynamic)" : "", ast_term_reset(),
+ 				mem->realtime ? ast_term_color(COLOR_MAGENTA, COLOR_BLACK) : "", mem->realtime ? " (realtime)" : "", ast_term_reset(),
+-				mem->starttime ? ast_term_color(COLOR_BROWN, COLOR_BLACK) : "", mem->starttime ? " (in call)" : "", ast_term_reset());
++				mem->starttime ? ast_term_color(COLOR_BROWN, COLOR_BLACK) : "", get_starttime(mem) ? " (in call)" : "", ast_term_reset());
+ 
+ 			if (mem->paused) {
+ 				ast_str_append(&out, 0, " %s(paused%s%s was %ld secs ago)%s",
+@@ -10530,9 +10715,9 @@ static void print_queue(struct mansessio
+ 					ast_devstate2str(mem->status), ast_term_reset());
+ 			if (!ast_strlen_zero(mem->skills))
+ 				ast_str_append(&out, 0, " (skills: %s)", mem->skills);
+-			if (mem->calls) {
++			if (get_calls(mem)) {
+ 				ast_str_append(&out, 0, " has taken %d calls (last was %ld secs ago)",
+-					mem->calls, (long) (now - mem->lastcall));
++					get_calls(mem), (long) (now - get_lastcall(mem)));
+ 			} else {
+ 				ast_str_append(&out, 0, " has taken no calls yet");
+ 			}
+@@ -11030,7 +11215,7 @@ static int manager_queues_status(struct
+ 						"%s"
+ 						"\r\n",
+ 						q->name, mem->membername, mem->interface, mem->state_interface, mem->dynamic ? "dynamic" : "static",
+-						mem->penalty, mem->calls, (int)mem->lastcall, (int)mem->lastpause, (int)mem->logintime, mem->starttime ? 1 : 0, mem->status,
++						mem->penalty, get_calls(mem), (int)get_lastcall(mem), (int)mem->lastpause, (int)mem->logintime, get_starttime(mem) ? 1 : 0, mem->status,
+ 						mem->paused, mem->reason_paused, mem->wrapuptime, mem->skills, idText);
+ 					++q_items;
+ 				}
+@@ -12129,17 +12314,16 @@ static int qupd_exec(struct ast_channel
+ 				if (!strcasecmp(args.status, "ANSWER")) {
+ 					oldtalktime = q->talktime;
+ 					q->talktime = (((oldtalktime << 2) - oldtalktime) + newtalktime) >> 2;
+-					time(&mem->lastcall);
+-					mem->calls++;
+-					mem->lastqueue = q;
++					update_lastcall(mem, -1);
++					update_calls(mem, get_calls(mem) + 1);
++					update_lastqueue(mem, q);
+ 					q->callscompleted++;
+ 
+ 					if (newtalktime <= q->servicelevel) {
+ 						q->callscompletedinsl++;
+ 					}
+ 				} else {
+-
+-					time(&mem->lastcall);
++					update_lastcall(mem, -1);
+ 					q->callsabandoned++;
+ 				}
+ 
