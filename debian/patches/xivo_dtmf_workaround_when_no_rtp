@@ -1,8 +1,8 @@
-Index: asterisk-22.2.0/main/features.c
+Index: asterisk-22.4.1/main/features.c
 ===================================================================
---- asterisk-22.2.0.orig/main/features.c
-+++ asterisk-22.2.0/main/features.c
-@@ -639,6 +639,14 @@ int ast_bridge_call_with_flags(struct as
+--- asterisk-22.4.1.orig/main/features.c
++++ asterisk-22.4.1/main/features.c
+@@ -641,6 +641,14 @@ int ast_bridge_call_with_flags(struct as
  
  	ast_bridge_basic_set_flags(bridge, flags);
  
@@ -17,7 +17,7 @@ Index: asterisk-22.2.0/main/features.c
  	/* Put peer into the bridge */
  	if (ast_bridge_impart(bridge, peer, NULL, peer_features,
  		AST_BRIDGE_IMPART_CHAN_INDEPENDENT | AST_BRIDGE_IMPART_INHIBIT_JOIN_COLP)) {
-@@ -663,6 +671,13 @@ int ast_bridge_call_with_flags(struct as
+@@ -665,6 +673,13 @@ int ast_bridge_call_with_flags(struct as
  	if (ast_channel_softhangup_internal_flag(chan) & AST_SOFTHANGUP_ASYNCGOTO) {
  		res = 0;
  	}
