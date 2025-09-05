@@ -1,7 +1,7 @@
-Index: asterisk-22.5.1/apps/app_queue.c
+Index: asterisk-22.5.2/apps/app_queue.c
 ===================================================================
---- asterisk-22.5.1.orig/apps/app_queue.c
-+++ asterisk-22.5.1/apps/app_queue.c
+--- asterisk-22.5.2.orig/apps/app_queue.c
++++ asterisk-22.5.2/apps/app_queue.c
 @@ -1988,6 +1988,15 @@ struct skills_group {
  
  static AST_LIST_HEAD_STATIC(skills_groups, skills_group);
