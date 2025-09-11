@@ -1,6 +1,6 @@
 - project:
     templates:
-      - debian-packaging-bullseye
+      - debian-packaging-bookworm
     wazo-check:
       jobs:
         - asterisk-tox-integration
@@ -11,6 +11,6 @@
 - job:
     name: asterisk-tox-integration
     description: Run asterisk integration tests
-    parent: wazo-tox-integration-py39
+    parent: wazo-tox-integration-py311
     vars:
       docker_install_siblings: false

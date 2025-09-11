@@ -13,5 +13,5 @@ asterisk: library-not-linked-against-libc usr/lib/asterisk/modules/*
 asterisk: shared-lib-without-dependency-information usr/lib/asterisk/modules/*
 asterisk: shared-lib-without-dependency-information usr/lib/libasteriskssl.so.1
 # Referenced by asterisk.postinst to migrate to systemd
-# Can be removed after Bullseye migration
+# Can be removed after Bullseye migration TODO
 init.d-script-not-included-in-package etc/init.d/asterisk
