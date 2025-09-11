@@ -32,27 +32,29 @@ pipeline {
     stage('Debian build and deploy') {
       steps {
         build job: 'build-package-multi-arch', parameters: [
-          string(name: 'PACKAGE', value: "${JOB_NAME}"),
+          string(name: 'PACKAGE', value: "asterisk"),
+          string(name: "BRANCH", value: "bookworm"),
+          string(name: "DISTRIBUTION", value: "wazo-dev-bookworm"),
           string(name: 'VERSION', value: "${version}"),
         ]
       }
     }
     stage('Docker build') {
       steps {
-        sh "docker build --no-cache -t wazoplatform/${JOB_NAME}:latest ."
+        sh "docker build --no-cache -t wazoplatform/asterisk:bookworm ."
       }
     }
     stage('Docker publish') {
       steps {
-        sh "docker push wazoplatform/${JOB_NAME}:latest"
+        sh "docker push wazoplatform/asterisk:bookworm"
       }
     }
   }
   post {
-    success {
-      build wait: false, job: 'asterisk-to-asterisk-vanilla'
-      build wait: false, job: 'asterisk-to-asterisk-debug'
-    }
+    // success {
+    //   build wait: false, job: 'asterisk-to-asterisk-vanilla'
+    //   build wait: false, job: 'asterisk-to-asterisk-debug'
+    // }
     failure {
       emailext to: "${MAIL_RECIPIENTS}", subject: '${DEFAULT_SUBJECT}', body: '${DEFAULT_CONTENT}'
     }
