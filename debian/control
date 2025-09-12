@@ -58,28 +58,37 @@ Breaks:
  xivo-libsccp (<< 17.14~),
  xivo-res-freeze-check (<< 17.14~)
 Description: Open Source Private Branch Exchange (PBX) - Wazo version
- Asterisk is an Open Source PBX and telephony toolkit.  It is, in a
+ Asterisk is an Open Source PBX and telephony toolkit. It is, in a
  sense, middleware between Internet and telephony channels on the bottom,
  and Internet and telephony applications at the top.
  .
- Asterisk can be used with Voice over IP (SIP, H.323, IAX and more) standards,
- or the Public Switched Telephone Network (PSTN) through supported hardware.
+ Asterisk is an Open Source PBX and telephony toolkit.
+ It is, in a sense, middleware
+ between Internet and telephony channels on the bottom,
+ and Internet and telephony applications at the top.
+ .
+ Asterisk can be used with Voice over IP standards
+ (SIP, H.323, IAX and more),
+ or the Public Switched Telephone Network (PSTN)
+ through supported hardware.
  .
  Supported hardware:
  .
-  * All Wildcard (tm) ISDN PRI cards from Digium (http://www.digium.com)
-  * HFC-S/HFC-4S-based ISDN BRI cards (Junghanns.NET, beroNet, Digium etc.)
+  * All Wildcard (tm) ISDN PRI cards from Digium
+  * HFC-S/HFC-4S-based ISDN BRI cards
+    (Junghanns.NET, beroNet, Digium etc.)
   * All TDM (FXO/FXS) cards from Digium
   * Various clones of Digium cards such as those by OpenVox
-  * Xorcom Astribank USB telephony adapter (http://www.xorcom.com)
+  * Xorcom Astribank USB telephony adapter
   * Voicetronix OpenPCI, OpenLine and OpenSwitch cards
-  * CAPI-compatible ISDN cards (using the add-on package chan-capi)
-  * Full Duplex Sound Card (ALSA or OSS) supported by Linux
-  * Tormenta T1/E1 card (http://www.zapatatelephony.org)
-  * QuickNet Internet PhoneJack and LineJack (http://www.quicknet.net)
+  * CAPI-compatible ISDN cards
+    (using the add-on package chan-capi)
+  * Tormenta T1/E1 card
+  * QuickNet Internet PhoneJack and LineJack
  .
- This is the main package that includes the Asterisk daemon and most channel
- drivers and applications.
+ This is the main package
+ that includes the Asterisk daemon
+ and most channel drivers and applications.
  .
  This software was heavily patched by Debian and Wazo.
 

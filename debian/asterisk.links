@@ -1,6 +1,6 @@
-usr/share/man/man8/asterisk.8		usr/share/man/man8/rasterisk.8
 usr/local/share/asterisk/sounds		usr/share/asterisk/sounds/custom
-var/lib/asterisk/sounds/custom		usr/share/asterisk/sounds/recordings
+usr/share/man/man8/asterisk.8		usr/share/man/man8/rasterisk.8
 var/lib/asterisk/priv-callerintros	usr/share/asterisk/sounds/priv-callerintros
+var/lib/asterisk/sounds/custom		usr/share/asterisk/sounds/recordings
 
 var/lib/asterisk/moh usr/share/asterisk/moh
