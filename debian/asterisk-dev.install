@@ -1,2 +1,2 @@
 include/asterisk usr/include/
-include/asterisk.h usr/include/asterisk/
+include/asterisk.h usr/include/asterisk.h
