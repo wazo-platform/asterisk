@@ -42,8 +42,8 @@ case "$1" in
         chown asterisk: /etc/asterisk
     fi
 
-    # spool holds some sensitive information (e.g. monitor, voicemail etc.)
-    find /var/spool/asterisk -type d | while read dir; do
+    # these hold some sensitive information (e.g. monitor, voicemail etc.)
+    find /var/spool/asterisk /var/cache/asterisk -type d | while read dir; do
         if ! dpkg-statoverride --list "$dir" > /dev/null ; then
             chown asterisk: $dir
             chmod 750 $dir
