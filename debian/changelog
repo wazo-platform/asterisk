@@ -1,3 +1,9 @@
+asterisk (8:22.5.2-1~wazo2) wazo-dev-bullseye; urgency=medium
+
+  * Enable channel storage API
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 19 Sep 2025 16:24:26 -0400
+
 asterisk (8:22.5.2-1~wazo1) wazo-dev-bullseye; urgency=medium
 
   * asterisk 22.5.2
