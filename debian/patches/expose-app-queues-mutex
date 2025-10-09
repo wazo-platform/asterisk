@@ -1,8 +1,8 @@
-Index: asterisk-22.4.1/apps/app_queue.c
+Index: asterisk-22.5.2/apps/app_queue.c
 ===================================================================
---- asterisk-22.4.1.orig/apps/app_queue.c
-+++ asterisk-22.4.1/apps/app_queue.c
-@@ -2207,6 +2207,9 @@ static int op_value_get(struct op_value
+--- asterisk-22.5.2.orig/apps/app_queue.c
++++ asterisk-22.5.2/apps/app_queue.c
+@@ -2209,6 +2209,9 @@ static int op_value_get(struct op_value
  static void op_value_set(struct op_value *op_value, int value);
  static void op_value_undef(struct op_value *op_value);
  
@@ -12,7 +12,7 @@ Index: asterisk-22.4.1/apps/app_queue.c
  /*! \brief sets the QUEUESTATUS channel variable */
  static void set_queue_result(struct ast_channel *chan, enum queue_result res)
  {
-@@ -13426,6 +13429,11 @@ static void op_value_undef(struct op_val
+@@ -13454,6 +13457,11 @@ static void op_value_undef(struct op_val
  	op_value->defined = 0;
  }
  
@@ -24,7 +24,7 @@ Index: asterisk-22.4.1/apps/app_queue.c
  static struct ast_cli_entry cli_queue[] = {
  	AST_CLI_DEFINE(queue_show, "Show status of a specified queue"),
  	AST_CLI_DEFINE(handle_queue_rule_show, "Show the rules defined in queuerules.conf"),
-@@ -13672,7 +13680,7 @@ static int load_module(void)
+@@ -13700,7 +13708,7 @@ static int load_module(void)
  	return AST_MODULE_LOAD_SUCCESS;
  }
  
@@ -33,10 +33,10 @@ Index: asterisk-22.4.1/apps/app_queue.c
  	.support_level = AST_MODULE_SUPPORT_CORE,
  	.load = load_module,
  	.unload = unload_module,
-Index: asterisk-22.4.1/apps/app_queue.exports.in
+Index: asterisk-22.5.2/apps/app_queue.exports.in
 ===================================================================
 --- /dev/null
-+++ asterisk-22.4.1/apps/app_queue.exports.in
++++ asterisk-22.5.2/apps/app_queue.exports.in
 @@ -0,0 +1,6 @@
 +{
 +	global:

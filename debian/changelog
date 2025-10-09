@@ -9,7 +9,6 @@ asterisk (8:22.4.1-1~wazo3) wazo-dev-bullseye; urgency=medium
   * Rebuild
 
  -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 09 Oct 2025 11:06:26 -0400
-
 asterisk (8:22.4.1-1~wazo2) wazo-dev-bullseye; urgency=medium
 
   * asterisk 22.4.1
@@ -294,7 +293,7 @@ asterisk (8:19.8.0-1~wazo3) wazo-dev-buster; urgency=medium
 
 asterisk (8:19.8.0-1~wazo2) wazo-dev-buster; urgency=medium
 
-  * Asterisk 19.8.0 
+  * Asterisk 19.8.0
 
  -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 24 Jan 2023 09:44:21 -0500
 
