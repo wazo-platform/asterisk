@@ -96,6 +96,7 @@ override_dh_auto_build:
 		--enable res_stasis_mailbox \
 		--enable res_ari_mailboxes \
 		--enable CORE-SOUNDS-FR-GSM \
+		--enable channelstorage_cpp_map_name_id \
 		$(MENUSELECT_EXTRA_ARGS) \
 		menuselect.makeopts
 	$(FETCH_ENV) dh_auto_build -- $(BUILDFLAGS)

@@ -1,7 +1,7 @@
-Index: asterisk-22.4.1/res/res_stasis_playback.c
+Index: asterisk-22.5.2/res/res_stasis_playback.c
 ===================================================================
---- asterisk-22.4.1.orig/res/res_stasis_playback.c
-+++ asterisk-22.4.1/res/res_stasis_playback.c
+--- asterisk-22.5.2.orig/res/res_stasis_playback.c
++++ asterisk-22.5.2/res/res_stasis_playback.c
 @@ -344,7 +344,8 @@ static void play_on_channel(struct stasi
  			if (!recording) {
  				ast_log(LOG_ERROR, "Attempted to play recording '%s' on channel '%s' but recording does not exist",
