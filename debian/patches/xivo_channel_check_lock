@@ -1,0 +1,36 @@
+Index: asterisk-22.4.1/include/asterisk/channel.h
+===================================================================
+--- asterisk-22.4.1.orig/include/asterisk/channel.h
++++ asterisk-22.4.1/include/asterisk/channel.h
+@@ -4447,6 +4447,18 @@ int ast_channel_dialed_causes_add(const
+  */
+ void ast_channel_dialed_causes_clear(const struct ast_channel *chan);
+ 
++/*
++ * \brief Return the mutex associated to the global channels container.
++ *
++ * \details
++ * Note that the mutex is destroyed when the channels container is destroyed
++ * (during asterisk shutdown), but we have no way to safely get a reference to the
++ * channels container to make sure it isn't destroyed while we still have a reference
++ * on its mutex, so we ignore this whole situation completely and suppose the returned
++ * pointer is always valid.
++ */
++ast_mutex_t *ast_channels_get_mutex(void);
++
+ struct ast_flags *ast_channel_flags(struct ast_channel *chan);
+ 
+ /*!
+Index: asterisk-22.4.1/main/channel.c
+===================================================================
+--- asterisk-22.4.1.orig/main/channel.c
++++ asterisk-22.4.1/main/channel.c
+@@ -11056,3 +11056,8 @@ void ast_channel_clear_flag(struct ast_c
+ 	ast_clear_flag(ast_channel_flags(chan), flag);
+ 	ast_channel_unlock(chan);
+ }
++
++ast_mutex_t *ast_channels_get_mutex(void)
++{
++	return ao2_object_get_lockaddr(channels);
++}

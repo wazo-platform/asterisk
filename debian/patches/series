@@ -6,6 +6,7 @@ xivo_queue_agent_talking
 wazo_banner
 xivo_skill_queues
 xivo_agent_complete_wrapup
+xivo_channel_check_lock
 xivo_senddigit_begin
 xivo_ccss_exten_context_var
 xivo_dtmf_xfer_plus
