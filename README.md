@@ -1,5 +1,7 @@
 # asterisk
 
+#  DO NOT MERGE
+
 This repository contains the packaging information and patches for [Asterisk](http://www.asterisk.org/).
 
 To update the version of Asterisk:
