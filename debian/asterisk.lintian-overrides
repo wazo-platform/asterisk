@@ -1,17 +1,15 @@
 asterisk: package-contains-empty-directory
+asterisk: init.d-script-not-included-in-package etc/init.d/asterisk
 # astcanary is not supposed to be invoked manually
-asterisk: binary-without-manpage usr/sbin/astcanary
-asterisk: binary-without-manpage usr/sbin/astversion
+asterisk: no-manual-page [usr/sbin/astcanary]
+asterisk: no-manual-page [usr/sbin/astversion]
 # private copy of pjproject
 asterisk: package-name-doesnt-match-sonames libasteriskpj2 libasteriskssl1
-asterisk: non-dev-pkg-with-shlib-symlink usr/lib/libasteriskpj.so.2 usr/lib/libasteriskpj.so
+asterisk: link-to-shared-library-in-wrong-package usr/lib/libasteriskpj.so.2 [usr/lib/libasteriskpj.so]
 # Ignore the included jquery in mantest.html
-asterisk: privacy-breach-uses-embedded-file usr/share/asterisk/static-http/mantest.html You may use the libjs-jquery package. (http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js)
-asterisk: embedded-javascript-library usr/share/asterisk/static-http/prototype.js please use libjs-prototype
+asterisk: privacy-breach-uses-embedded-file You may use the libjs-jquery package. (http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js) [usr/share/asterisk/static-http/mantest.html]
+asterisk: embedded-javascript-library please use libjs-prototype [usr/share/asterisk/static-http/prototype.js]
 # Plugins
-asterisk: library-not-linked-against-libc usr/lib/asterisk/modules/*
-asterisk: shared-lib-without-dependency-information usr/lib/asterisk/modules/*
-asterisk: shared-lib-without-dependency-information usr/lib/libasteriskssl.so.1
-# Referenced by asterisk.postinst to migrate to systemd
-# Can be removed after Bullseye migration
-init.d-script-not-included-in-package etc/init.d/asterisk
+asterisk: library-not-linked-against-libc [usr/lib/asterisk/modules/res_curl.so]
+asterisk: shared-library-lacks-prerequisites [usr/lib/asterisk/modules/*]
+asterisk: shared-library-lacks-prerequisites [usr/lib/libasteriskssl.so.1]

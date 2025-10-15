@@ -1,10 +1,11 @@
-usr/sbin
 usr/lib/libasterisk*
-usr/share/asterisk/firmware
-usr/share/asterisk/keys
+usr/sbin
 usr/share/asterisk/conf
 usr/share/asterisk/documentation
+usr/share/asterisk/firmware
+usr/share/asterisk/keys
 usr/share/asterisk/rest-api
+usr/share/asterisk/phoneprov
 
 usr/lib/asterisk
 usr/share/asterisk/keys /var/lib/asterisk/

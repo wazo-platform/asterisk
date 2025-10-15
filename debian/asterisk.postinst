@@ -6,88 +6,84 @@ USER='asterisk'
 
 case "$1" in
     configure)
-	# add user
-	if ! getent passwd $USER > /dev/null ; then
-		echo "Adding system user $USER" 1>&2
-		adduser --quiet --system --group --no-create-home \
-			--home /var/lib/asterisk \
-			--gecos "Asterisk PBX daemon" \
-			$USER
-	fi
+    # add user
+    if ! getent passwd $USER > /dev/null ; then
+        echo "Adding system user $USER" 1>&2
+        adduser --quiet --system --group --no-create-home \
+            --home /var/lib/asterisk \
+            --gecos "Asterisk PBX daemon" \
+            $USER
+    fi
 
-	# add asterisk to required groups
-	for group in dialout audio; do
-		if groups $USER | grep -w -q -v $group; then
-			adduser --quiet $USER $group
-		fi
-	done
+    # add asterisk to required groups
+    for group in dialout audio; do
+        if groups $USER | grep -w -q -v $group; then
+            adduser --quiet $USER $group
+        fi
+    done
 
-	# chown asterisk on all $dirs and their subdirectories
-	# do not harm the files, they should be empty on new installations
-	# and we don't want to mess-up anything on old installations
-	find /var/log/asterisk \
-	     /var/lib/asterisk \
-	     -type d | while read dir; do
-		if ! dpkg-statoverride --list "$dir" > /dev/null ; then
-			chown asterisk: $dir
-		fi
-	done 
-	
-	# this is not needed for new installations but is not such a bad idea
-	# removing this will _break_ upgrades from versions < 1:1.4.10.1~dfsg-1
-	#
-	# we are doing the same for subdirectories, since we are not shipping
-	# any and it's supposed to be user-modifiable
-	if ! dpkg-statoverride --list "/etc/asterisk" > /dev/null ; then
-		chown asterisk: /etc/asterisk
-	fi
+    # chown asterisk on all $dirs and their subdirectories
+    # do not harm the files, they should be empty on new installations
+    # and we don't want to mess-up anything on old installations
+    find /var/log/asterisk \
+         /var/lib/asterisk \
+         -type d | while read dir; do
+        if ! dpkg-statoverride --list "$dir" > /dev/null ; then
+            chown asterisk: $dir
+        fi
+    done
 
-	# spool holds some sensitive information (e.g. monitor, voicemail etc.)
-	find /var/spool/asterisk -type d | while read dir; do
-		if ! dpkg-statoverride --list "$dir" > /dev/null ; then
-			chown asterisk: $dir
-			chmod 750 $dir
-		fi
-	done
+    # this is not needed for new installations but is not such a bad idea
+    # removing this will _break_ upgrades from versions < 1:1.4.10.1~dfsg-1
+    #
+    # we are doing the same for subdirectories, since we are not shipping
+    # any and it's supposed to be user-modifiable
+    if ! dpkg-statoverride --list "/etc/asterisk" > /dev/null ; then
+        chown asterisk: /etc/asterisk
+    fi
 
-	if [ -e /usr/share/asterisk/rest-api ]; then
-		chown -R $USER: /usr/share/asterisk/rest-api
-	fi
+    # spool holds some sensitive information (e.g. monitor, voicemail etc.)
+    find /var/spool/asterisk -type d | while read dir; do
+        if ! dpkg-statoverride --list "$dir" > /dev/null ; then
+            chown asterisk: $dir
+            chmod 750 $dir
+        fi
+    done
 
-	# Create /usr/local directory; policy 9.1.2
-	if [ ! -e /usr/local/share/asterisk/sounds ]; then
-		if mkdir -p /usr/local/share/asterisk/sounds 2>/dev/null ; then
-			chown root:staff /usr/local/share/asterisk/sounds
-			chmod 2775 /usr/local/share/asterisk/sounds
-		fi
-	fi
+    if [ -e /usr/share/asterisk/rest-api ]; then
+        chown -R $USER: /usr/share/asterisk/rest-api
+    fi
 
-	# Added in 20.17 to remove the init file that is not used anymore
-	OLD_INIT_FILE="/etc/init.d/asterisk"
-	rm -f "${OLD_INIT_FILE}"
+    # Create /usr/local directory; policy 9.1.2
+    if [ ! -e /usr/local/share/asterisk/sounds ]; then
+        if mkdir -p /usr/local/share/asterisk/sounds 2>/dev/null ; then
+            chown root:staff /usr/local/share/asterisk/sounds
+            chmod 2775 /usr/local/share/asterisk/sounds
+        fi
+    fi
 
-	### this is done here in case asterisk-config was installed/upgraded first
+    ### this is done here in case asterisk-config was installed/upgraded first
 
-	set +e # ignore errors temporarily
+    set +e # ignore errors temporarily
 
-	# find the name of the package providing config; either asterisk-config
-	# or a package providing asterisk-config-custom
-	ASTERISK_CONFIG=`dpkg-query -W -f='${Package}\t${Provides}\n' | \
-			 sed -nr 's/(.*)\tasterisk-config-custom|(asterisk-config)(\t.*)?/\1\2/p'`
+    # find the name of the package providing config; either asterisk-config
+    # or a package providing asterisk-config-custom
+    ASTERISK_CONFIG=`dpkg-query -W -f='${Package}\t${Provides}\n' | \
+             sed -nr 's/(.*)\tasterisk-config-custom|(asterisk-config)(\t.*)?/\1\2/p'`
 
-	# find conffiles under /etc/asterisk belonging to asterisk-config
-	# and chown them to user asterisk.
-	dpkg-query -W -f='${Conffiles}\n' $ASTERISK_CONFIG 2>/dev/null | \
-	  sed -nr -e 's; (/etc/asterisk/.*) [0-9a-f]*;\1;p' | \
-	while read conffile; do
-		chown asterisk: $conffile 2>/dev/null
-	done
+    # find conffiles under /etc/asterisk belonging to asterisk-config
+    # and chown them to user asterisk.
+    dpkg-query -W -f='${Conffiles}\n' $ASTERISK_CONFIG 2>/dev/null | \
+      sed -nr -e 's; (/etc/asterisk/.*) [0-9a-f]*;\1;p' | \
+    while read conffile; do
+        chown asterisk: $conffile 2>/dev/null
+    done
 
-	# handle them in the end with a glob since it's way faster
-	dpkg-statoverride --quiet --list '/etc/asterisk/*' | while read STAT; do
-		chown `echo $STAT | cut -d' ' -f 1,2,4 | sed 's/ /:/'` \
-			2>/dev/null
-	done
+    # handle them in the end with a glob since it's way faster
+    dpkg-statoverride --quiet --list '/etc/asterisk/*' | while read STAT; do
+        chown `echo $STAT | cut -d' ' -f 1,2,4 | sed 's/ /:/'` \
+            2>/dev/null
+    done
 
     # WAZO: Do a more aggressive chmod/chown on asterisk files
     asterisk_dirs="/etc/asterisk /var/lib/asterisk /var/spool/asterisk/monitor /var/lib/asterisk/moh /var/lib/asterisk/sounds/custom /usr/share/asterisk/moh /var/spool/asterisk/fax"
