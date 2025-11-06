@@ -1,8 +1,8 @@
-Index: asterisk-22.5.2/apps/app_mixmonitor.c
+Index: asterisk-22.6.0/apps/app_mixmonitor.c
 ===================================================================
---- asterisk-22.5.2.orig/apps/app_mixmonitor.c
-+++ asterisk-22.5.2/apps/app_mixmonitor.c
-@@ -900,7 +900,9 @@ static void *mixmonitor_thread(void *obj
+--- asterisk-22.6.0.orig/apps/app_mixmonitor.c
++++ asterisk-22.6.0/apps/app_mixmonitor.c
+@@ -905,7 +905,9 @@ static void *mixmonitor_thread(void *obj
  
  	if (ast_test_flag(mixmonitor, MUXFLAG_BEEP_STOP)) {
  		ast_autochan_channel_lock(mixmonitor->autochan);
@@ -13,7 +13,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  		ast_autochan_channel_unlock(mixmonitor->autochan);
  	}
  
-@@ -991,7 +993,9 @@ static int setup_mixmonitor_ds(struct mi
+@@ -996,7 +998,9 @@ static int setup_mixmonitor_ds(struct mi
  
  	if (ast_test_flag(mixmonitor, MUXFLAG_BEEP_START)) {
  		ast_autochan_channel_lock(mixmonitor->autochan);
