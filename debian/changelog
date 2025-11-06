@@ -1,4 +1,10 @@
-asterisk (8:22.4.1-1~wazo5) wazo-dev-bookworm; urgency=medium
+asterisk (8:22.6.0-1~wazo1) wazo-dev-bookworm; urgency=medium
+
+  * Asterisk 22.6.0
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 06 Nov 2025 13:20:17 -0500
+
+asterisk (8:22.5.2-1~wazo2) wazo-dev-bullseye; urgency=medium
 
   * Rebuild for Bookworm
 
