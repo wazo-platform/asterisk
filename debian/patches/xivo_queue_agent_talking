@@ -1,9 +1,9 @@
 Adding agent in conversation counter in QueueSummary AMI event (based on AST_DEVICE_INUSE flag)
-Index: asterisk-22.5.2/apps/app_queue.c
+Index: asterisk-22.6.0/apps/app_queue.c
 ===================================================================
---- asterisk-22.5.2.orig/apps/app_queue.c
-+++ asterisk-22.5.2/apps/app_queue.c
-@@ -10665,6 +10665,7 @@ static int manager_queues_summary(struct
+--- asterisk-22.6.0.orig/apps/app_queue.c
++++ asterisk-22.6.0/apps/app_queue.c
+@@ -10677,6 +10677,7 @@ static int manager_queues_summary(struct
  {
  	time_t now;
  	int qmemcount = 0;
@@ -11,7 +11,7 @@ Index: asterisk-22.5.2/apps/app_queue.c
  	int qmemavail = 0;
  	int qchancount = 0;
  	int qlongestholdtime = 0;
-@@ -10696,6 +10697,7 @@ static int manager_queues_summary(struct
+@@ -10708,6 +10709,7 @@ static int manager_queues_summary(struct
  		if (ast_strlen_zero(queuefilter) || !strcasecmp(q->name, queuefilter)) {
  			/* Reset the necessary local variables if no queuefilter is set*/
  			qmemcount = 0;
@@ -19,7 +19,7 @@ Index: asterisk-22.5.2/apps/app_queue.c
  			qmemavail = 0;
  			qchancount = 0;
  			qlongestholdtime = 0;
-@@ -10709,6 +10711,9 @@ static int manager_queues_summary(struct
+@@ -10721,6 +10723,9 @@ static int manager_queues_summary(struct
  						++qmemavail;
  					}
  				}
@@ -29,7 +29,7 @@ Index: asterisk-22.5.2/apps/app_queue.c
  				ao2_ref(mem, -1);
  			}
  			ao2_iterator_destroy(&mem_iter);
-@@ -10722,13 +10727,14 @@ static int manager_queues_summary(struct
+@@ -10734,13 +10739,14 @@ static int manager_queues_summary(struct
  				"Queue: %s\r\n"
  				"LoggedIn: %d\r\n"
  				"Available: %d\r\n"
