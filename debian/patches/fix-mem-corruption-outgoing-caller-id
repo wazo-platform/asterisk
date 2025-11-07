@@ -1,0 +1,24 @@
+Index: asterisk-22.6.0/res/res_pjsip_caller_id.c
+===================================================================
+--- asterisk-22.6.0.orig/res/res_pjsip_caller_id.c
++++ asterisk-22.6.0/res/res_pjsip_caller_id.c
+@@ -566,8 +566,8 @@ static void caller_id_outgoing_request(s
+ 		return;
+ 	}
+ 
+-	ast_party_id_init(&connected_id);
+ 	ast_channel_lock(session->channel);
++	ast_party_id_init(&connected_id);
+ 	effective_id = ast_channel_connected_effective_id(session->channel);
+ 	ast_party_id_copy(&connected_id, &effective_id);
+ 	ast_channel_unlock(session->channel);
+@@ -598,8 +598,8 @@ static void caller_id_outgoing_response(
+ 	}
+ 
+ 	/* Must do a deep copy unless we hold the channel lock the entire time. */
+-	ast_party_id_init(&connected_id);
+ 	ast_channel_lock(session->channel);
++	ast_party_id_init(&connected_id);
+ 	effective_id = ast_channel_connected_effective_id(session->channel);
+ 	ast_party_id_copy(&connected_id, &effective_id);
+ 	ast_channel_unlock(session->channel);
