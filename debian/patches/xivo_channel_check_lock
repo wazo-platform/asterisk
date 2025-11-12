@@ -1,8 +1,8 @@
-Index: asterisk-22.4.1/include/asterisk/channel.h
+Index: asterisk-22.5.2/include/asterisk/channel.h
 ===================================================================
---- asterisk-22.4.1.orig/include/asterisk/channel.h
-+++ asterisk-22.4.1/include/asterisk/channel.h
-@@ -4447,6 +4447,18 @@ int ast_channel_dialed_causes_add(const
+--- asterisk-22.5.2.orig/include/asterisk/channel.h
++++ asterisk-22.5.2/include/asterisk/channel.h
+@@ -4475,6 +4475,18 @@ int ast_channel_dialed_causes_add(const
   */
  void ast_channel_dialed_causes_clear(const struct ast_channel *chan);
  
@@ -21,16 +21,42 @@ Index: asterisk-22.4.1/include/asterisk/channel.h
  struct ast_flags *ast_channel_flags(struct ast_channel *chan);
  
  /*!
-Index: asterisk-22.4.1/main/channel.c
+Index: asterisk-22.5.2/main/channel.c
 ===================================================================
---- asterisk-22.4.1.orig/main/channel.c
-+++ asterisk-22.4.1/main/channel.c
-@@ -11056,3 +11056,8 @@ void ast_channel_clear_flag(struct ast_c
- 	ast_clear_flag(ast_channel_flags(chan), flag);
+--- asterisk-22.5.2.orig/main/channel.c
++++ asterisk-22.5.2/main/channel.c
+@@ -11036,3 +11036,34 @@ void ast_channel_clear_flag(struct ast_c
  	ast_channel_unlock(chan);
  }
+ 
++struct ast_channelstorage_driver_pvt {
++	struct ao2_container *handle;
++};
 +
 +ast_mutex_t *ast_channels_get_mutex(void)
 +{
-+	return ao2_object_get_lockaddr(channels);
++	void *lock_addr = NULL;
++	if(!current_channel_storage_driver) {
++		return NULL;
++	}
++	if(!current_channel_storage_driver->driver_name) {
++		return NULL;
++	}
++	if(!current_channel_storage_instance) {
++		return NULL;
++	}
++	if(!current_channel_storage_instance->handle) {
++		return NULL;
++	}
++	if(!strcasecmp(current_channel_storage_driver->driver_name, "ao2_legacy")) {
++		lock_addr = ao2_object_get_lockaddr(current_channel_storage_instance->handle->handle);
++		ast_log(LOG_NOTICE, "ao2_legacy: lockaddr handle is %p\n", lock_addr);
++		return lock_addr;
++	} else if (!strcasecmp(current_channel_storage_driver->driver_name, "cpp_map_name_id")) {
++		lock_addr = current_channel_storage_instance->lock_handle;
++		ast_log(LOG_NOTICE, "cpp_map_name_id: lock handle is %p\n", lock_addr);
++		return lock_addr;
++	}
++	ast_log(LOG_WARNING, "No driver name match: %s\n", current_channel_storage_driver->driver_name);
++	return NULL;
 +}
