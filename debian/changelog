@@ -1,3 +1,9 @@
+asterisk (8:22.6.0-1~wazo3) wazo-dev-bookworm; urgency=medium
+
+  * Attempt outgoing callerid memory corruption patch
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 12 Nov 2025 10:38:07 -0500
+
 asterisk (8:22.6.0-1~wazo2) wazo-dev-bookworm; urgency=medium
 
   * asterisk 22.6.0
