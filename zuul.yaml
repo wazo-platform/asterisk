@@ -1,6 +1,6 @@
 - project:
     templates:
-      - debian-packaging-bookworm
+      - debian-packaging-bullseye
     wazo-check:
       jobs:
         - asterisk-tox-integration
