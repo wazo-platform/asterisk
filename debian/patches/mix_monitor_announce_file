@@ -1,8 +1,8 @@
-Index: asterisk-22.5.2/apps/app_mixmonitor.c
+Index: asterisk-22.6.0/apps/app_mixmonitor.c
 ===================================================================
---- asterisk-22.5.2.orig/apps/app_mixmonitor.c
-+++ asterisk-22.5.2/apps/app_mixmonitor.c
-@@ -145,10 +145,14 @@
+--- asterisk-22.6.0.orig/apps/app_mixmonitor.c
++++ asterisk-22.6.0/apps/app_mixmonitor.c
+@@ -147,10 +147,14 @@
  						<para>Stores the MixMonitor's ID on this channel variable.</para>
  					</option>
  					<option name="p">
@@ -19,7 +19,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  					</option>
  					<option name="m">
  						<argument name="mailbox" required="true" />
-@@ -410,6 +414,8 @@ struct mixmonitor {
+@@ -415,6 +419,8 @@ struct mixmonitor {
  	char *filename;
  	char *filename_read;
  	char *filename_write;
@@ -28,7 +28,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  	char *post_process;
  	char *name;
  	ast_callid callid;
-@@ -463,6 +469,8 @@ enum mixmonitor_args {
+@@ -468,6 +474,8 @@ enum mixmonitor_args {
  	OPT_ARG_BEEP_INTERVAL,
  	OPT_ARG_DEPRECATED_RWSYNC,
  	OPT_ARG_NO_RWSYNC,
@@ -37,7 +37,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  	OPT_ARG_ARRAY_SIZE,	/* Always last element of the enum */
  };
  
-@@ -472,8 +480,8 @@ AST_APP_OPTIONS(mixmonitor_opts, {
+@@ -477,8 +485,8 @@ AST_APP_OPTIONS(mixmonitor_opts, {
  	AST_APP_OPTION_ARG('B', MUXFLAG_BEEP, OPT_ARG_BEEP_INTERVAL),
  	AST_APP_OPTION('c', MUXFLAG_REAL_CALLERID),
  	AST_APP_OPTION('d', MUXFLAG_AUTO_DELETE),
@@ -48,7 +48,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  	AST_APP_OPTION_ARG('v', MUXFLAG_READVOLUME, OPT_ARG_READVOLUME),
  	AST_APP_OPTION_ARG('V', MUXFLAG_WRITEVOLUME, OPT_ARG_WRITEVOLUME),
  	AST_APP_OPTION_ARG('W', MUXFLAG_VOLUME, OPT_ARG_VOLUME),
-@@ -661,6 +669,8 @@ static void mixmonitor_free(struct mixmo
+@@ -666,6 +674,8 @@ static void mixmonitor_free(struct mixmo
  		ast_free(mixmonitor->filename);
  		ast_free(mixmonitor->filename_write);
  		ast_free(mixmonitor->filename_read);
@@ -57,7 +57,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  
  		/* Free everything in the recipient list */
  		clear_mixmonitor_recipient_list(mixmonitor);
-@@ -900,7 +910,7 @@ static void *mixmonitor_thread(void *obj
+@@ -905,7 +915,7 @@ static void *mixmonitor_thread(void *obj
  
  	if (ast_test_flag(mixmonitor, MUXFLAG_BEEP_STOP)) {
  		ast_autochan_channel_lock(mixmonitor->autochan);
@@ -66,7 +66,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  			ast_closestream(ast_channel_stream(mixmonitor->autochan->chan));
  		}
  		ast_autochan_channel_unlock(mixmonitor->autochan);
-@@ -993,7 +1003,7 @@ static int setup_mixmonitor_ds(struct mi
+@@ -998,7 +1008,7 @@ static int setup_mixmonitor_ds(struct mi
  
  	if (ast_test_flag(mixmonitor, MUXFLAG_BEEP_START)) {
  		ast_autochan_channel_lock(mixmonitor->autochan);
@@ -75,7 +75,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  			ast_closestream(ast_channel_stream(mixmonitor->autochan->chan));
  		}
  		ast_autochan_channel_unlock(mixmonitor->autochan);
-@@ -1036,8 +1046,9 @@ static void mixmonitor_ds_remove_and_fre
+@@ -1041,8 +1051,9 @@ static void mixmonitor_ds_remove_and_fre
  static int launch_monitor_thread(struct ast_channel *chan, const char *filename,
  				  unsigned int flags, int readvol, int writevol,
  				  const char *post_process, const char *filename_write,
@@ -87,7 +87,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  {
  	pthread_t thread;
  	struct mixmonitor *mixmonitor;
-@@ -1098,6 +1109,14 @@ static int launch_monitor_thread(struct
+@@ -1103,6 +1114,14 @@ static int launch_monitor_thread(struct
  		mixmonitor->filename_read = ast_strdup(filename_read);
  	}
  
@@ -102,7 +102,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  	if (setup_mixmonitor_ds(mixmonitor, chan, &datastore_id, beep_id)) {
  		ast_autochan_destroy(mixmonitor->autochan);
  		mixmonitor_free(mixmonitor);
-@@ -1247,6 +1266,8 @@ static int mixmonitor_exec(struct ast_ch
+@@ -1252,6 +1271,8 @@ static int mixmonitor_exec(struct ast_ch
  	int x, readvol = 0, writevol = 0;
  	char *filename_read = NULL;
  	char *filename_write = NULL;
@@ -111,7 +111,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  	char filename_buffer[1024] = "";
  	char *uid_channel_var = NULL;
  	char beep_id[64] = "";
-@@ -1325,6 +1346,14 @@ static int mixmonitor_exec(struct ast_ch
+@@ -1330,6 +1351,14 @@ static int mixmonitor_exec(struct ast_ch
  			filename_read = ast_strdupa(filename_parse(opts[OPT_ARG_READNAME], filename_buffer, sizeof(filename_buffer)));
  		}
  
@@ -126,7 +126,7 @@ Index: asterisk-22.5.2/apps/app_mixmonitor.c
  		if (ast_test_flag(&flags, MUXFLAG_UID)) {
  			uid_channel_var = opts[OPT_ARG_UID];
  		}
-@@ -1368,6 +1397,8 @@ static int mixmonitor_exec(struct ast_ch
+@@ -1373,6 +1402,8 @@ static int mixmonitor_exec(struct ast_ch
  			args.post_process,
  			filename_write,
  			filename_read,
