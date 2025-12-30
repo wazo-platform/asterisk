@@ -20,4 +20,5 @@ var/spool/asterisk/outgoing
 usr/share/asterisk/firmware/iax
 var/lib/asterisk/agi-bin
 var/lib/asterisk/moh/default
+var/spool/asterisk/fax
 var/spool/asterisk/recording
