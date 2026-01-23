@@ -1,3 +1,9 @@
+asterisk (8:23.2.0-1~wazo) wazo-dev-bookworm; urgency=medium
+
+  * asterisk 23.2.0
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Fri, 23 Jan 2026 15:14:04 -0500
+
 asterisk (8:22.6.0-1~wazo3) wazo-dev-bookworm; urgency=medium
 
   * create fax directory
