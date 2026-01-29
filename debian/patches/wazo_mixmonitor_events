@@ -1,7 +1,7 @@
-Index: asterisk-22.8.0/apps/app_mixmonitor.c
+Index: asterisk-22.8.1/apps/app_mixmonitor.c
 ===================================================================
---- asterisk-22.8.0.orig/apps/app_mixmonitor.c
-+++ asterisk-22.8.0/apps/app_mixmonitor.c
+--- asterisk-22.8.1.orig/apps/app_mixmonitor.c
++++ asterisk-22.8.1/apps/app_mixmonitor.c
 @@ -1082,6 +1082,8 @@ static int launch_monitor_thread(struct
  	struct mixmonitor *mixmonitor;
  	char postprocess2[1024] = "";
@@ -91,10 +91,10 @@ Index: asterisk-22.8.0/apps/app_mixmonitor.c
  	return 0;
  }
  
-Index: asterisk-22.8.0/main/cel.c
+Index: asterisk-22.8.1/main/cel.c
 ===================================================================
---- asterisk-22.8.0.orig/main/cel.c
-+++ asterisk-22.8.0/main/cel.c
+--- asterisk-22.8.1.orig/main/cel.c
++++ asterisk-22.8.1/main/cel.c
 @@ -344,6 +344,8 @@ static const char * const cel_event_type
  	[AST_CEL_STREAM_BEGIN]     = "STREAM_BEGIN",
  	[AST_CEL_STREAM_END]       = "STREAM_END",
@@ -155,10 +155,10 @@ Index: asterisk-22.8.0/main/cel.c
  		ast_local_optimization_end_type(),
  		cel_local_optimization_end_cb,
  		NULL);
-Index: asterisk-22.8.0/include/asterisk/cel.h
+Index: asterisk-22.8.1/include/asterisk/cel.h
 ===================================================================
---- asterisk-22.8.0.orig/include/asterisk/cel.h
-+++ asterisk-22.8.0/include/asterisk/cel.h
+--- asterisk-22.8.1.orig/include/asterisk/cel.h
++++ asterisk-22.8.1/include/asterisk/cel.h
 @@ -83,6 +83,10 @@ enum ast_cel_event_type {
  	AST_CEL_STREAM_END = 20,
  	/*! \brief A DTMF digit was processed */

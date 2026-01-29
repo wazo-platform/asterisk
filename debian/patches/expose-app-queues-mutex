@@ -1,7 +1,7 @@
-Index: asterisk-22.8.0/apps/app_queue.c
+Index: asterisk-22.8.1/apps/app_queue.c
 ===================================================================
---- asterisk-22.8.0.orig/apps/app_queue.c
-+++ asterisk-22.8.0/apps/app_queue.c
+--- asterisk-22.8.1.orig/apps/app_queue.c
++++ asterisk-22.8.1/apps/app_queue.c
 @@ -2216,6 +2216,9 @@ static int op_value_get(struct op_value
  static void op_value_set(struct op_value *op_value, int value);
  static void op_value_undef(struct op_value *op_value);
@@ -33,10 +33,10 @@ Index: asterisk-22.8.0/apps/app_queue.c
  	.support_level = AST_MODULE_SUPPORT_CORE,
  	.load = load_module,
  	.unload = unload_module,
-Index: asterisk-22.8.0/apps/app_queue.exports.in
+Index: asterisk-22.8.1/apps/app_queue.exports.in
 ===================================================================
 --- /dev/null
-+++ asterisk-22.8.0/apps/app_queue.exports.in
++++ asterisk-22.8.1/apps/app_queue.exports.in
 @@ -0,0 +1,6 @@
 +{
 +	global:
