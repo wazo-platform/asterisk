@@ -1,7 +1,7 @@
-Index: asterisk-22.8.0/apps/app_mixmonitor.c
+Index: asterisk-22.8.1/apps/app_mixmonitor.c
 ===================================================================
---- asterisk-22.8.0.orig/apps/app_mixmonitor.c
-+++ asterisk-22.8.0/apps/app_mixmonitor.c
+--- asterisk-22.8.1.orig/apps/app_mixmonitor.c
++++ asterisk-22.8.1/apps/app_mixmonitor.c
 @@ -147,10 +147,14 @@
  						<para>Stores the MixMonitor's ID on this channel variable.</para>
  					</option>
