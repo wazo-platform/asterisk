@@ -1,17 +1,18 @@
+# Set endpoint channel variables after unlock to prevent deadlock
+# when variables invoke dialplan functions (e.g., PJSIP_HEADER)
+# that block on serializer tasks while the channel lock is held.
+# pbx_builtin_setvar_helper will acquire and release channel lock on each invocation in the loop
 Index: asterisk-22.8.1/channels/chan_pjsip.c
 ===================================================================
 --- asterisk-22.8.1.orig/channels/chan_pjsip.c	2026-03-05 15:42:57.508015668 +0000
 +++ asterisk-22.8.1/channels/chan_pjsip.c	2026-03-05 15:43:19.673013563 +0000
-@@ -665,15 +665,18 @@
+@@ -665,15 +665,15 @@
  		ast_channel_zone_set(chan, zone);
  	}
  
 +	ast_channel_stage_snapshot_done(chan);
 +	ast_channel_unlock(chan);
 +
-+	/* Set endpoint channel variables after unlock to prevent deadlock
-+	 * when variables invoke dialplan functions (e.g., PJSIP_HEADER)
-+	 * that block on serializer tasks while the channel lock is held. */
  	for (var = session->endpoint->channel_vars; var; var = var->next) {
  		char buf[512];
  		pbx_builtin_setvar_helper(chan, var->name, ast_get_encoded_str(
