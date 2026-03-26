@@ -1,0 +1,14 @@
+Index: asterisk-22.8.1/main/bridge.c
+===================================================================
+--- asterisk-22.8.1.orig/main/bridge.c
++++ asterisk-22.8.1/main/bridge.c
+@@ -2888,6 +2888,9 @@ static int try_swap_optimize_out(struct
+ 			ast_channel_name(dst_bridge_channel->chan),
+ 			ast_channel_name(other->chan));
+ 
++		/* DEBUG: force race condition with CEL emission - remove before release */
++		usleep(50000); /* 50ms */
++
+ 		if (pvt && !ast_test_flag(pvt, AST_UNREAL_OPTIMIZE_BEGUN) && pvt->callbacks
+ 				&& pvt->callbacks->optimization_started) {
+ 			pvt->callbacks->optimization_started(pvt, other->chan,

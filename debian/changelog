@@ -1,3 +1,9 @@
+asterisk (8:22.8.1-1~wazo2) wazo-dev-bookworm; urgency=medium
+
+  * debug
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 26 Mar 2026 14:23:13 -0400
+
 asterisk (8:22.8.1-1~wazo1) wazo-dev-bookworm; urgency=medium
 
   * asterisk 22.8.1
