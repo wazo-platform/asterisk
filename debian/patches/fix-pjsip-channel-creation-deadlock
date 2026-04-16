@@ -4,7 +4,6 @@
 # holding the channel lock. Re-lock for ast_channel_stage_snapshot_done()
 # so the batched snapshot is published under lock.
 # pbx_builtin_setvar_helper acquires/releases channel lock on its own.
-# Upstream: https://github.com/asterisk/asterisk/pull/1873
 Index: asterisk-22.8.2/channels/chan_pjsip.c
 ===================================================================
 --- asterisk-22.8.2.orig/channels/chan_pjsip.c
