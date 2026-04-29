@@ -30,3 +30,4 @@ fix-application-playback-update
 expose-app-queues-mutex
 fix-queue-deadlock
 fix-pjsip-channel-creation-deadlock
+pjsip-fix-reload-deadlock
