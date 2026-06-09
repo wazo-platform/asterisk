@@ -1,8 +1,8 @@
-Index: asterisk-22.8.2/apps/app_queue.c
+Index: asterisk-22.9.0/apps/app_queue.c
 ===================================================================
---- asterisk-22.8.2.orig/apps/app_queue.c
-+++ asterisk-22.8.2/apps/app_queue.c
-@@ -4701,7 +4701,7 @@ static int say_position(struct queue_ent
+--- asterisk-22.9.0.orig/apps/app_queue.c
++++ asterisk-22.9.0/apps/app_queue.c
+@@ -4724,7 +4724,7 @@ static int say_position(struct queue_ent
  		}
  
  		if (avgholdmins >= 1) {
@@ -11,7 +11,7 @@ Index: asterisk-22.8.2/apps/app_queue.c
  			if (res) {
  				goto playout;
  			}
-@@ -4719,7 +4719,7 @@ static int say_position(struct queue_ent
+@@ -4742,7 +4742,7 @@ static int say_position(struct queue_ent
  			}
  		}
  		if (avgholdsecs >= 1) {
