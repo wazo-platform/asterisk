@@ -19,7 +19,6 @@ xivo_ari_events_moh
 xivo_ari_set_channel_var_bypass
 wazo_ari_expose_voicemail_functions
 wazo_sip_mobility
-wazo_bridge_variables
 wazo_mixmonitor_events
 wazo_stun_recurring_resolution
 increase-max-sdp-media
