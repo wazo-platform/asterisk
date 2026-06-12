@@ -20,7 +20,6 @@ xivo_ari_set_channel_var_bypass
 wazo_ari_expose_voicemail_functions
 wazo_sip_mobility
 wazo_mixmonitor_events
-wazo_stun_recurring_resolution
 increase-max-sdp-media
 mixmonitor_close_beep_file
 fix-invalid-moh
