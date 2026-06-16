@@ -66,10 +66,10 @@ Index: asterisk-22.10.0/rest-api/api-docs/channels.json
 ===================================================================
 --- asterisk-22.10.0.orig/rest-api/api-docs/channels.json
 +++ asterisk-22.10.0/rest-api/api-docs/channels.json
-@@ -1803,6 +1803,15 @@
- 							"required": false,
+@@ -1610,6 +1610,15 @@
  							"allowMultiple": false,
- 							"dataType": "string"
+ 							"dataType": "boolean",
+ 							"defaultValue": false
 +						},
 +						{
 +							"name": "bypassStasis",
