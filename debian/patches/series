@@ -19,9 +19,7 @@ xivo_ari_events_moh
 xivo_ari_set_channel_var_bypass
 wazo_ari_expose_voicemail_functions
 wazo_sip_mobility
-wazo_bridge_variables
 wazo_mixmonitor_events
-wazo_stun_recurring_resolution
 increase-max-sdp-media
 mixmonitor_close_beep_file
 fix-invalid-moh
@@ -29,6 +27,3 @@ mix_monitor_announce_file
 fix-application-playback-update
 expose-app-queues-mutex
 fix-queue-deadlock
-fix-pjsip-channel-creation-deadlock
-pjsip-fix-reload-deadlock
-1867-ioqueue-destroy-fd-leak
