@@ -52,6 +52,7 @@ pipeline {
     success {
       build wait: false, job: 'asterisk-to-asterisk-vanilla'
       build wait: false, job: 'asterisk-to-asterisk-debug'
+      build wait: false, job: 'xivo-res-freeze-check'
     }
     failure {
       emailext to: "${MAIL_RECIPIENTS}", subject: '${DEFAULT_SUBJECT}', body: '${DEFAULT_CONTENT}'
