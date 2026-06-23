@@ -27,3 +27,4 @@ mix_monitor_announce_file
 fix-application-playback-update
 expose-app-queues-mutex
 fix-queue-deadlock
+null-src-format-cap
