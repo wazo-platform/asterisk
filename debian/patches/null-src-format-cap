@@ -1,0 +1,51 @@
+From: Wazo Support <support@wazo.io>
+Date: Tue, 23 Jun 2026 00:00:00 +0000
+Subject: [PATCH] format_cap: guard against NULL src in *_from_cap helpers
+
+ast_format_cap_append_from_cap() and ast_format_cap_replace_from_cap()
+dereference `src` (src->preference_order) without checking it for NULL.
+
+A dummy channel allocated with ast_dummy_channel_alloc() never sets a
+native-format capability, so ast_channel_nativeformats() returns NULL on
+such channels. When CHANNEL(audionativeformat) / CHANNEL(videonativeformat)
+is evaluated against a dummy channel (e.g. via ARI channelvars during a
+Stasis VarSet event raised while app_voicemail builds the notification
+email on a dummy channel), func_channel_read() passes that NULL straight
+into ast_format_cap_append_from_cap(), causing a NULL dereference at
+offset 0x28 and a SIGSEGV.
+
+Guard both helpers against a NULL source. A NULL source simply means
+"no formats to copy", so appending/replacing nothing is the correct
+no-op behaviour. This also protects all other callers.
+
+Reproduced on Asterisk 22.10.0.
+---
+ main/format_cap.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+Index: asterisk-22.10.0/main/format_cap.c
+===================================================================
+--- asterisk-22.10.0.orig/main/format_cap.c
++++ asterisk-22.10.0/main/format_cap.c
+@@ -271,6 +271,10 @@ int ast_format_cap_append_from_cap(struc
+ {
+ 	int idx, res = 0;
+ 
++	if (!src) {
++		return 0;
++	}
++
+ 	/* NOTE:  The streams API is dependent on the formats being in "preference" order */
+ 	for (idx = 0; (idx < AST_VECTOR_SIZE(&src->preference_order)) && !res; ++idx) {
+ 		struct format_cap_framed *framed = AST_VECTOR_GET(&src->preference_order, idx);
+@@ -308,6 +312,10 @@ void ast_format_cap_replace_from_cap(str
+ {
+ 	int idx;
+ 
++	if (!src) {
++		return;
++	}
++
+ 	for (idx = 0; (idx < AST_VECTOR_SIZE(&src->preference_order)); ++idx) {
+ 		struct format_cap_framed *framed = AST_VECTOR_GET(&src->preference_order, idx);
+ 
