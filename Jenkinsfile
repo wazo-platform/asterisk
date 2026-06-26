@@ -52,7 +52,13 @@ pipeline {
     success {
       build wait: false, job: 'asterisk-to-asterisk-vanilla'
       build wait: false, job: 'asterisk-to-asterisk-debug'
-      build wait: false, job: 'xivo-res-freeze-check'
+      script {
+        if (env.JOB_NAME == 'asterisk.asterisk-rc') {
+          build wait: false, job: 'xivo-res-freeze-check.asterisk-rc'
+        } else {
+          build wait: false, job: 'xivo-res-freeze-check'
+        }
+      }
     }
     failure {
       emailext to: "${MAIL_RECIPIENTS}", subject: '${DEFAULT_SUBJECT}', body: '${DEFAULT_CONTENT}'
