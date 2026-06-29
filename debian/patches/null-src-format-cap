@@ -23,10 +23,10 @@ Reproduced on Asterisk 22.10.0.
  main/format_cap.c | 8 ++++++++
  1 file changed, 8 insertions(+)
 
-Index: asterisk-22.10.0/main/format_cap.c
+Index: asterisk-22.10.1/main/format_cap.c
 ===================================================================
---- asterisk-22.10.0.orig/main/format_cap.c
-+++ asterisk-22.10.0/main/format_cap.c
+--- asterisk-22.10.1.orig/main/format_cap.c
++++ asterisk-22.10.1/main/format_cap.c
 @@ -271,6 +271,10 @@ int ast_format_cap_append_from_cap(struc
  {
  	int idx, res = 0;
