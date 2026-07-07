@@ -28,3 +28,4 @@ fix-application-playback-update
 expose-app-queues-mutex
 fix-queue-deadlock
 null-src-format-cap
+wazo-res-pjsip-wazo-call-id
