@@ -2,7 +2,7 @@ Index: asterisk-22.10.1/res/res_pjsip_wazo_call_id.c
 ===================================================================
 --- /dev/null
 +++ asterisk-22.10.1/res/res_pjsip_wazo_call_id.c
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,94 @@
 +/*
 + * Asterisk -- An open source telephony toolkit.
 + *
@@ -35,12 +35,12 @@ Index: asterisk-22.10.1/res/res_pjsip_wazo_call_id.c
 +#include "asterisk/strings.h"
 +
 +/*
-+ * Adds the channel uniqueid to INVITE responses (180/183/200) as
-+ * X-Wazo-Call-ID so SIP clients learn the Wazo call id of their own leg
-+ * in-band, without having to fetch it from the REST API.
++ * Adds the channel uniqueid as X-Wazo-Call-ID to the INVITEs Asterisk sends
++ * and to INVITE responses (180/183/200), so SIP clients learn the Wazo call
++ * id of their own leg in-band, without having to fetch it from the REST API.
 + */
 +
-+static void wazo_call_id_outgoing_response(struct ast_sip_session *session, pjsip_tx_data *tdata)
++static void add_wazo_call_id_header(struct ast_sip_session *session, pjsip_tx_data *tdata)
 +{
 +	static const pj_str_t hdr_name = { "X-Wazo-Call-ID", 14 };
 +	char uniqueid[AST_MAX_UNIQUEID];
@@ -61,9 +61,20 @@ Index: asterisk-22.10.1/res/res_pjsip_wazo_call_id.c
 +	ast_sip_add_header(tdata, "X-Wazo-Call-ID", uniqueid);
 +}
 +
++static void wazo_call_id_outgoing_request(struct ast_sip_session *session, pjsip_tx_data *tdata)
++{
++	add_wazo_call_id_header(session, tdata);
++}
++
++static void wazo_call_id_outgoing_response(struct ast_sip_session *session, pjsip_tx_data *tdata)
++{
++	add_wazo_call_id_header(session, tdata);
++}
++
 +static struct ast_sip_session_supplement wazo_call_id_supplement = {
 +	.method = "INVITE",
 +	.priority = AST_SIP_SUPPLEMENT_PRIORITY_CHANNEL,
++	.outgoing_request = wazo_call_id_outgoing_request,
 +	.outgoing_response = wazo_call_id_outgoing_response,
 +};
 +
