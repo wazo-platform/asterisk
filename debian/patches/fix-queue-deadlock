@@ -1,7 +1,7 @@
-Index: asterisk-22.10.0/apps/app_queue.c
+Index: asterisk-22.10.1/apps/app_queue.c
 ===================================================================
---- asterisk-22.10.0.orig/apps/app_queue.c
-+++ asterisk-22.10.0/apps/app_queue.c
+--- asterisk-22.10.1.orig/apps/app_queue.c
++++ asterisk-22.10.1/apps/app_queue.c
 @@ -2014,6 +2014,15 @@ struct skills_group {
  
  static AST_LIST_HEAD_STATIC(skills_groups, skills_group);
@@ -141,7 +141,7 @@ Index: asterisk-22.10.0/apps/app_queue.c
  
  	if ((cur = ao2_alloc(sizeof(*cur), destroy_queue_member_cb))) {
  		cur->ringinuse = ringinuse;
-@@ -3280,6 +3327,32 @@ static struct member *create_queue_membe
+@@ -3280,6 +3329,32 @@ static struct member *create_queue_membe
  			ast_copy_string(cur->skills, skills, sizeof(cur->skills));
  		else
  			cur->skills[0] = '\0';
@@ -548,7 +548,10 @@ Index: asterisk-22.10.0/apps/app_queue.c
  
  			ao2_link(q->members, newm);
  			ao2_unlink(q->members, cur);
-@@ -10777,7 +10979,8 @@ static void print_queue(struct mansessio
+@@ -10774,10 +10976,11 @@ static void print_queue(struct mansessio
+ 
+ 			ast_str_append(&out, 0, " (ringinuse %s)", mem->ringinuse ? "enabled" : "disabled");
+ 
 +			time_t starttime = get_starttime(mem);
  			ast_str_append(&out, 0, "%s%s%s%s%s%s%s%s%s",
  				mem->dynamic ? ast_term_color(COLOR_CYAN, COLOR_BLACK) : "", mem->dynamic ? " (dynamic)" : "", ast_term_reset(),
@@ -558,7 +561,7 @@ Index: asterisk-22.10.0/apps/app_queue.c
  
  			if (mem->paused) {
  				ast_str_append(&out, 0, " %s(paused%s%s was %ld secs ago)%s",
-@@ -10795,9 +10997,11 @@ static void print_queue(struct mansessio
+@@ -10795,9 +10998,11 @@ static void print_queue(struct mansessio
  					ast_devstate2str(mem->status), ast_term_reset());
  			if (!ast_strlen_zero(mem->skills))
  				ast_str_append(&out, 0, " (skills: %s)", mem->skills);
@@ -572,7 +575,7 @@ Index: asterisk-22.10.0/apps/app_queue.c
  			} else {
  				ast_str_append(&out, 0, " has taken no calls yet");
  			}
-@@ -11295,7 +11497,7 @@ static int manager_queues_status(struct
+@@ -11295,7 +11500,7 @@ static int manager_queues_status(struct
  						"%s"
  						"\r\n",
  						q->name, mem->membername, mem->interface, mem->state_interface, mem->dynamic ? "dynamic" : "static",
@@ -581,7 +584,7 @@ Index: asterisk-22.10.0/apps/app_queue.c
  						mem->paused, mem->reason_paused, mem->wrapuptime, mem->skills, idText);
  					++q_items;
  				}
-@@ -12394,17 +12596,16 @@ static int qupd_exec(struct ast_channel
+@@ -12394,17 +12599,16 @@ static int qupd_exec(struct ast_channel
  				if (!strcasecmp(args.status, "ANSWER")) {
  					oldtalktime = q->talktime;
  					q->talktime = (((oldtalktime << 2) - oldtalktime) + newtalktime) >> 2;
