@@ -1,0 +1,61 @@
+From: Wazo Support <support@wazo.io>
+Date: Wed, 22 Jul 2026 00:00:00 +0000
+Subject: [PATCH] func_channel: guard against NULL tech on dummy channels
+
+func_channel_read() dereferences ast_channel_tech(chan)->type for
+CHANNEL(channeltype) without checking the tech for NULL.
+
+A dummy channel allocated with ast_dummy_channel_alloc() never sets a
+channel technology, so ast_channel_tech() returns NULL on such channels.
+When CHANNEL(channeltype) is evaluated against a dummy channel (e.g. via
+ARI channelvars during a Stasis VarSet event raised while app_voicemail
+builds the notification email on a dummy channel in prep_email_sub_vars),
+func_channel_read() dereferences the NULL tech pointer, causing a SIGSEGV
+in func_channel.c:465 on every voicemail deposit.
+
+Return an empty string for channeltype on a tech-less channel, matching
+the "nothing to report" no-op behaviour of the existing NULL guards in
+the read fallthrough (func_channel.c:609) and the pjsip item.
+
+Also guard the func_channel_write() fallthrough, which has the same
+unguarded ast_channel_tech(chan)->func_channel_write dereference and
+would crash the same way on a write to an unknown item.
+
+Same failure family as the null-src-format-cap patch (which fixed
+CHANNEL(audionativeformat)/CHANNEL(videonativeformat) for the same
+dummy-channel path in main/format_cap.c).
+
+Reproduced on Asterisk 22.10.1: incall -> user with WebRTC line ->
+forward to voicemail -> message deposited -> SIGSEGV in
+func_channel_read (LWP of the caller channel PBX thread), with
+CHANNEL(channeltype) present in ari.conf channelvars. The voicemail
+user must have an email address configured on the voicemail box, as
+the crash happens while building the email notification.
+---
+ funcs/func_channel.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+Index: asterisk-22.10.1/funcs/func_channel.c
+===================================================================
+--- asterisk-22.10.1.orig/funcs/func_channel.c
++++ asterisk-22.10.1/funcs/func_channel.c
+@@ -462,7 +462,8 @@
+ 		locked_copy_string(chan, buf,
+ 			ast_channel_hold_state(chan) == AST_CONTROL_HOLD ? "1" : "0", len);
+ 	} else if (!strcasecmp(data, "channeltype"))
+-		locked_copy_string(chan, buf, ast_channel_tech(chan)->type, len);
++		locked_copy_string(chan, buf,
++			ast_channel_tech(chan) ? ast_channel_tech(chan)->type : "", len);
+ 	else if (!strcasecmp(data, "accountcode"))
+ 		locked_copy_string(chan, buf, ast_channel_accountcode(chan), len);
+ 	else if (!strcasecmp(data, "checkhangup")) {
+@@ -797,7 +798,8 @@
+ 		}
+ 	} else if (!strcasecmp(data, "tenantid")) {
+ 		ast_channel_tenantid_set(chan, value);
+-	} else if (!ast_channel_tech(chan)->func_channel_write
++	} else if (!ast_channel_tech(chan)
++		 || !ast_channel_tech(chan)->func_channel_write
+ 		 || ast_channel_tech(chan)->func_channel_write(chan, function, data, value)) {
+ 		ast_log(LOG_WARNING, "Unknown or unavailable item requested: '%s'\n",
+ 				data);

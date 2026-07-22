@@ -1,3 +1,9 @@
+asterisk (8:22.10.1-1~wazo4) wazo-dev-bookworm; urgency=medium
+
+  * add func_channel NULL tech dereference patch
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 22 Jul 2026 09:31:39 -0400
+
 asterisk (8:22.10.1-1~wazo3) wazo-dev-bookworm; urgency=medium
 
   * add res_pjsip_wazo_call_id patch (X-Wazo-Call-ID header)
