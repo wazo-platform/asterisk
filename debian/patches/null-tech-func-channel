@@ -60,3 +60,25 @@ Index: asterisk-22.10.1/funcs/func_channel.c
  		 || ast_channel_tech(chan)->func_channel_write(chan, function, data, value)) {
  		ast_log(LOG_WARNING, "Unknown or unavailable item requested: '%s'\n",
  				data);
+Index: asterisk-22.10.1/main/channel.c
+===================================================================
+--- asterisk-22.10.1.orig/main/channel.c
++++ asterisk-22.10.1/main/channel.c
+@@ -7475,7 +7475,7 @@ int ast_channel_setoption(struct ast_cha
+ 	int res;
+ 
+ 	ast_channel_lock(chan);
+-	if (!ast_channel_tech(chan)->setoption) {
++	if (!ast_channel_tech(chan) || !ast_channel_tech(chan)->setoption) {
+ 		errno = ENOSYS;
+ 		ast_channel_unlock(chan);
+ 		return -1;
+@@ -7495,7 +7495,7 @@ int ast_channel_queryoption(struct ast_c
+ 	int res;
+ 
+ 	ast_channel_lock(chan);
+-	if (!ast_channel_tech(chan)->queryoption) {
++	if (!ast_channel_tech(chan) || !ast_channel_tech(chan)->queryoption) {
+ 		errno = ENOSYS;
+ 		ast_channel_unlock(chan);
+ 		return -1;
