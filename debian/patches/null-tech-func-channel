@@ -21,6 +21,11 @@ Also guard the func_channel_write() fallthrough, which has the same
 unguarded ast_channel_tech(chan)->func_channel_write dereference and
 would crash the same way on a write to an unknown item.
 
+ast_channel_setoption() and ast_channel_queryoption() in main/channel.c
+dereference the tech unconditionally too; both already fail with ENOSYS
+when the tech provides no callback, so extend that same early return to
+a NULL tech.
+
 Same failure family as the null-src-format-cap patch (which fixed
 CHANNEL(audionativeformat)/CHANNEL(videonativeformat) for the same
 dummy-channel path in main/format_cap.c).
@@ -32,8 +37,9 @@ CHANNEL(channeltype) present in ari.conf channelvars. The voicemail
 user must have an email address configured on the voicemail box, as
 the crash happens while building the email notification.
 ---
- funcs/func_channel.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ funcs/func_channel.c | 7 +++++--
+ main/channel.c       | 4 ++--
+ 2 files changed, 7 insertions(+), 4 deletions(-)
 
 Index: asterisk-22.10.1/funcs/func_channel.c
 ===================================================================
