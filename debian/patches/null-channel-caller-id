@@ -1,0 +1,91 @@
+From: Wazo Support <support@wazo.io>
+Date: Thu, 10 Sep 2026 00:00:00 +0000
+Subject: [PATCH] res_pjsip_caller_id: only run when on the session serializer
+
+caller_id_outgoing_request() and caller_id_outgoing_response() check
+session->channel for NULL and then dereference it a few instructions
+later, without holding anything that keeps it alive.
+
+session->channel is written by chan_pjsip's hangup() task, which always
+runs on session->serializer, and nearly every session supplement runs on
+that same serializer, so the field normally needs no lock. Response
+retransmissions break that invariant: session_on_tx_response() is a
+pjproject on_tx_msg module callback, so it runs on whichever thread
+transmits -- for a retransmission that is the pjsip monitor thread
+driving the timer heap. handle_outgoing_response() then traverses the
+supplement list with no serializer check and no channel reference, so
+the supplement races the concurrent teardown.
+
+The compiler cannot cache session->channel across the intervening calls
+to ast_party_id_init() and ast_channel_lock(), so it emits three
+separate loads of the field. The NULL check therefore protects nothing:
+the channel can be cleared between the check and either later load.
+
+Add the serializer check that res_pjsip_rfc3326.c already applies to its
+own outgoing_request/outgoing_response supplements for exactly this
+reason -- res_pjsip_caller_id.c is the only remaining outgoing_response
+supplement that dereferences session->channel unguarded.
+
+On a retransmission the P-Asserted-Identity / Remote-Party-ID headers
+are no longer recomputed. That is harmless and arguably more correct: a
+retransmission must reproduce the original response, and the headers
+added on the first (in-serializer) pass are already in the tdata. This
+is the same trade-off upstream accepted for res_pjsip_rfc3326.c.
+
+Still unguarded in asterisk master; reported upstream.
+
+Analyzed from coredump core.2770643.1788336165 (22.10.0-1~wazo5,
+res_pjsip_caller_id.c:603). A WebRTC/WSS client sent an in-dialog
+re-INVITE (hold, CSeq 3) and never ACKed the 200 OK; the 500 ms
+retransmit fired on the pjsip monitor thread at the same instant the
+session serializer ran hangup() -> clear_session_and_channel(), which
+had just set session->channel = NULL. ast_party_id_merge() then faulted
+at 0x438 == offsetof(struct ast_channel, connected.id), i.e. a NULL
+channel.
+---
+ res/res_pjsip_caller_id.c | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
+
+Index: asterisk-22.10.1/res/res_pjsip_caller_id.c
+===================================================================
+--- asterisk-22.10.1.orig/res/res_pjsip_caller_id.c
++++ asterisk-22.10.1/res/res_pjsip_caller_id.c
+@@ -34,6 +34,7 @@
+ #include "asterisk/module.h"
+ #include "asterisk/callerid.h"
+ #include "asterisk/conversions.h"
++#include "asterisk/taskpool.h"
+ 
+ static int extract_oli(const pjsip_param *param_list, char *buf, size_t len)
+ {
+@@ -562,7 +563,13 @@ static void caller_id_outgoing_request(s
+ 	struct ast_party_id effective_id;
+ 	struct ast_party_id connected_id;
+ 
+-	if (!session->channel) {
++	if (!session->channel
++		/*
++		 * The session->channel has been seen to go away on us between
++		 * checks so we must also be running under the call's serializer
++		 * thread.
++		 */
++		|| session->serializer != ast_taskpool_serializer_get_current()) {
+ 		return;
+ 	}
+ 
+@@ -593,7 +600,14 @@ static void caller_id_outgoing_response(
+ 	if (!session->channel
+ 		|| (!session->endpoint->id.send_connected_line
+ 			&& session->inv_session
+-			&& session->inv_session->state >= PJSIP_INV_STATE_EARLY)) {
++			&& session->inv_session->state >= PJSIP_INV_STATE_EARLY)
++		/*
++		 * The session->channel has been seen to go away on us between
++		 * checks so we must also be running under the call's serializer
++		 * thread.  Response retransmissions are sent from the pjsip
++		 * monitor thread, not the serializer.
++		 */
++		|| session->serializer != ast_taskpool_serializer_get_current()) {
+ 		return;
+ 	}
+ 
