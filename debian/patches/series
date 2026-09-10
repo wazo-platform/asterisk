@@ -30,3 +30,4 @@ fix-queue-deadlock
 null-src-format-cap
 wazo-res-pjsip-wazo-call-id
 null-tech-func-channel
+null-channel-caller-id

@@ -1,3 +1,9 @@
+asterisk (8:22.10.1-1~wazo6) wazo-dev-bookworm; urgency=medium
+
+  * add res_pjsip_caller_id NULL channel serializer race patch
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 10 Sep 2026 11:39:10 -0400
+
 asterisk (8:22.10.1-1~wazo5) wazo-dev-bookworm; urgency=medium
 
   * add func_channel/channel NULL tech dereference patch
