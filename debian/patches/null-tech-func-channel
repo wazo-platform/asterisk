@@ -41,10 +41,10 @@ the crash happens while building the email notification.
  main/channel.c       | 4 ++--
  2 files changed, 7 insertions(+), 4 deletions(-)
 
-Index: asterisk-22.10.1/funcs/func_channel.c
+Index: asterisk-22.11.0/funcs/func_channel.c
 ===================================================================
---- asterisk-22.10.1.orig/funcs/func_channel.c
-+++ asterisk-22.10.1/funcs/func_channel.c
+--- asterisk-22.11.0.orig/funcs/func_channel.c
++++ asterisk-22.11.0/funcs/func_channel.c
 @@ -462,7 +462,9 @@ static int func_channel_read(struct ast_
  		locked_copy_string(chan, buf,
  			ast_channel_hold_state(chan) == AST_CONTROL_HOLD ? "1" : "0", len);
@@ -66,10 +66,10 @@ Index: asterisk-22.10.1/funcs/func_channel.c
  		 || ast_channel_tech(chan)->func_channel_write(chan, function, data, value)) {
  		ast_log(LOG_WARNING, "Unknown or unavailable item requested: '%s'\n",
  				data);
-Index: asterisk-22.10.1/main/channel.c
+Index: asterisk-22.11.0/main/channel.c
 ===================================================================
---- asterisk-22.10.1.orig/main/channel.c
-+++ asterisk-22.10.1/main/channel.c
+--- asterisk-22.11.0.orig/main/channel.c
++++ asterisk-22.11.0/main/channel.c
 @@ -7475,7 +7475,7 @@ int ast_channel_setoption(struct ast_cha
  	int res;
  
