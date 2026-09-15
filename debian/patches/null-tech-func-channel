@@ -21,6 +21,11 @@ Also guard the func_channel_write() fallthrough, which has the same
 unguarded ast_channel_tech(chan)->func_channel_write dereference and
 would crash the same way on a write to an unknown item.
 
+ast_channel_setoption() and ast_channel_queryoption() in main/channel.c
+dereference the tech unconditionally too; both already fail with ENOSYS
+when the tech provides no callback, so extend that same early return to
+a NULL tech.
+
 Same failure family as the null-src-format-cap patch (which fixed
 CHANNEL(audionativeformat)/CHANNEL(videonativeformat) for the same
 dummy-channel path in main/format_cap.c).
@@ -32,13 +37,14 @@ CHANNEL(channeltype) present in ari.conf channelvars. The voicemail
 user must have an email address configured on the voicemail box, as
 the crash happens while building the email notification.
 ---
- funcs/func_channel.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ funcs/func_channel.c | 7 +++++--
+ main/channel.c       | 4 ++--
+ 2 files changed, 7 insertions(+), 4 deletions(-)
 
-Index: asterisk-22.10.1/funcs/func_channel.c
+Index: asterisk-22.11.0/funcs/func_channel.c
 ===================================================================
---- asterisk-22.10.1.orig/funcs/func_channel.c
-+++ asterisk-22.10.1/funcs/func_channel.c
+--- asterisk-22.11.0.orig/funcs/func_channel.c
++++ asterisk-22.11.0/funcs/func_channel.c
 @@ -462,7 +462,9 @@ static int func_channel_read(struct ast_
  		locked_copy_string(chan, buf,
  			ast_channel_hold_state(chan) == AST_CONTROL_HOLD ? "1" : "0", len);
@@ -60,10 +66,10 @@ Index: asterisk-22.10.1/funcs/func_channel.c
  		 || ast_channel_tech(chan)->func_channel_write(chan, function, data, value)) {
  		ast_log(LOG_WARNING, "Unknown or unavailable item requested: '%s'\n",
  				data);
-Index: asterisk-22.10.1/main/channel.c
+Index: asterisk-22.11.0/main/channel.c
 ===================================================================
---- asterisk-22.10.1.orig/main/channel.c
-+++ asterisk-22.10.1/main/channel.c
+--- asterisk-22.11.0.orig/main/channel.c
++++ asterisk-22.11.0/main/channel.c
 @@ -7475,7 +7475,7 @@ int ast_channel_setoption(struct ast_cha
  	int res;
  

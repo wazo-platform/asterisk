@@ -1,6 +1,12 @@
-asterisk (8:22.10.1-1~wazo3.1) wazo-dev-bookworm; urgency=medium
+asterisk (8:22.11.0-1~wazo1) wazo-dev-bookworm; urgency=medium
+  * asterisk 22.11.0
+  * remove null-src-format-cap patch (merged upstream in 22.11.0)
 
-  * add func_channel NULL tech dereference patch
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Mon, 14 Sep 2026 14:16:19 -0400
+
+asterisk (8:22.10.1-1~wazo5) wazo-dev-bookworm; urgency=medium
+
+  * add func_channel/channel NULL tech dereference patch
 
  -- Wazo Maintainers <dev+pkg@wazo.community>  Wed, 22 Jul 2026 09:31:39 -0400
 
