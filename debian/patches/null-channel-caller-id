@@ -1,0 +1,61 @@
+From: Wazo Support <support@wazo.io>
+Date: Thu, 10 Sep 2026 00:00:00 +0000
+Subject: [PATCH] res_pjsip_caller_id: only run when on the session serializer
+
+caller_id_outgoing_request() and caller_id_outgoing_response() check
+session->channel for NULL, then dereference it a few instructions later.
+The compiler cannot cache the field across the intervening calls, so the
+NULL check does not protect the later loads.
+
+session->channel is cleared by chan_pjsip's hangup() task on the session
+serializer. Response retransmissions run the supplements from the pjsip
+monitor thread instead (session_on_tx_response is a pjproject on_tx_msg
+hook), so the channel can go away mid-function.
+
+Add the serializer check res_pjsip_rfc3326.c already applies to its own
+outgoing_request/outgoing_response supplements for the same reason. The
+headers are then no longer recomputed on a retransmission, which is
+correct: they are already in the tdata from the first pass.
+
+Still unguarded in asterisk master; reported upstream.
+
+Analyzed from coredump core.2770643.1788336165 (22.10.0-1~wazo5,
+res_pjsip_caller_id.c:603): a WebRTC/WSS client never ACKed a 200 OK to
+its hold re-INVITE, and the 500 ms retransmit raced hangup() clearing
+session->channel.
+---
+ res/res_pjsip_caller_id.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+Index: asterisk-22.10.1/res/res_pjsip_caller_id.c
+===================================================================
+--- asterisk-22.10.1.orig/res/res_pjsip_caller_id.c
++++ asterisk-22.10.1/res/res_pjsip_caller_id.c
+@@ -34,6 +34,7 @@
+ #include "asterisk/module.h"
+ #include "asterisk/callerid.h"
+ #include "asterisk/conversions.h"
++#include "asterisk/taskpool.h"
+ 
+ static int extract_oli(const pjsip_param *param_list, char *buf, size_t len)
+ {
+@@ -562,7 +563,8 @@ static void caller_id_outgoing_request(s
+ 	struct ast_party_id effective_id;
+ 	struct ast_party_id connected_id;
+ 
+-	if (!session->channel) {
++	if (!session->channel
++		|| session->serializer != ast_taskpool_serializer_get_current()) {
+ 		return;
+ 	}
+ 
+@@ -593,7 +595,8 @@ static void caller_id_outgoing_response(
+ 	if (!session->channel
+ 		|| (!session->endpoint->id.send_connected_line
+ 			&& session->inv_session
+-			&& session->inv_session->state >= PJSIP_INV_STATE_EARLY)) {
++			&& session->inv_session->state >= PJSIP_INV_STATE_EARLY)
++		|| session->serializer != ast_taskpool_serializer_get_current()) {
+ 		return;
+ 	}
+ 
