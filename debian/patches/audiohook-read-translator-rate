@@ -1,0 +1,38 @@
+From: Wazo Support <support@wazo.io>
+Date: Thu, 8 Oct 2026 00:00:00 +0000
+Subject: [PATCH] audiohook: rebuild read translation path on slin rate change
+
+audiohook_read_frame_helper() caches the translation path used to
+convert the hook's slin frames to the requested format, and only
+rebuilds it when the requested format changes. The path is built from
+the hook's slin format at that moment, but the hook's internal rate can
+change afterwards (e.g. a call transferred to a channel using a codec
+with a higher sample rate). The stale path then converts the new frames
+as if they were at the old rate, so MixMonitor recordings are
+frequency-shifted after the change.
+
+Also rebuild the path when its source sample rate differs from the
+hook's current slin rate.
+
+Not reproduced on a live call yet.
+---
+ main/audiohook.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+Index: asterisk-22.11.0/main/audiohook.c
+===================================================================
+--- asterisk-22.11.0.orig/main/audiohook.c
++++ asterisk-22.11.0/main/audiohook.c
+@@ -681,8 +681,10 @@
+ 
+ 	/* If they don't want signed linear back out, we'll have to send it through the translation path */
+ 	if (ast_format_cmp(format, slin) != AST_FORMAT_CMP_EQUAL) {
+-		/* Rebuild translation path if different format then previously */
+-		if (ast_format_cmp(format, audiohook->format) == AST_FORMAT_CMP_NOT_EQUAL) {
++		/* Rebuild translation path if different format or slin rate then previously */
++		if (ast_format_cmp(format, audiohook->format) == AST_FORMAT_CMP_NOT_EQUAL
++			|| !audiohook->trans_pvt
++			|| audiohook->trans_pvt->t->src_codec.sample_rate != ast_format_get_sample_rate(slin)) {
+ 			if (audiohook->trans_pvt) {
+ 				ast_translator_free_path(audiohook->trans_pvt);
+ 				audiohook->trans_pvt = NULL;
