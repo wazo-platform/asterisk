@@ -27,10 +27,10 @@ session->channel.
  res/res_pjsip_caller_id.c | 7 +++++--
  1 file changed, 5 insertions(+), 2 deletions(-)
 
-Index: asterisk-22.10.1/res/res_pjsip_caller_id.c
+Index: asterisk-22.12.0/res/res_pjsip_caller_id.c
 ===================================================================
---- asterisk-22.10.1.orig/res/res_pjsip_caller_id.c
-+++ asterisk-22.10.1/res/res_pjsip_caller_id.c
+--- asterisk-22.12.0.orig/res/res_pjsip_caller_id.c
++++ asterisk-22.12.0/res/res_pjsip_caller_id.c
 @@ -34,6 +34,7 @@
  #include "asterisk/module.h"
  #include "asterisk/callerid.h"
