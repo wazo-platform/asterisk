@@ -1,3 +1,11 @@
+asterisk (8:22.12.0-1~wazo2) wazo-dev-bookworm; urgency=medium
+
+  * asterisk 22.12.0
+  * trim null-tech-func-channel patch to main/channel.c (func_channel.c part
+    merged upstream in 22.12.0)
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Thu, 05 Nov 2026 09:58:28 -0500
+
 asterisk (8:22.11.0-1~wazo6) wazo-dev-bookworm; urgency=medium
 
   * rebuild for CI
