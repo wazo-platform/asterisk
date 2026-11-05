@@ -31,3 +31,4 @@ wazo-res-pjsip-wazo-call-id
 null-tech-func-channel
 null-channel-caller-id
 chan-pjsip-channel-func-deadlock
+audiohook-whisper-framehook-timer
