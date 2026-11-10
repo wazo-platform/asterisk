@@ -1,0 +1,188 @@
+From: Wazo Support <support@wazo.io>
+Date: Tue, 10 Nov 2026 00:00:00 +0000
+Subject: [PATCH] taskpool: suspend a serializer without going through its queue
+
+ast_taskpool_serializer_suspend() pushed a task through the serializer and
+waited for it, so it needed a free taskpool taskprocessor to reach that
+task. A taskpool taskprocessor can itself be blocked in
+ast_taskpool_serializer_push_wait() waiting for a suspended serializer to
+be unsuspended, with the taskpool task of other serializers queued behind
+it. A thread that suspends two serializers in a row, as a masquerade of
+two PJSIP channels does, then deadlocks: it waits for the second
+serializer to reach the suspension task, which is queued behind a
+taskprocessor waiting for that same thread to unsuspend the first one.
+
+This was seen with res_pjsip: a channel masquerade suspended one
+distributor serializer and waited on a second one, while a
+"module reload res_pjsip.so" was blocked in sip_options_synchronize() on
+the first one, holding the taskpool taskprocessor the second one was
+queued on. All SIP processing stopped.
+
+Tasks of a serializer are only ever executed with the serializer lock
+held, so holding that lock is enough to know no thread is executing them.
+Suspend the serializer directly under that lock instead. Since the
+suspension can now happen while the taskpool task executing the serializer
+is still waiting to run, that task checks the suspension before executing
+anything, and unsuspension only queues a new one if the previous one was
+dropped, so there is never more than one per serializer.
+
+Tasks queued before the suspension are no longer executed before it takes
+effect, they stay queued until the serializer is unsuspended. This was
+already the case for any task queued between the suspension and the
+operation it protects.
+
+UserNote: Suspending a taskpool serializer no longer requires a free
+taskpool taskprocessor, which fixes a deadlock between a PJSIP channel
+masquerade and a PJSIP reload.
+---
+--- a/main/taskpool.c
++++ b/main/taskpool.c
+@@ -712,7 +712,6 @@
+ 
+ enum serializer_suspension {
+ 	SERIALIZER_UNSUSPENDED = 0,	/* The serializer is unsuspended */
+-	SERIALIZER_SUSPENDING,		/* The serializer is pending suspension */
+ 	SERIALIZER_SUSPENDED,		/* The serializer is suspended */
+ };
+ 
+@@ -725,6 +724,8 @@
+ 	ast_cond_t cond;
+ 	/*! Serializer suspension status. */
+ 	enum serializer_suspension suspended;
++	/*! The taskpool task for this serializer was dropped while suspended */
++	unsigned int execution_dropped:1;
+ };
+ 
+ static void serializer_dtor(void *obj)
+@@ -773,20 +774,16 @@
+ 	 */
+ 	ao2_lock(ser);
+ 
+-	ast_threadstorage_set_ptr(&current_taskpool_serializer, tps);
+-	for (remaining = ast_taskprocessor_size(tps); remaining > 0; remaining--) {
+-		requeue = ast_taskprocessor_execute(tps);
+-
+-		/* If the serializer is suspended we will not execute any more tasks and
+-		 * we will not requeue the taskpool task. Instead it will be requeued when
+-		 * the serializer is unsuspended.
+-		 */
+-		if (ser->suspended == SERIALIZER_SUSPENDED) {
+-			requeue = 0;
+-			break;
++	if (ser->suspended == SERIALIZER_SUSPENDED) {
++		/* Suspended while waiting to run, unsuspension queues a new taskpool task */
++		ser->execution_dropped = 1;
++	} else {
++		ast_threadstorage_set_ptr(&current_taskpool_serializer, tps);
++		for (remaining = ast_taskprocessor_size(tps); remaining > 0; remaining--) {
++			requeue = ast_taskprocessor_execute(tps);
+ 		}
++		ast_threadstorage_set_ptr(&current_taskpool_serializer, NULL);
+ 	}
+-	ast_threadstorage_set_ptr(&current_taskpool_serializer, NULL);
+ 
+ 	ao2_unlock(ser);
+ 
+@@ -989,54 +986,18 @@
+ 	return sync_task.fail;
+ }
+ 
+-/*!
+- * \internal A task that suspends the serializer after queuing an empty task
+- */
+-static int taskpool_serializer_suspend_task(void *data)
+-{
+-	struct ast_taskprocessor *serializer = data;
+-	struct ast_taskprocessor_listener *listener = ast_taskprocessor_listener(serializer);
+-	struct serializer *ser = ast_taskprocessor_listener_get_user_data(listener);
+-
+-	/* First we queue the empty task to ensure the serializer doesn't reach empty, this
+-	 * prevents any threads from queueing up a taskpool task that executes the serializer
+-	 * while it is suspended, allowing us to queue it ourselves when the serializer is
+-	 * unsuspended.
+-	 */
+-	if (ast_taskprocessor_push(serializer, taskpool_serializer_empty_task, NULL)) {
+-		return -1;
+-	}
+-
+-	/* Next we suspend the serializer so that the execute_tasks currently executing stops
+-	 * and doesn't requeue.
+-	 */
+-	ser->suspended = SERIALIZER_SUSPENDED;
+-
+-	return 0;
+-}
+-
+ int ast_taskpool_serializer_suspend(struct ast_taskprocessor *serializer)
+ {
+ 	struct ast_taskprocessor_listener *listener = ast_taskprocessor_listener(serializer);
+ 	struct serializer *ser = ast_taskprocessor_listener_get_user_data(listener);
+ 
+-	/* This suspension process works by inserting a checkpoint into the queue of the
+-	 * serializer. Once this checkpoint is reached the taskpool taskprocessor handling
+-	 * the queue stops prematurely and does not get requeued. For the case where a
+-	 * synchronous task wait is in progress it is instead paused temporarily. Once
+-	 * the serializer is unsuspended a new execution task is queued into the taskpool
+-	 * to resume execution and any paused synchronous task waits are awoken to resume
+-	 * their own execution as well. This approach minimizes the number of threads that
+-	 * are paused waiting, nominally to 0.
+-	 */
+-
+ 	if (ast_taskpool_get_current()) {
+ 		return -1;
+ 	}
+ 
+ 	ao2_lock(ser);
+ 
+-	/* If the serializer is already suspending or suspended, just return immediately.
++	/* If the serializer is already suspended, just return immediately.
+ 	 * This mirrors the original behavior from PJSIP.
+ 	 */
+ 	if (ser->suspended != SERIALIZER_UNSUSPENDED) {
+@@ -1044,23 +1005,17 @@
+ 		return 0;
+ 	}
+ 
+-	ser->suspended = SERIALIZER_SUSPENDING;
+-
+-	ao2_unlock(ser);
+-
+-	/* Once this returns successfully there is no thread executing the tasks on the serializer,
+-	 * so they will accumulate until the serializer is unsuspended.
+-	 */
+-	if (ast_taskpool_serializer_push_wait(serializer, taskpool_serializer_suspend_task, serializer)) {
+-		/* Suspension failed, so unsuspend as doing otherwise would leave the serializer in a stuck
+-		 * state.
+-		 */
+-		ao2_lock(ser);
+-		ser->suspended = SERIALIZER_UNSUSPENDED;
++	/* Tasks only execute with this lock held, so suspend directly. The empty task
++	 * keeps the serializer from going empty while suspended. */
++	if (ast_taskprocessor_push(serializer, taskpool_serializer_empty_task, NULL)) {
+ 		ao2_unlock(ser);
+ 		return -1;
+ 	}
+ 
++	ser->suspended = SERIALIZER_SUSPENDED;
++
++	ao2_unlock(ser);
++
+ 	return 0;
+ }
+ 
+@@ -1085,9 +1040,12 @@
+ 	/* Notify any other interested threads that this one has awoken */
+ 	ast_cond_broadcast(&ser->cond);
+ 
+-	/* And now we kick off handling of the queued tasks once again */
+-	if (ast_taskpool_push(ser->pool, execute_tasks, ao2_bump(serializer))) {
+-		ast_taskprocessor_unreference(serializer);
++	/* Kick off handling of the queued tasks, unless a taskpool task is still on its way */
++	if (ser->execution_dropped) {
++		ser->execution_dropped = 0;
++		if (ast_taskpool_push(ser->pool, execute_tasks, ao2_bump(serializer))) {
++			ast_taskprocessor_unreference(serializer);
++		}
+ 	}
+ 
+ 	ao2_unlock(ser);
