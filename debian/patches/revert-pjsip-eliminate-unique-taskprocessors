@@ -1,0 +1,199 @@
+From: Wazo Support <support@wazo.io>
+Date: Tue, 10 Nov 2026 00:00:00 +0000
+Subject: [PATCH] Revert "pjsip: Eliminate some unique taskprocessors."
+
+This reverts upstream commit 9f838868f8, first released in Asterisk
+22.11.0. Outbound sessions and AOR OPTIONS handling go back to their own
+serializers instead of the shared distributor serializers.
+
+With the shared serializers, a channel masquerade suspending a
+distributor serializer can deadlock with "module reload res_pjsip.so":
+the reload waits on the suspended serializer while holding the taskpool
+taskprocessor the masquerade needs to finish. All SIP processing stops.
+
+Rebased on Asterisk 22.11.0 with the Wazo patch series.
+---
+--- a/include/asterisk/res_pjsip.h
++++ b/include/asterisk/res_pjsip.h
+@@ -2053,32 +2053,6 @@
+ struct ast_taskprocessor *ast_sip_get_distributor_serializer(pjsip_rx_data *rdata);
+ 
+ /*!
+- * \brief Determine the distributor serializer for the SIP dialog.
+- * \since 20.21.0
+- * \since 22.11.0
+- * \since 23.5.0
+- *
+- * \param dlg The SIP dialog.
+- *
+- * \retval Calculated distributor serializer on success.
+- * \retval NULL on error.
+- */
+-struct ast_taskprocessor *ast_sip_get_distributor_serializer_dialog(pjsip_dialog *dlg);
+-
+-/*!
+- * \brief Determine the distributor serializer for a given hash.
+- * \since 20.21.0
+- * \since 22.11.0
+- * \since 23.5.0
+- *
+- * \param hash The hash value.
+- *
+- * \retval Calculated distributor serializer on success.
+- * \retval NULL on error.
+- */
+-struct ast_taskprocessor *ast_sip_get_distributor_serializer_hash(int hash);
+-
+-/*!
+  * \brief Set a serializer on a SIP dialog so requests and responses are automatically serialized
+  *
+  * Passing a NULL serializer is a way to remove a serializer from a dialog.
+--- a/res/res_pjsip/pjsip_distributor.c
++++ b/res/res_pjsip/pjsip_distributor.c
+@@ -465,45 +465,11 @@
+ 
+ 	serializer = ao2_bump(distributor_pool[hash % ARRAY_LEN(distributor_pool)]);
+ 	if (serializer) {
+-		ast_debug(3, "Calculated serializer %s to use for message %s\n",
++		ast_debug(3, "Calculated serializer %s to use for %s\n",
+ 			ast_taskprocessor_name(serializer), pjsip_rx_data_get_info(rdata));
+ 	}
+ 	return serializer;
+ }
+-
+-struct ast_taskprocessor *ast_sip_get_distributor_serializer_dialog(pjsip_dialog *dlg)
+-{
+-	int hash;
+-	struct ast_taskprocessor *serializer;
+-
+-	if (!dlg) {
+-		return NULL;
+-	}
+-
+-	/* Compute the hash from the SIP message call-id and tag */
+-	hash = pjstr_hash(&dlg->call_id->id);
+-	hash = pjstr_hash_add(&dlg->local.info->tag, hash);
+-	hash = ast_str_hash_restrict(hash);
+-
+-	serializer = ao2_bump(distributor_pool[hash % ARRAY_LEN(distributor_pool)]);
+-	if (serializer) {
+-		ast_debug(3, "Calculated serializer %s to use for dialog %s\n",
+-			ast_taskprocessor_name(serializer), dlg->obj_name);
+-	}
+-	return serializer;
+-}
+-
+-struct ast_taskprocessor *ast_sip_get_distributor_serializer_hash(int hash)
+-{
+-	struct ast_taskprocessor *serializer;
+-
+-	serializer = ao2_bump(distributor_pool[hash % ARRAY_LEN(distributor_pool)]);
+-	if (serializer) {
+-		ast_debug(3, "Calculated serializer %s to use for hash %u\n",
+-			ast_taskprocessor_name(serializer), hash);
+-	}
+-	return serializer;
+-}
+ 
+ static pj_bool_t endpoint_lookup(pjsip_rx_data *rdata);
+ 
+--- a/res/res_pjsip/pjsip_options.c
++++ b/res/res_pjsip/pjsip_options.c
+@@ -33,6 +33,7 @@
+ #include "asterisk/statsd.h"
+ #include "include/res_pjsip_private.h"
+ #include "asterisk/taskprocessor.h"
++#include "asterisk/serializer_shutdown_group.h"
+ 
+ /*
+  * This implementation for OPTIONS support is based around the idea
+@@ -124,6 +125,9 @@
+ /*! \brief Maximum wait time to join the below shutdown group */
+ #define MAX_UNLOAD_TIMEOUT_TIME		10	/* Seconds */
+ 
++/*! \brief Shutdown group for options serializers */
++static struct ast_serializer_shutdown_group *shutdown_group;
++
+ /*!
+  * \brief Structure which contains status information for an AOR feeding an endpoint state compositor
+  */
+@@ -968,6 +972,7 @@
+ static struct sip_options_aor *sip_options_aor_alloc(struct ast_sip_aor *aor)
+ {
+ 	struct sip_options_aor *aor_options;
++	char tps_name[AST_TASKPROCESSOR_MAX_NAME + 1];
+ 
+ 	aor_options = ao2_alloc_options(sizeof(*aor_options) + strlen(ast_sorcery_object_get_id(aor)) + 1,
+ 		sip_options_aor_dtor, AO2_ALLOC_OPT_LOCK_NOLOCK);
+@@ -977,7 +982,10 @@
+ 
+ 	strcpy(aor_options->name, ast_sorcery_object_get_id(aor)); /* SAFE */
+ 
+-	aor_options->serializer = ast_sip_get_distributor_serializer_hash(ast_str_hash(aor_options->name));
++	ast_taskprocessor_build_name(tps_name, sizeof(tps_name), "pjsip/options/%s",
++		ast_sorcery_object_get_id(aor));
++	aor_options->serializer = ast_sip_create_serializer_group(tps_name,
++		shutdown_group);
+ 	if (!aor_options->serializer) {
+ 		ao2_ref(aor_options, -1);
+ 		return NULL;
+@@ -2842,6 +2850,7 @@
+ 
+ void ast_res_pjsip_cleanup_options_handling(void)
+ {
++	int remaining;
+ 	struct ast_taskprocessor *mgmt_serializer;
+ 
+ 	ast_cli_unregister_multiple(cli_options, ARRAY_LEN(cli_options));
+@@ -2860,6 +2869,18 @@
+ 	management_serializer = NULL;
+ 	if (mgmt_serializer) {
+ 		ast_sip_push_task_wait_serializer(mgmt_serializer, sip_options_cleanup_task, NULL);
++	}
++
++	remaining = ast_serializer_shutdown_group_join(shutdown_group,
++		MAX_UNLOAD_TIMEOUT_TIME);
++	if (remaining) {
++		ast_log(LOG_WARNING, "Cleanup incomplete. Could not stop %d AORs.\n",
++			remaining);
++	}
++	ao2_cleanup(shutdown_group);
++	shutdown_group = NULL;
++
++	if (mgmt_serializer) {
+ 		ast_taskprocessor_unreference(mgmt_serializer);
+ 	}
+ 
+@@ -2881,6 +2902,11 @@
+ {
+ 	management_serializer = mgmt_serializer;
+ 
++	shutdown_group = ast_serializer_shutdown_group_alloc();
++	if (!shutdown_group) {
++		return -1;
++	}
++
+ 	if (ast_sorcery_observer_add(ast_sip_get_sorcery(), "endpoint",
+ 		&endpoint_observer_callbacks)) {
+ 		return -1;
+--- a/res/res_pjsip_session.c
++++ b/res/res_pjsip_session.c
+@@ -3134,11 +3134,13 @@
+ 		 */
+ 		session->serializer = ast_sip_get_distributor_serializer(rdata);
+ 	} else {
+-		/*
+-		 * This is an outgoing session, so we can just choose a serializer
+-		 * from the distributor pool based on the dialog.
+-		 */
+-		session->serializer = ast_sip_get_distributor_serializer_dialog(inv_session->dlg);
++		char tps_name[AST_TASKPROCESSOR_MAX_NAME + 1];
++
++		/* Create name with seq number appended. */
++		ast_taskprocessor_build_name(tps_name, sizeof(tps_name), "pjsip/outsess/%s",
++			ast_sorcery_object_get_id(endpoint));
++
++		session->serializer = ast_sip_create_serializer(tps_name);
+ 	}
+ 	if (!session->serializer) {
+ 		return NULL;

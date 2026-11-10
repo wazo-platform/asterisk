@@ -1,3 +1,10 @@
+asterisk (8:22.11.0-1~wazo7) wazo-dev-bookworm; urgency=medium
+
+  * revert "pjsip: Eliminate some unique taskprocessors." to avoid a deadlock
+    between a channel masquerade and a res_pjsip reload
+
+ -- Wazo Maintainers <dev+pkg@wazo.community>  Tue, 10 Nov 2026 14:29:50 -0500
+
 asterisk (8:22.11.0-1~wazo6) wazo-dev-bookworm; urgency=medium
 
   * rebuild for CI
