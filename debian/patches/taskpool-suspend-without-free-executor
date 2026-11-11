@@ -2,38 +2,36 @@ From: Wazo Support <support@wazo.io>
 Date: Tue, 10 Nov 2026 00:00:00 +0000
 Subject: [PATCH] taskpool: suspend a serializer without going through its queue
 
-ast_taskpool_serializer_suspend() pushed a task through the serializer and
-waited for it, so it needed a free taskpool taskprocessor to reach that
-task. A taskpool taskprocessor can itself be blocked in
-ast_taskpool_serializer_push_wait() waiting for a suspended serializer to
-be unsuspended, with the taskpool task of other serializers queued behind
-it. A thread that suspends two serializers in a row, as a masquerade of
-two PJSIP channels does, then deadlocks: it waits for the second
-serializer to reach the suspension task, which is queued behind a
-taskprocessor waiting for that same thread to unsuspend the first one.
+Problem: ast_taskpool_serializer_suspend() queued a task on the serializer
+and waited for a taskpool thread to execute it. If every taskpool thread
+is busy, the suspension waits. If one of them is itself waiting for the
+caller, the suspension never returns.
 
-This was seen with res_pjsip: a channel masquerade suspended one
-distributor serializer and waited on a second one, while a
-"module reload res_pjsip.so" was blocked in sip_options_synchronize() on
-the first one, holding the taskpool taskprocessor the second one was
-queued on. All SIP processing stopped.
+This happens with res_pjsip:
 
-Tasks of a serializer are only ever executed with the serializer lock
-held, so holding that lock is enough to know no thread is executing them.
-Suspend the serializer directly under that lock instead. Since the
-suspension can now happen while the taskpool task executing the serializer
-is still waiting to run, that task checks the suspension before executing
-anything, and unsuspension only queues a new one if the previous one was
-dropped, so there is never more than one per serializer.
+1. A masquerade of two PJSIP channels suspends the serializer of the
+   first channel, then the one of the second channel.
+2. Meanwhile "module reload res_pjsip.so" runs a synchronous task on the
+   first serializer from a taskpool thread. It blocks until the
+   masquerade unsuspends that serializer.
+3. The suspension of the second serializer is queued behind that blocked
+   thread, so the masquerade never gets to unsuspend the first one.
 
-Tasks queued before the suspension are no longer executed before it takes
-effect, they stay queued until the serializer is unsuspended. This was
-already the case for any task queued between the suspension and the
-operation it protects.
+All SIP processing stops.
 
-UserNote: Suspending a taskpool serializer no longer requires a free
-taskpool taskprocessor, which fixes a deadlock between a PJSIP channel
-masquerade and a PJSIP reload.
+Fix: the tasks of a serializer only execute with the serializer lock
+held. So take the lock and mark the serializer suspended right away, no
+taskpool thread is needed.
+
+The taskpool task that executes the serializer (execute_tasks) may
+already be queued at that point. When it runs and finds the serializer
+suspended, it executes nothing and sets a flag. Unsuspending queues it
+again only if that flag is set, so there is never more than one queued
+per serializer.
+
+Behavior change: tasks queued before the suspension used to execute
+before the suspension took effect. They now wait until the serializer is
+unsuspended.
 ---
 --- a/main/taskpool.c
 +++ b/main/taskpool.c
@@ -49,18 +47,27 @@ masquerade and a PJSIP reload.
  	ast_cond_t cond;
  	/*! Serializer suspension status. */
  	enum serializer_suspension suspended;
-+	/*! The taskpool task for this serializer was dropped while suspended */
-+	unsigned int execution_dropped:1;
++	/*! execute_tasks ran while suspended, unsuspending must queue it again. */
++	unsigned int execute_on_unsuspend:1;
  };
  
  static void serializer_dtor(void *obj)
-@@ -773,20 +774,16 @@
+@@ -773,18 +774,18 @@
  	 */
  	ao2_lock(ser);
  
--	ast_threadstorage_set_ptr(&current_taskpool_serializer, tps);
--	for (remaining = ast_taskprocessor_size(tps); remaining > 0; remaining--) {
--		requeue = ast_taskprocessor_execute(tps);
++	/* Suspended while this taskpool task was waiting to run: execute nothing,
++	 * unsuspending queues it again. */
++	if (ser->suspended == SERIALIZER_SUSPENDED) {
++		ser->execute_on_unsuspend = 1;
++		ao2_unlock(ser);
++		ast_taskprocessor_unreference(tps);
++		return 0;
++	}
++
+ 	ast_threadstorage_set_ptr(&current_taskpool_serializer, tps);
+ 	for (remaining = ast_taskprocessor_size(tps); remaining > 0; remaining--) {
+ 		requeue = ast_taskprocessor_execute(tps);
 -
 -		/* If the serializer is suspended we will not execute any more tasks and
 -		 * we will not requeue the taskpool task. Instead it will be requeued when
@@ -69,21 +76,11 @@ masquerade and a PJSIP reload.
 -		if (ser->suspended == SERIALIZER_SUSPENDED) {
 -			requeue = 0;
 -			break;
-+	if (ser->suspended == SERIALIZER_SUSPENDED) {
-+		/* Suspended while waiting to run, unsuspension queues a new taskpool task */
-+		ser->execution_dropped = 1;
-+	} else {
-+		ast_threadstorage_set_ptr(&current_taskpool_serializer, tps);
-+		for (remaining = ast_taskprocessor_size(tps); remaining > 0; remaining--) {
-+			requeue = ast_taskprocessor_execute(tps);
- 		}
-+		ast_threadstorage_set_ptr(&current_taskpool_serializer, NULL);
+-		}
  	}
--	ast_threadstorage_set_ptr(&current_taskpool_serializer, NULL);
+ 	ast_threadstorage_set_ptr(&current_taskpool_serializer, NULL);
  
- 	ao2_unlock(ser);
- 
-@@ -989,54 +986,18 @@
+@@ -989,54 +990,18 @@
  	return sync_task.fail;
  }
  
@@ -139,7 +136,7 @@ masquerade and a PJSIP reload.
  	 * This mirrors the original behavior from PJSIP.
  	 */
  	if (ser->suspended != SERIALIZER_UNSUSPENDED) {
-@@ -1044,23 +1005,17 @@
+@@ -1044,23 +1009,17 @@
  		return 0;
  	}
  
@@ -156,8 +153,8 @@ masquerade and a PJSIP reload.
 -		 */
 -		ao2_lock(ser);
 -		ser->suspended = SERIALIZER_UNSUSPENDED;
-+	/* Tasks only execute with this lock held, so suspend directly. The empty task
-+	 * keeps the serializer from going empty while suspended. */
++	/* Tasks only execute with this lock held, so none is executing now. The empty
++	 * task keeps the queue from going empty, which would queue a taskpool task. */
 +	if (ast_taskprocessor_push(serializer, taskpool_serializer_empty_task, NULL)) {
  		ao2_unlock(ser);
  		return -1;
@@ -170,16 +167,17 @@ masquerade and a PJSIP reload.
  	return 0;
  }
  
-@@ -1085,9 +1040,12 @@
+@@ -1085,9 +1044,13 @@
  	/* Notify any other interested threads that this one has awoken */
  	ast_cond_broadcast(&ser->cond);
  
 -	/* And now we kick off handling of the queued tasks once again */
 -	if (ast_taskpool_push(ser->pool, execute_tasks, ao2_bump(serializer))) {
 -		ast_taskprocessor_unreference(serializer);
-+	/* Kick off handling of the queued tasks, unless a taskpool task is still on its way */
-+	if (ser->execution_dropped) {
-+		ser->execution_dropped = 0;
++	/* And now we kick off handling of the queued tasks once again, unless the
++	 * taskpool task queued before the suspension is still waiting to run. */
++	if (ser->execute_on_unsuspend) {
++		ser->execute_on_unsuspend = 0;
 +		if (ast_taskpool_push(ser->pool, execute_tasks, ao2_bump(serializer))) {
 +			ast_taskprocessor_unreference(serializer);
 +		}
