@@ -30,3 +30,4 @@ fix-queue-deadlock
 wazo-res-pjsip-wazo-call-id
 null-tech-func-channel
 null-channel-caller-id
+taskpool-suspend-without-free-executor
